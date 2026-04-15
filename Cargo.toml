@@ -1,0 +1,31 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/lex-core",
+    "crates/lex-diag",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.93"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+# Lex depends on mez-core for foundational types (EntityId, ComplianceDomain, etc.)
+# This is a path dependency to the kernel workspace.
+mez-core = { path = "../kernel/mez/crates/mez-core" }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Error handling
+thiserror = "2"
+
+# Logging
+tracing = "0.1"
+
+# Testing
+proptest = "1"
+criterion = "0.5"
