@@ -14,20 +14,20 @@
 
 use mez_core::canonical::CanonicalBytes;
 use mez_core::digest::sha256_digest;
-use mez_lex::ast::{
+use lex_core::ast::{
     Branch, Constructor, DefeasibleRule, Exception, Ident, Level, Pattern, QualIdent, Sort, Term,
 };
-use mez_lex::certificate::{
+use lex_core::certificate::{
     self, ComplianceVerdict, DischargedObligation as CertDischargedObligation, LexCertificate,
 };
-use mez_lex::debruijn;
-use mez_lex::decide::{
+use lex_core::debruijn;
+use lex_core::decide::{
     DecisionResult, boolean_check, finite_domain_check, threshold_check,
 };
-use mez_lex::prelude;
-use mez_lex::temporal;
-use mez_lex::obligations;
-use mez_lex::typecheck;
+use lex_core::prelude;
+use lex_core::temporal;
+use lex_core::obligations;
+use lex_core::typecheck;
 
 #[derive(Debug, Clone)]
 struct ProofObligation {

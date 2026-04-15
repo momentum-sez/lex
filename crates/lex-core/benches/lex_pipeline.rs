@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput};
-use mez_lex::{
+use lex_core::{
     ast::{Branch, Constructor, DefeasibleRule, Ident, Pattern, QualIdent, Term},
     debruijn, elaborate, lexer, obligations, parser, prelude, typecheck,
 };

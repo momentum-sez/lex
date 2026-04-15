@@ -4,9 +4,9 @@
 //! Tests that SHOULD fail (system is sound) assert on the error.
 //! Tests that expose vulnerabilities are documented.
 
-use mez_lex::ast::*;
-use mez_lex::typecheck::{check, check_admissibility, infer, Context, TypeError, AdmissibilityViolation};
-use mez_lex::debruijn::{assign_indices, shift, substitute, DebruijnError};
+use lex_core::ast::*;
+use lex_core::typecheck::{check, check_admissibility, infer, Context, TypeError, AdmissibilityViolation};
+use lex_core::debruijn::{assign_indices, shift, substitute, DebruijnError};
 
 // ============================================================
 // Helpers

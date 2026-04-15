@@ -5,9 +5,9 @@
 
 use proptest::prelude::*;
 
-use mez_lex::ast::{Ident, Level, Sort, Term};
-use mez_lex::effects::{effect_subsumes, Effect, EffectRow};
-use mez_lex::typecheck::{check, check_admissibility, infer, Context};
+use lex_core::ast::{Ident, Level, Sort, Term};
+use lex_core::effects::{effect_subsumes, Effect, EffectRow};
+use lex_core::typecheck::{check, check_admissibility, infer, Context};
 
 // ---------------------------------------------------------------------------
 // Proptest strategies
@@ -274,7 +274,7 @@ proptest! {
         a in arb_effect_row().prop_filter("non-branch-sensitive", |r| !r.is_branch_sensitive()),
         b in arb_effect_row().prop_filter("non-branch-sensitive", |r| !r.is_branch_sensitive()),
     ) {
-        let joined = mez_lex::effects::effect_join(&a, &b);
+        let joined = lex_core::effects::effect_join(&a, &b);
         prop_assert!(
             effect_subsumes(&a, &joined),
             "join upper bound violated: a={:?} not subsumed by join={:?}",
@@ -290,23 +290,23 @@ proptest! {
     /// Join is idempotent: join(a, a) == a.
     #[test]
     fn join_idempotent(row in arb_effect_row()) {
-        let joined = mez_lex::effects::effect_join(&row, &row);
+        let joined = lex_core::effects::effect_join(&row, &row);
         prop_assert_eq!(&joined, &row, "join idempotency violated");
     }
 
     /// Join is commutative: join(a, b) == join(b, a).
     #[test]
     fn join_commutative(a in arb_effect_row(), b in arb_effect_row()) {
-        let ab = mez_lex::effects::effect_join(&a, &b);
-        let ba = mez_lex::effects::effect_join(&b, &a);
+        let ab = lex_core::effects::effect_join(&a, &b);
+        let ba = lex_core::effects::effect_join(&b, &a);
         prop_assert_eq!(ab, ba, "join commutativity violated");
     }
 
     /// Meet is commutative: meet(a, b) == meet(b, a).
     #[test]
     fn meet_commutative(a in arb_effect_row(), b in arb_effect_row()) {
-        let ab = mez_lex::effects::effect_meet(&a, &b);
-        let ba = mez_lex::effects::effect_meet(&b, &a);
+        let ab = lex_core::effects::effect_meet(&a, &b);
+        let ba = lex_core::effects::effect_meet(&b, &a);
         prop_assert_eq!(ab, ba, "meet commutativity violated");
     }
 }

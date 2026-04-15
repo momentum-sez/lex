@@ -14,7 +14,7 @@
 //! # Usage
 //!
 //! ```rust
-//! use mez_lex::fuel::{Fuel, FuelTracker, Indeterminate};
+//! use lex_core::fuel::{Fuel, FuelTracker, Indeterminate};
 //!
 //! let budget = Fuel::new(100);
 //! let mut tracker = FuelTracker::new(budget);

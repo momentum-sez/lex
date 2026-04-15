@@ -6,9 +6,9 @@
 //! 2. Temporal stratification (no Time0/Time1 mixing)
 //! 3. Structural survival through the existing Lex pipeline
 
-use mez_lex::ast::*;
-use mez_lex::debruijn;
-use mez_lex::temporal;
+use lex_core::ast::*;
+use lex_core::debruijn;
+use lex_core::temporal;
 
 /// Helper: create a simple variable term.
 fn var(name: &str, index: u32) -> Term {

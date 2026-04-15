@@ -8,9 +8,9 @@
 //!
 //! These are the first real laws to flow through the proof kernel.
 
-use mez_lex::ast::*;
-use mez_lex::debruijn;
-use mez_lex::temporal;
+use lex_core::ast::*;
+use lex_core::debruijn;
+use lex_core::temporal;
 
 /// Helper: create a simple variable term.
 fn var(name: &str, index: u32) -> Term {
