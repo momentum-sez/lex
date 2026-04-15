@@ -7,9 +7,6 @@ use crate::render::DiagContext;
 /// Errors internal to the mez-diag crate itself (not Lex elaboration errors).
 #[derive(Debug, Error)]
 pub enum DiagError {
-    #[error("not implemented")]
-    NotImplemented,
-
     #[error("unknown diagnostic category: {0}")]
     UnknownCategory(String),
 
