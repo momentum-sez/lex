@@ -91,3 +91,8 @@ lex check-principles <file>    # Check priority DAG acyclicity
 Apache-2.0. Lex is a contribution to human knowledge about legal logic —
 not a proprietary implementation detail. Published as part of the Momentum
 research programme at research.momentum.inc.
+
+## Git Commit Rules
+
+- **No LLM credit in git commits.** NEVER include `Co-Authored-By` lines referencing Claude, Opus, GPT, Codex, or any LLM in commit messages. The author is the human operator.
+
