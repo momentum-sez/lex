@@ -18,4 +18,5 @@ pub mod principles;
 pub mod smt;
 pub mod temporal;
 pub mod token;
+pub mod tty;
 pub mod typecheck;

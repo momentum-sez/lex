@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/lex-core",
     "crates/lex-diag",
+    "crates/lex-cli",
 ]
 
 [workspace.package]
