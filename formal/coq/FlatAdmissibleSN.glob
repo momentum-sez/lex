@@ -1,369 +1,1034 @@
-DIGEST d4695cdd4bc7cf4068e7dfcfa21ae036
+DIGEST a7d4950c74b9d7cad2d5e37df8fc469d
 FFlatAdmissibleSN
-R3090:3093 Stdlib.Lists.List <> <> lib
-R3095:3099 Stdlib.Arith.Arith <> <> lib
-R3101:3103 Stdlib.micromega.Lia <> <> lib
-R3105:3115 Stdlib.Wellfounded.Wellfounded <> <> lib
-R3117:3125 Stdlib.Relations.Relations <> <> lib
-R3135:3147 Stdlib.Lists.List ListNotations <> mod
-def 3776:3783 <> ConstTag
-R3788:3790 Corelib.Init.Datatypes <> nat ind
-def 4233:4240 <> Accessor
-R4245:4247 Corelib.Init.Datatypes <> nat ind
-ind 4261:4264 <> FAdm
-constr 4280:4282 <> Var
-constr 4306:4310 <> Const
-constr 4335:4340 <> Access
-constr 4373:4376 <> Let_
-constr 4406:4409 <> Mtch
-constr 4457:4459 <> Def
-R4291:4296 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R4288:4290 Corelib.Init.Datatypes <> nat ind
-R4297:4300 FlatAdmissibleSN <> FAdm:1 ind
-R4322:4325 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R4314:4321 FlatAdmissibleSN <> ConstTag def
-R4326:4329 FlatAdmissibleSN <> FAdm:1 ind
-R4352:4355 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R4344:4351 FlatAdmissibleSN <> Accessor def
-R4360:4363 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R4356:4359 FlatAdmissibleSN <> FAdm:1 ind
-R4364:4367 FlatAdmissibleSN <> FAdm:1 ind
-R4385:4388 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R4381:4384 FlatAdmissibleSN <> FAdm:1 ind
-R4393:4396 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R4389:4392 FlatAdmissibleSN <> FAdm:1 ind
-R4397:4400 FlatAdmissibleSN <> FAdm:1 ind
-R4418:4421 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R4414:4417 FlatAdmissibleSN <> FAdm:1 ind
-R4444:4447 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R4422:4425 Corelib.Init.Datatypes <> list ind
-R4436:4438 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
-R4428:4435 FlatAdmissibleSN <> ConstTag def
-R4439:4442 FlatAdmissibleSN <> FAdm:1 ind
-R4448:4451 FlatAdmissibleSN <> FAdm:1 ind
-R4469:4472 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R4465:4468 FlatAdmissibleSN <> FAdm:1 ind
-R4491:4494 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R4473:4476 Corelib.Init.Datatypes <> list ind
-R4483:4485 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
-R4479:4482 FlatAdmissibleSN <> FAdm:1 ind
-R4486:4489 FlatAdmissibleSN <> FAdm:1 ind
-R4495:4498 FlatAdmissibleSN <> FAdm:1 ind
-scheme 4261:4264 <> FAdm_rect
-scheme 4261:4264 <> FAdm_ind
-scheme 4261:4264 <> FAdm_rec
-scheme 4261:4264 <> FAdm_sind
-def 4825:4828 <> size
-R4835:4838 FlatAdmissibleSN <> FAdm ind
-binder 4831:4831 <> t:3
-R4843:4845 Corelib.Init.Datatypes <> nat ind
-R4858:4858 FlatAdmissibleSN <> t:3 var
-R4869:4871 FlatAdmissibleSN <> Var constr
-R4892:4896 FlatAdmissibleSN <> Const constr
-R4915:4920 FlatAdmissibleSN <> Access constr
-R4932:4932 Corelib.Init.Datatypes <> S constr
-R4935:4938 FlatAdmissibleSN <> size:4 def
-R4947:4950 FlatAdmissibleSN <> Let_ constr
-R4964:4964 Corelib.Init.Datatypes <> S constr
-R4974:4976 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
-R4967:4970 FlatAdmissibleSN <> size:4 def
-R4977:4980 FlatAdmissibleSN <> size:4 def
-R4990:4993 FlatAdmissibleSN <> Mtch constr
-R5013:5013 Corelib.Init.Datatypes <> S constr
-R5022:5024 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
-R5016:5019 FlatAdmissibleSN <> size:4 def
-R5025:5032 Stdlib.Lists.List <> list_sum def
-R5035:5037 Corelib.Lists.ListDef <> map def
-binder 5044:5045 <> ce:6
-R5050:5053 FlatAdmissibleSN <> size:4 def
-R5056:5058 Corelib.Init.Datatypes <> snd def
-R5060:5061 FlatAdmissibleSN <> ce:6 var
-R5074:5076 FlatAdmissibleSN <> Def constr
-R5097:5097 Corelib.Init.Datatypes <> S constr
-R5106:5108 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
-R5100:5103 FlatAdmissibleSN <> size:4 def
-R5109:5116 Stdlib.Lists.List <> list_sum def
-R5119:5121 Corelib.Lists.ListDef <> map def
-binder 5128:5129 <> ge:7
-R5147:5149 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
-R5134:5137 FlatAdmissibleSN <> size:4 def
-R5140:5142 Corelib.Init.Datatypes <> fst def
-R5144:5145 FlatAdmissibleSN <> ge:7 var
-R5150:5153 FlatAdmissibleSN <> size:4 def
-R5156:5158 Corelib.Init.Datatypes <> snd def
-R5160:5161 FlatAdmissibleSN <> ge:7 var
-def 5260:5272 <> size_branches
-R5280:5283 Corelib.Init.Datatypes <> list ind
-R5294:5296 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
-R5286:5293 FlatAdmissibleSN <> ConstTag def
-R5297:5300 FlatAdmissibleSN <> FAdm ind
-binder 5275:5276 <> bs:8
-R5306:5308 Corelib.Init.Datatypes <> nat ind
-R5315:5322 Stdlib.Lists.List <> list_sum def
-R5325:5327 Corelib.Lists.ListDef <> map def
-R5355:5356 FlatAdmissibleSN <> bs:8 var
-binder 5334:5335 <> ce:9
-R5340:5343 FlatAdmissibleSN <> size def
-R5346:5348 Corelib.Init.Datatypes <> snd def
-R5350:5351 FlatAdmissibleSN <> ce:9 var
-def 5372:5380 <> size_excs
-R5388:5391 Corelib.Init.Datatypes <> list ind
-R5398:5400 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
-R5394:5397 FlatAdmissibleSN <> FAdm ind
-R5401:5404 FlatAdmissibleSN <> FAdm ind
-binder 5383:5384 <> es:10
-R5410:5412 Corelib.Init.Datatypes <> nat ind
-R5419:5426 Stdlib.Lists.List <> list_sum def
-R5429:5431 Corelib.Lists.ListDef <> map def
-R5475:5476 FlatAdmissibleSN <> es:10 var
-binder 5438:5439 <> ge:11
-R5457:5459 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
-R5444:5447 FlatAdmissibleSN <> size def
-R5450:5452 Corelib.Init.Datatypes <> fst def
-R5454:5455 FlatAdmissibleSN <> ge:11 var
-R5460:5463 FlatAdmissibleSN <> size def
-R5466:5468 Corelib.Init.Datatypes <> snd def
-R5470:5471 FlatAdmissibleSN <> ge:11 var
-prf 5487:5502 <> size_Mtch_unfold
-binder 5513:5513 <> e:12
-binder 5515:5516 <> bs:13
-R5537:5539 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R5521:5524 FlatAdmissibleSN <> size def
-R5527:5530 FlatAdmissibleSN <> Mtch constr
-R5534:5535 FlatAdmissibleSN <> bs:13 var
-R5532:5532 FlatAdmissibleSN <> e:12 var
-R5540:5540 Corelib.Init.Datatypes <> S constr
-R5549:5551 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
-R5543:5546 FlatAdmissibleSN <> size def
-R5548:5548 FlatAdmissibleSN <> e:12 var
-R5552:5564 FlatAdmissibleSN <> size_branches def
-R5566:5567 FlatAdmissibleSN <> bs:13 var
-prf 5603:5617 <> size_Def_unfold
-binder 5628:5628 <> e:14
-binder 5630:5631 <> es:15
-R5651:5653 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R5636:5639 FlatAdmissibleSN <> size def
-R5642:5644 FlatAdmissibleSN <> Def constr
-R5648:5649 FlatAdmissibleSN <> es:15 var
-R5646:5646 FlatAdmissibleSN <> e:14 var
-R5654:5654 Corelib.Init.Datatypes <> S constr
-R5663:5665 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
-R5657:5660 FlatAdmissibleSN <> size def
-R5662:5662 FlatAdmissibleSN <> e:14 var
-R5666:5674 FlatAdmissibleSN <> size_excs def
-R5676:5677 FlatAdmissibleSN <> es:15 var
-prf 5713:5720 <> size_pos
-binder 5731:5731 <> t:16
-R5735:5738 Corelib.Init.Peano <> ::nat_scope:x_'<='_x not
-R5739:5742 FlatAdmissibleSN <> size def
-R5744:5744 FlatAdmissibleSN <> t:16 var
-def 6182:6192 <> find_branch
-R6199:6206 FlatAdmissibleSN <> ConstTag def
-binder 6195:6195 <> c:17
-R6215:6218 Corelib.Init.Datatypes <> list ind
-R6229:6231 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
-R6221:6228 FlatAdmissibleSN <> ConstTag def
-R6232:6235 FlatAdmissibleSN <> FAdm ind
-binder 6210:6211 <> bs:18
-R6241:6246 Corelib.Init.Datatypes <> option ind
-R6248:6251 FlatAdmissibleSN <> FAdm ind
-R6264:6265 FlatAdmissibleSN <> bs:18 var
-R6276:6277 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
-R6282:6285 Corelib.Init.Datatypes <> None constr
-R6298:6301 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
-R6291:6291 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
-R6294:6295 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
-R6297:6297 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
-R6319:6325 Stdlib.Arith.PeanoNat Nat eqb def
-R6327:6327 FlatAdmissibleSN <> c:17 var
-R6349:6359 FlatAdmissibleSN <> find_branch:19 def
-R6361:6361 FlatAdmissibleSN <> c:17 var
-R6337:6340 Corelib.Init.Datatypes <> Some constr
-prf 6382:6397 <> find_branch_size
-binder 6410:6410 <> c:21
-binder 6412:6413 <> bs:22
-binder 6415:6415 <> e:23
-R6443:6446 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R6434:6436 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R6418:6428 FlatAdmissibleSN <> find_branch def
-R6432:6433 FlatAdmissibleSN <> bs:22 var
-R6430:6430 FlatAdmissibleSN <> c:21 var
-R6437:6440 Corelib.Init.Datatypes <> Some constr
-R6442:6442 FlatAdmissibleSN <> e:23 var
-R6453:6456 Corelib.Init.Peano <> ::nat_scope:x_'<='_x not
-R6447:6450 FlatAdmissibleSN <> size def
-R6452:6452 FlatAdmissibleSN <> e:23 var
-R6457:6469 FlatAdmissibleSN <> size_branches def
-R6471:6472 FlatAdmissibleSN <> bs:22 var
-R6602:6608 Stdlib.Arith.PeanoNat Nat eqb def
-R6602:6608 Stdlib.Arith.PeanoNat Nat eqb def
-R6657:6669 FlatAdmissibleSN <> size_branches def
-R6712:6724 FlatAdmissibleSN <> size_branches def
-ind 7003:7006 <> step
-constr 7088:7101 <> step_let_const
-constr 7198:7213 <> step_match_const
-constr 7433:7445 <> step_def_base
-constr 7547:7558 <> step_ctx_let
-constr 7694:7707 <> step_ctx_match
-constr 7830:7841 <> step_ctx_def
-R7014:7017 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R7010:7013 FlatAdmissibleSN <> FAdm ind
-R7022:7025 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R7018:7021 FlatAdmissibleSN <> FAdm ind
-binder 7112:7112 <> c:26
-binder 7114:7114 <> e:27
-R7123:7126 FlatAdmissibleSN <> step:24 ind
-R7147:7147 FlatAdmissibleSN <> e:27 var
-R7129:7132 FlatAdmissibleSN <> Let_ constr
-R7144:7144 FlatAdmissibleSN <> e:27 var
-R7135:7139 FlatAdmissibleSN <> Const constr
-R7141:7141 FlatAdmissibleSN <> c:26 var
-binder 7224:7224 <> c:28
-binder 7226:7227 <> bs:29
-binder 7229:7229 <> e:30
-R7263:7272 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R7254:7256 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R7238:7248 FlatAdmissibleSN <> find_branch def
-R7252:7253 FlatAdmissibleSN <> bs:29 var
-R7250:7250 FlatAdmissibleSN <> c:28 var
-R7257:7260 Corelib.Init.Datatypes <> Some constr
-R7262:7262 FlatAdmissibleSN <> e:30 var
-R7273:7276 FlatAdmissibleSN <> step:24 ind
-R7298:7298 FlatAdmissibleSN <> e:30 var
-R7279:7282 FlatAdmissibleSN <> Mtch constr
-R7294:7295 FlatAdmissibleSN <> bs:29 var
-R7285:7289 FlatAdmissibleSN <> Const constr
-R7291:7291 FlatAdmissibleSN <> c:28 var
-binder 7456:7456 <> c:31
-R7465:7468 FlatAdmissibleSN <> step:24 ind
-R7490:7494 FlatAdmissibleSN <> Const constr
-R7496:7496 FlatAdmissibleSN <> c:31 var
-R7471:7473 FlatAdmissibleSN <> Def constr
-R7485:7486 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
-R7476:7480 FlatAdmissibleSN <> Const constr
-R7482:7482 FlatAdmissibleSN <> c:31 var
-binder 7569:7570 <> e1:32
-binder 7572:7574 <> e1':33
-binder 7576:7577 <> e2:34
-R7597:7606 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R7586:7589 FlatAdmissibleSN <> step:24 ind
-R7594:7596 FlatAdmissibleSN <> e1':33 var
-R7591:7592 FlatAdmissibleSN <> e1:32 var
-R7607:7610 FlatAdmissibleSN <> step:24 ind
-R7626:7629 FlatAdmissibleSN <> Let_ constr
-R7635:7636 FlatAdmissibleSN <> e2:34 var
-R7631:7633 FlatAdmissibleSN <> e1':33 var
-R7613:7616 FlatAdmissibleSN <> Let_ constr
-R7621:7622 FlatAdmissibleSN <> e2:34 var
-R7618:7619 FlatAdmissibleSN <> e1:32 var
-binder 7718:7718 <> e:35
-binder 7720:7721 <> e':36
-binder 7723:7724 <> bs:37
-R7742:7751 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R7733:7736 FlatAdmissibleSN <> step:24 ind
-R7740:7741 FlatAdmissibleSN <> e':36 var
-R7738:7738 FlatAdmissibleSN <> e:35 var
-R7752:7755 FlatAdmissibleSN <> step:24 ind
-R7770:7773 FlatAdmissibleSN <> Mtch constr
-R7778:7779 FlatAdmissibleSN <> bs:37 var
-R7775:7776 FlatAdmissibleSN <> e':36 var
-R7758:7761 FlatAdmissibleSN <> Mtch constr
-R7765:7766 FlatAdmissibleSN <> bs:37 var
-R7763:7763 FlatAdmissibleSN <> e:35 var
-binder 7852:7852 <> e:38
-binder 7854:7855 <> e':39
-binder 7857:7858 <> es:40
-R7876:7885 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R7867:7870 FlatAdmissibleSN <> step:24 ind
-R7874:7875 FlatAdmissibleSN <> e':39 var
-R7872:7872 FlatAdmissibleSN <> e:38 var
-R7886:7889 FlatAdmissibleSN <> step:24 ind
-R7903:7905 FlatAdmissibleSN <> Def constr
-R7910:7911 FlatAdmissibleSN <> es:40 var
-R7907:7908 FlatAdmissibleSN <> e':39 var
-R7892:7894 FlatAdmissibleSN <> Def constr
-R7898:7899 FlatAdmissibleSN <> es:40 var
-R7896:7896 FlatAdmissibleSN <> e:38 var
-scheme 7003:7006 <> step_ind
-scheme 7003:7006 <> step_sind
-prf 8167:8185 <> step_decreases_size
-binder 8198:8198 <> t:41
-binder 8200:8201 <> t':42
-R8213:8216 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R8204:8207 FlatAdmissibleSN <> step ind
-R8211:8212 FlatAdmissibleSN <> t':42 var
-R8209:8209 FlatAdmissibleSN <> t:41 var
-R8224:8226 Corelib.Init.Peano <> ::nat_scope:x_'<'_x not
-R8217:8220 FlatAdmissibleSN <> size def
-R8222:8223 FlatAdmissibleSN <> t':42 var
-R8227:8230 FlatAdmissibleSN <> size def
-R8232:8232 FlatAdmissibleSN <> t:41 var
-R8400:8415 FlatAdmissibleSN <> find_branch_size thm
-R8400:8415 FlatAdmissibleSN <> find_branch_size thm
-R8435:8450 FlatAdmissibleSN <> size_Mtch_unfold thm
-R8435:8450 FlatAdmissibleSN <> size_Mtch_unfold thm
-R8435:8450 FlatAdmissibleSN <> size_Mtch_unfold thm
-R8531:8545 FlatAdmissibleSN <> size_Def_unfold thm
-R8531:8545 FlatAdmissibleSN <> size_Def_unfold thm
-R8531:8545 FlatAdmissibleSN <> size_Def_unfold thm
-R8555:8563 FlatAdmissibleSN <> size_excs def
-R8707:8722 FlatAdmissibleSN <> size_Mtch_unfold thm
-R8707:8722 FlatAdmissibleSN <> size_Mtch_unfold thm
-R8707:8722 FlatAdmissibleSN <> size_Mtch_unfold thm
-R8707:8722 FlatAdmissibleSN <> size_Mtch_unfold thm
-R8707:8722 FlatAdmissibleSN <> size_Mtch_unfold thm
-R8790:8804 FlatAdmissibleSN <> size_Def_unfold thm
-R8790:8804 FlatAdmissibleSN <> size_Def_unfold thm
-R8790:8804 FlatAdmissibleSN <> size_Def_unfold thm
-R8790:8804 FlatAdmissibleSN <> size_Def_unfold thm
-R8790:8804 FlatAdmissibleSN <> size_Def_unfold thm
-def 9331:9332 <> SN
-R9339:9342 FlatAdmissibleSN <> FAdm ind
-binder 9335:9335 <> t:43
-R9355:9357 Corelib.Init.Wf <> Acc ind
-R9381:9381 FlatAdmissibleSN <> t:43 var
-binder 9364:9364 <> x:44
-binder 9366:9366 <> y:45
-R9371:9374 FlatAdmissibleSN <> step ind
-R9378:9378 FlatAdmissibleSN <> x:44 var
-R9376:9376 FlatAdmissibleSN <> y:45 var
-prf 9445:9449 <> lt_wf
-R9453:9464 Corelib.Init.Wf <> well_founded def
-R9466:9467 Corelib.Init.Peano <> lt def
-R9483:9493 Stdlib.Arith.PeanoNat Nat lt_wf_0 thm
-R9483:9493 Stdlib.Arith.PeanoNat Nat lt_wf_0 thm
-prf 9631:9648 <> flat_admissible_sn
-binder 9659:9659 <> t:46
-R9662:9663 FlatAdmissibleSN <> SN def
-R9665:9665 FlatAdmissibleSN <> t:46 var
-R9739:9742 FlatAdmissibleSN <> size def
-R9739:9742 FlatAdmissibleSN <> size def
-R9806:9821 Corelib.Init.Wf <> well_founded_ind thm
-R9823:9827 FlatAdmissibleSN <> lt_wf thm
-R9806:9821 Corelib.Init.Wf <> well_founded_ind thm
-R9823:9827 FlatAdmissibleSN <> lt_wf thm
-R9893:9911 FlatAdmissibleSN <> step_decreases_size thm
-R9893:9911 FlatAdmissibleSN <> step_decreases_size thm
-R9936:9939 FlatAdmissibleSN <> size def
-R9954:9960 Corelib.Init.Logic <> eq_refl constr
-R9936:9939 FlatAdmissibleSN <> size def
-R9954:9960 Corelib.Init.Logic <> eq_refl constr
-prf 10055:10077 <> reduction_chain_bounded
-binder 10090:10090 <> t:47
-binder 10092:10093 <> t':48
-R10123:10126 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R10096:10110 Stdlib.Relations.Relation_Operators <> clos_refl_trans ind
-R10119:10119 FlatAdmissibleSN <> t:47 var
-R10121:10122 FlatAdmissibleSN <> t':48 var
-R10114:10117 FlatAdmissibleSN <> step ind
-R10134:10137 Corelib.Init.Peano <> ::nat_scope:x_'<='_x not
-R10127:10130 FlatAdmissibleSN <> size def
-R10132:10133 FlatAdmissibleSN <> t':48 var
-R10138:10141 FlatAdmissibleSN <> size def
-R10143:10143 FlatAdmissibleSN <> t:47 var
-R10193:10211 FlatAdmissibleSN <> step_decreases_size thm
-R10193:10211 FlatAdmissibleSN <> step_decreases_size thm
-R13594:13611 FlatAdmissibleSN <> flat_admissible_sn thm
-R13620:13638 FlatAdmissibleSN <> step_decreases_size thm
-R13647:13669 FlatAdmissibleSN <> reduction_chain_bounded thm
-R13690:13707 FlatAdmissibleSN <> flat_admissible_sn thm
+R4891:4894 Stdlib.Lists.List <> <> lib
+R4896:4900 Stdlib.Arith.Arith <> <> lib
+R4902:4904 Stdlib.micromega.Lia <> <> lib
+R4906:4916 Stdlib.Wellfounded.Wellfounded <> <> lib
+R4918:4926 Stdlib.Relations.Relations <> <> lib
+R4936:4948 Stdlib.Lists.List ListNotations <> mod
+def 5576:5583 <> ConstTag
+R5588:5590 Corelib.Init.Datatypes <> nat ind
+def 5682:5689 <> Accessor
+R5694:5696 Corelib.Init.Datatypes <> nat ind
+ind 5710:5713 <> FAdm
+constr 5729:5731 <> Var
+constr 5756:5760 <> Const
+constr 5786:5791 <> Access
+constr 5824:5827 <> Let_
+constr 5858:5861 <> Mtch
+constr 5910:5912 <> Def
+constr 5958:5960 <> Lam
+constr 5984:5986 <> App
+R5741:5746 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5738:5740 Corelib.Init.Datatypes <> nat ind
+R5747:5750 FlatAdmissibleSN <> FAdm:1 ind
+R5773:5776 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5765:5772 FlatAdmissibleSN <> ConstTag def
+R5777:5780 FlatAdmissibleSN <> FAdm:1 ind
+R5803:5806 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5795:5802 FlatAdmissibleSN <> Accessor def
+R5811:5814 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5807:5810 FlatAdmissibleSN <> FAdm:1 ind
+R5815:5818 FlatAdmissibleSN <> FAdm:1 ind
+R5837:5840 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5833:5836 FlatAdmissibleSN <> FAdm:1 ind
+R5845:5848 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5841:5844 FlatAdmissibleSN <> FAdm:1 ind
+R5849:5852 FlatAdmissibleSN <> FAdm:1 ind
+R5871:5874 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5867:5870 FlatAdmissibleSN <> FAdm:1 ind
+R5897:5900 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5875:5878 Corelib.Init.Datatypes <> list ind
+R5889:5891 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R5881:5888 FlatAdmissibleSN <> ConstTag def
+R5892:5895 FlatAdmissibleSN <> FAdm:1 ind
+R5901:5904 FlatAdmissibleSN <> FAdm:1 ind
+R5923:5926 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5919:5922 FlatAdmissibleSN <> FAdm:1 ind
+R5945:5948 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5927:5930 Corelib.Init.Datatypes <> list ind
+R5937:5939 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R5933:5936 FlatAdmissibleSN <> FAdm:1 ind
+R5940:5943 FlatAdmissibleSN <> FAdm:1 ind
+R5949:5952 FlatAdmissibleSN <> FAdm:1 ind
+R5971:5974 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5967:5970 FlatAdmissibleSN <> FAdm:1 ind
+R5975:5978 FlatAdmissibleSN <> FAdm:1 ind
+R5997:6000 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5993:5996 FlatAdmissibleSN <> FAdm:1 ind
+R6005:6008 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R6001:6004 FlatAdmissibleSN <> FAdm:1 ind
+R6009:6012 FlatAdmissibleSN <> FAdm:1 ind
+scheme 5710:5713 <> FAdm_rect
+scheme 5710:5713 <> FAdm_ind
+scheme 5710:5713 <> FAdm_rec
+scheme 5710:5713 <> FAdm_sind
+def 6102:6105 <> size
+R6112:6115 FlatAdmissibleSN <> FAdm ind
+binder 6108:6108 <> t:3
+R6120:6122 Corelib.Init.Datatypes <> nat ind
+R6135:6135 FlatAdmissibleSN <> t:3 var
+R6146:6148 FlatAdmissibleSN <> Var constr
+R6169:6173 FlatAdmissibleSN <> Const constr
+R6192:6197 FlatAdmissibleSN <> Access constr
+R6209:6209 Corelib.Init.Datatypes <> S constr
+R6212:6215 FlatAdmissibleSN <> size:4 def
+R6224:6227 FlatAdmissibleSN <> Let_ constr
+R6241:6241 Corelib.Init.Datatypes <> S constr
+R6251:6253 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R6244:6247 FlatAdmissibleSN <> size:4 def
+R6254:6257 FlatAdmissibleSN <> size:4 def
+R6267:6270 FlatAdmissibleSN <> Mtch constr
+R6290:6290 Corelib.Init.Datatypes <> S constr
+R6299:6301 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R6293:6296 FlatAdmissibleSN <> size:4 def
+R6302:6309 Stdlib.Lists.List <> list_sum def
+R6312:6314 Corelib.Lists.ListDef <> map def
+binder 6321:6322 <> ce:6
+R6327:6330 FlatAdmissibleSN <> size:4 def
+R6333:6335 Corelib.Init.Datatypes <> snd def
+R6337:6338 FlatAdmissibleSN <> ce:6 var
+R6351:6353 FlatAdmissibleSN <> Def constr
+R6374:6374 Corelib.Init.Datatypes <> S constr
+R6383:6385 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R6377:6380 FlatAdmissibleSN <> size:4 def
+R6386:6393 Stdlib.Lists.List <> list_sum def
+R6396:6398 Corelib.Lists.ListDef <> map def
+binder 6405:6406 <> ge:7
+R6424:6426 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R6411:6414 FlatAdmissibleSN <> size:4 def
+R6417:6419 Corelib.Init.Datatypes <> fst def
+R6421:6422 FlatAdmissibleSN <> ge:7 var
+R6427:6430 FlatAdmissibleSN <> size:4 def
+R6433:6435 Corelib.Init.Datatypes <> snd def
+R6437:6438 FlatAdmissibleSN <> ge:7 var
+R6451:6453 FlatAdmissibleSN <> Lam constr
+R6468:6468 Corelib.Init.Datatypes <> S constr
+R6471:6474 FlatAdmissibleSN <> size:4 def
+R6486:6488 FlatAdmissibleSN <> App constr
+R6503:6503 Corelib.Init.Datatypes <> S constr
+R6512:6514 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R6506:6509 FlatAdmissibleSN <> size:4 def
+R6515:6518 FlatAdmissibleSN <> size:4 def
+def 6613:6625 <> size_branches
+R6633:6636 Corelib.Init.Datatypes <> list ind
+R6647:6649 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R6639:6646 FlatAdmissibleSN <> ConstTag def
+R6650:6653 FlatAdmissibleSN <> FAdm ind
+binder 6628:6629 <> bs:8
+R6659:6661 Corelib.Init.Datatypes <> nat ind
+R6668:6675 Stdlib.Lists.List <> list_sum def
+R6678:6680 Corelib.Lists.ListDef <> map def
+R6708:6709 FlatAdmissibleSN <> bs:8 var
+binder 6687:6688 <> ce:9
+R6693:6696 FlatAdmissibleSN <> size def
+R6699:6701 Corelib.Init.Datatypes <> snd def
+R6703:6704 FlatAdmissibleSN <> ce:9 var
+def 6725:6733 <> size_excs
+R6741:6744 Corelib.Init.Datatypes <> list ind
+R6751:6753 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R6747:6750 FlatAdmissibleSN <> FAdm ind
+R6754:6757 FlatAdmissibleSN <> FAdm ind
+binder 6736:6737 <> es:10
+R6763:6765 Corelib.Init.Datatypes <> nat ind
+R6772:6779 Stdlib.Lists.List <> list_sum def
+R6782:6784 Corelib.Lists.ListDef <> map def
+R6828:6829 FlatAdmissibleSN <> es:10 var
+binder 6791:6792 <> ge:11
+R6810:6812 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R6797:6800 FlatAdmissibleSN <> size def
+R6803:6805 Corelib.Init.Datatypes <> fst def
+R6807:6808 FlatAdmissibleSN <> ge:11 var
+R6813:6816 FlatAdmissibleSN <> size def
+R6819:6821 Corelib.Init.Datatypes <> snd def
+R6823:6824 FlatAdmissibleSN <> ge:11 var
+prf 6840:6855 <> size_Mtch_unfold
+binder 6866:6866 <> e:12
+binder 6868:6869 <> bs:13
+R6890:6892 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R6874:6877 FlatAdmissibleSN <> size def
+R6880:6883 FlatAdmissibleSN <> Mtch constr
+R6887:6888 FlatAdmissibleSN <> bs:13 var
+R6885:6885 FlatAdmissibleSN <> e:12 var
+R6893:6893 Corelib.Init.Datatypes <> S constr
+R6902:6904 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R6896:6899 FlatAdmissibleSN <> size def
+R6901:6901 FlatAdmissibleSN <> e:12 var
+R6905:6917 FlatAdmissibleSN <> size_branches def
+R6919:6920 FlatAdmissibleSN <> bs:13 var
+prf 6956:6970 <> size_Def_unfold
+binder 6981:6981 <> e:14
+binder 6983:6984 <> es:15
+R7004:7006 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R6989:6992 FlatAdmissibleSN <> size def
+R6995:6997 FlatAdmissibleSN <> Def constr
+R7001:7002 FlatAdmissibleSN <> es:15 var
+R6999:6999 FlatAdmissibleSN <> e:14 var
+R7007:7007 Corelib.Init.Datatypes <> S constr
+R7016:7018 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R7010:7013 FlatAdmissibleSN <> size def
+R7015:7015 FlatAdmissibleSN <> e:14 var
+R7019:7027 FlatAdmissibleSN <> size_excs def
+R7029:7030 FlatAdmissibleSN <> es:15 var
+prf 7066:7073 <> size_pos
+binder 7084:7084 <> t:16
+R7088:7091 Corelib.Init.Peano <> ::nat_scope:x_'<='_x not
+R7092:7095 FlatAdmissibleSN <> size def
+R7097:7097 FlatAdmissibleSN <> t:16 var
+def 7536:7546 <> find_branch
+R7553:7560 FlatAdmissibleSN <> ConstTag def
+binder 7549:7549 <> c:17
+R7569:7572 Corelib.Init.Datatypes <> list ind
+R7583:7585 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R7575:7582 FlatAdmissibleSN <> ConstTag def
+R7586:7589 FlatAdmissibleSN <> FAdm ind
+binder 7564:7565 <> bs:18
+R7595:7600 Corelib.Init.Datatypes <> option ind
+R7602:7605 FlatAdmissibleSN <> FAdm ind
+R7618:7619 FlatAdmissibleSN <> bs:18 var
+R7630:7631 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R7636:7639 Corelib.Init.Datatypes <> None constr
+R7652:7655 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R7645:7645 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7648:7649 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7651:7651 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7673:7679 Stdlib.Arith.PeanoNat Nat eqb def
+R7681:7681 FlatAdmissibleSN <> c:17 var
+R7703:7713 FlatAdmissibleSN <> find_branch:19 def
+R7715:7715 FlatAdmissibleSN <> c:17 var
+R7691:7694 Corelib.Init.Datatypes <> Some constr
+prf 7736:7751 <> find_branch_size
+binder 7764:7764 <> c:21
+binder 7766:7767 <> bs:22
+binder 7769:7769 <> e:23
+R7797:7800 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R7788:7790 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R7772:7782 FlatAdmissibleSN <> find_branch def
+R7786:7787 FlatAdmissibleSN <> bs:22 var
+R7784:7784 FlatAdmissibleSN <> c:21 var
+R7791:7794 Corelib.Init.Datatypes <> Some constr
+R7796:7796 FlatAdmissibleSN <> e:23 var
+R7807:7810 Corelib.Init.Peano <> ::nat_scope:x_'<='_x not
+R7801:7804 FlatAdmissibleSN <> size def
+R7806:7806 FlatAdmissibleSN <> e:23 var
+R7811:7823 FlatAdmissibleSN <> size_branches def
+R7825:7826 FlatAdmissibleSN <> bs:22 var
+R7956:7962 Stdlib.Arith.PeanoNat Nat eqb def
+R7956:7962 Stdlib.Arith.PeanoNat Nat eqb def
+R8011:8023 FlatAdmissibleSN <> size_branches def
+R8066:8078 FlatAdmissibleSN <> size_branches def
+ind 8631:8635 <> value
+constr 8659:8667 <> val_const
+constr 8701:8707 <> val_lam
+R8643:8646 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8639:8642 FlatAdmissibleSN <> FAdm ind
+binder 8678:8678 <> c:26
+R8681:8685 FlatAdmissibleSN <> value:24 ind
+R8688:8692 FlatAdmissibleSN <> Const constr
+R8694:8694 FlatAdmissibleSN <> c:26 var
+binder 8720:8723 <> body:27
+R8726:8730 FlatAdmissibleSN <> value:24 ind
+R8733:8735 FlatAdmissibleSN <> Lam constr
+R8737:8740 FlatAdmissibleSN <> body:27 var
+scheme 8631:8635 <> value_ind
+scheme 8631:8635 <> value_sind
+def 9434:9438 <> subst
+R9445:9448 FlatAdmissibleSN <> FAdm ind
+binder 9441:9441 <> t:28
+R9456:9458 Corelib.Init.Datatypes <> nat ind
+binder 9452:9452 <> k:29
+R9466:9469 FlatAdmissibleSN <> FAdm ind
+binder 9462:9462 <> u:30
+R9474:9477 FlatAdmissibleSN <> FAdm ind
+R9490:9490 FlatAdmissibleSN <> t:28 var
+R9501:9503 FlatAdmissibleSN <> Var constr
+R9519:9525 Stdlib.Arith.PeanoNat Nat eqb def
+R9529:9529 FlatAdmissibleSN <> k:29 var
+R9543:9545 FlatAdmissibleSN <> Var constr
+R9536:9536 FlatAdmissibleSN <> u:30 var
+R9553:9557 FlatAdmissibleSN <> Const constr
+R9569:9573 FlatAdmissibleSN <> Const constr
+R9581:9586 FlatAdmissibleSN <> Access constr
+R9597:9602 FlatAdmissibleSN <> Access constr
+R9607:9611 FlatAdmissibleSN <> subst:31 def
+R9617:9617 FlatAdmissibleSN <> u:30 var
+R9615:9615 FlatAdmissibleSN <> k:29 var
+R9624:9627 FlatAdmissibleSN <> Let_ constr
+R9640:9643 FlatAdmissibleSN <> Let_ constr
+R9661:9665 FlatAdmissibleSN <> subst:31 def
+R9676:9676 FlatAdmissibleSN <> u:30 var
+R9671:9671 Corelib.Init.Datatypes <> S constr
+R9673:9673 FlatAdmissibleSN <> k:29 var
+R9646:9650 FlatAdmissibleSN <> subst:31 def
+R9657:9657 FlatAdmissibleSN <> u:30 var
+R9655:9655 FlatAdmissibleSN <> k:29 var
+R9683:9686 FlatAdmissibleSN <> Mtch constr
+R9705:9708 FlatAdmissibleSN <> Mtch constr
+R9725:9727 Corelib.Lists.ListDef <> map def
+binder 9734:9735 <> ce:33
+R9740:9740 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R9747:9748 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R9767:9767 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R9741:9743 Corelib.Init.Datatypes <> fst def
+R9745:9746 FlatAdmissibleSN <> ce:33 var
+R9749:9753 FlatAdmissibleSN <> subst:31 def
+R9766:9766 FlatAdmissibleSN <> u:30 var
+R9764:9764 FlatAdmissibleSN <> k:29 var
+R9756:9758 Corelib.Init.Datatypes <> snd def
+R9760:9761 FlatAdmissibleSN <> ce:33 var
+R9711:9715 FlatAdmissibleSN <> subst:31 def
+R9721:9721 FlatAdmissibleSN <> u:30 var
+R9719:9719 FlatAdmissibleSN <> k:29 var
+R9778:9780 FlatAdmissibleSN <> Def constr
+R9800:9802 FlatAdmissibleSN <> Def constr
+R9831:9833 Corelib.Lists.ListDef <> map def
+binder 9840:9841 <> ge:34
+R9846:9846 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R9865:9866 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R9885:9885 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R9847:9851 FlatAdmissibleSN <> subst:31 def
+R9864:9864 FlatAdmissibleSN <> u:30 var
+R9862:9862 FlatAdmissibleSN <> k:29 var
+R9854:9856 Corelib.Init.Datatypes <> fst def
+R9858:9859 FlatAdmissibleSN <> ge:34 var
+R9867:9871 FlatAdmissibleSN <> subst:31 def
+R9884:9884 FlatAdmissibleSN <> u:30 var
+R9882:9882 FlatAdmissibleSN <> k:29 var
+R9874:9876 Corelib.Init.Datatypes <> snd def
+R9878:9879 FlatAdmissibleSN <> ge:34 var
+R9806:9810 FlatAdmissibleSN <> subst:31 def
+R9816:9816 FlatAdmissibleSN <> u:30 var
+R9814:9814 FlatAdmissibleSN <> k:29 var
+R9896:9898 FlatAdmissibleSN <> Lam constr
+R9912:9914 FlatAdmissibleSN <> Lam constr
+R9917:9921 FlatAdmissibleSN <> subst:31 def
+R9934:9934 FlatAdmissibleSN <> u:30 var
+R9929:9929 Corelib.Init.Datatypes <> S constr
+R9931:9931 FlatAdmissibleSN <> k:29 var
+R9941:9943 FlatAdmissibleSN <> App constr
+R9957:9959 FlatAdmissibleSN <> App constr
+R9976:9980 FlatAdmissibleSN <> subst:31 def
+R9986:9986 FlatAdmissibleSN <> u:30 var
+R9984:9984 FlatAdmissibleSN <> k:29 var
+R9962:9966 FlatAdmissibleSN <> subst:31 def
+R9972:9972 FlatAdmissibleSN <> u:30 var
+R9970:9970 FlatAdmissibleSN <> k:29 var
+def 10059:10061 <> occ
+R10068:10071 FlatAdmissibleSN <> FAdm ind
+binder 10064:10064 <> t:35
+R10079:10081 Corelib.Init.Datatypes <> nat ind
+binder 10075:10075 <> k:36
+R10086:10088 Corelib.Init.Datatypes <> nat ind
+R10101:10101 FlatAdmissibleSN <> t:35 var
+R10112:10114 FlatAdmissibleSN <> Var constr
+R10132:10138 Stdlib.Arith.PeanoNat Nat eqb def
+R10142:10142 FlatAdmissibleSN <> k:36 var
+R10162:10166 FlatAdmissibleSN <> Const constr
+R10185:10190 FlatAdmissibleSN <> Access constr
+R10202:10204 FlatAdmissibleSN <> occ:37 def
+R10208:10208 FlatAdmissibleSN <> k:36 var
+R10214:10217 FlatAdmissibleSN <> Let_ constr
+R10239:10241 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R10231:10233 FlatAdmissibleSN <> occ:37 def
+R10238:10238 FlatAdmissibleSN <> k:36 var
+R10242:10244 FlatAdmissibleSN <> occ:37 def
+R10250:10250 Corelib.Init.Datatypes <> S constr
+R10252:10252 FlatAdmissibleSN <> k:36 var
+R10259:10262 FlatAdmissibleSN <> Mtch constr
+R10289:10291 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R10282:10284 FlatAdmissibleSN <> occ:37 def
+R10288:10288 FlatAdmissibleSN <> k:36 var
+R10292:10299 Stdlib.Lists.List <> list_sum def
+R10302:10304 Corelib.Lists.ListDef <> map def
+binder 10311:10312 <> ce:39
+R10317:10319 FlatAdmissibleSN <> occ:37 def
+R10330:10330 FlatAdmissibleSN <> k:36 var
+R10322:10324 Corelib.Init.Datatypes <> snd def
+R10326:10327 FlatAdmissibleSN <> ce:39 var
+R10341:10343 FlatAdmissibleSN <> Def constr
+R10371:10373 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R10364:10366 FlatAdmissibleSN <> occ:37 def
+R10370:10370 FlatAdmissibleSN <> k:36 var
+R10374:10381 Stdlib.Lists.List <> list_sum def
+R10384:10386 Corelib.Lists.ListDef <> map def
+binder 10393:10394 <> ge:40
+R10413:10415 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R10399:10401 FlatAdmissibleSN <> occ:37 def
+R10412:10412 FlatAdmissibleSN <> k:36 var
+R10404:10406 Corelib.Init.Datatypes <> fst def
+R10408:10409 FlatAdmissibleSN <> ge:40 var
+R10416:10418 FlatAdmissibleSN <> occ:37 def
+R10429:10429 FlatAdmissibleSN <> k:36 var
+R10421:10423 Corelib.Init.Datatypes <> snd def
+R10425:10426 FlatAdmissibleSN <> ge:40 var
+R10440:10442 FlatAdmissibleSN <> Lam constr
+R10457:10459 FlatAdmissibleSN <> occ:37 def
+R10467:10467 Corelib.Init.Datatypes <> S constr
+R10469:10469 FlatAdmissibleSN <> k:36 var
+R10476:10478 FlatAdmissibleSN <> App constr
+R10500:10502 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R10493:10495 FlatAdmissibleSN <> occ:37 def
+R10499:10499 FlatAdmissibleSN <> k:36 var
+R10503:10505 FlatAdmissibleSN <> occ:37 def
+R10509:10509 FlatAdmissibleSN <> k:36 var
+def 10664:10669 <> affine
+R10676:10679 FlatAdmissibleSN <> FAdm ind
+binder 10672:10672 <> t:41
+R10687:10689 Corelib.Init.Datatypes <> nat ind
+binder 10683:10683 <> k:42
+R10709:10712 Corelib.Init.Peano <> ::nat_scope:x_'<='_x not
+R10702:10704 FlatAdmissibleSN <> occ def
+R10708:10708 FlatAdmissibleSN <> k:42 var
+R10706:10706 FlatAdmissibleSN <> t:41 var
+prf 11027:11043 <> map_branches_size
+R11061:11064 FlatAdmissibleSN <> FAdm ind
+binder 11057:11057 <> u:43
+R11073:11076 Corelib.Init.Datatypes <> list ind
+R11087:11089 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R11079:11086 FlatAdmissibleSN <> ConstTag def
+R11090:11093 FlatAdmissibleSN <> FAdm ind
+binder 11068:11069 <> bs:44
+R11102:11104 Corelib.Init.Datatypes <> nat ind
+binder 11098:11098 <> k:45
+R11244:11254 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R11112:11119 Stdlib.Lists.List <> list_sum def
+R11122:11124 Corelib.Lists.ListDef <> map def
+R11177:11179 Corelib.Lists.ListDef <> map def
+R11240:11241 FlatAdmissibleSN <> bs:44 var
+R11199:11201 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R11191:11198 FlatAdmissibleSN <> ConstTag def
+R11202:11205 FlatAdmissibleSN <> FAdm ind
+binder 11186:11187 <> ce:46
+R11210:11210 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R11217:11218 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R11237:11237 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R11211:11213 Corelib.Init.Datatypes <> fst def
+R11215:11216 FlatAdmissibleSN <> ce:46 var
+R11219:11223 FlatAdmissibleSN <> subst def
+R11236:11236 FlatAdmissibleSN <> u:43 var
+R11234:11234 FlatAdmissibleSN <> k:45 var
+R11226:11228 Corelib.Init.Datatypes <> snd def
+R11230:11231 FlatAdmissibleSN <> ce:46 var
+R11144:11146 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R11136:11143 FlatAdmissibleSN <> ConstTag def
+R11147:11150 FlatAdmissibleSN <> FAdm ind
+binder 11131:11132 <> ce:47
+R11155:11158 FlatAdmissibleSN <> size def
+R11161:11163 Corelib.Init.Datatypes <> snd def
+R11165:11166 FlatAdmissibleSN <> ce:47 var
+R11255:11262 Stdlib.Lists.List <> list_sum def
+R11265:11267 Corelib.Lists.ListDef <> map def
+R11325:11326 FlatAdmissibleSN <> bs:44 var
+R11287:11289 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R11279:11286 FlatAdmissibleSN <> ConstTag def
+R11290:11293 FlatAdmissibleSN <> FAdm ind
+binder 11274:11275 <> ce:48
+R11298:11301 FlatAdmissibleSN <> size def
+R11304:11308 FlatAdmissibleSN <> subst def
+R11321:11321 FlatAdmissibleSN <> u:43 var
+R11319:11319 FlatAdmissibleSN <> k:45 var
+R11311:11313 Corelib.Init.Datatypes <> snd def
+R11315:11316 FlatAdmissibleSN <> ce:48 var
+prf 11443:11455 <> map_excs_size
+R11473:11476 FlatAdmissibleSN <> FAdm ind
+binder 11469:11469 <> u:49
+R11485:11488 Corelib.Init.Datatypes <> list ind
+R11495:11497 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R11491:11494 FlatAdmissibleSN <> FAdm ind
+R11498:11501 FlatAdmissibleSN <> FAdm ind
+binder 11480:11481 <> es:50
+R11510:11512 Corelib.Init.Datatypes <> nat ind
+binder 11506:11506 <> k:51
+R11672:11682 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R11520:11527 Stdlib.Lists.List <> list_sum def
+R11530:11532 Corelib.Lists.ListDef <> map def
+R11597:11599 Corelib.Lists.ListDef <> map def
+R11668:11669 FlatAdmissibleSN <> es:50 var
+R11615:11617 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R11611:11614 FlatAdmissibleSN <> FAdm ind
+R11618:11621 FlatAdmissibleSN <> FAdm ind
+binder 11606:11607 <> ge:52
+R11626:11626 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R11645:11646 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R11665:11665 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R11627:11631 FlatAdmissibleSN <> subst def
+R11644:11644 FlatAdmissibleSN <> u:49 var
+R11642:11642 FlatAdmissibleSN <> k:51 var
+R11634:11636 Corelib.Init.Datatypes <> fst def
+R11638:11639 FlatAdmissibleSN <> ge:52 var
+R11647:11651 FlatAdmissibleSN <> subst def
+R11664:11664 FlatAdmissibleSN <> u:49 var
+R11662:11662 FlatAdmissibleSN <> k:51 var
+R11654:11656 Corelib.Init.Datatypes <> snd def
+R11658:11659 FlatAdmissibleSN <> ge:52 var
+R11548:11550 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R11544:11547 FlatAdmissibleSN <> FAdm ind
+R11551:11554 FlatAdmissibleSN <> FAdm ind
+binder 11539:11540 <> ge:53
+R11572:11574 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R11559:11562 FlatAdmissibleSN <> size def
+R11565:11567 Corelib.Init.Datatypes <> fst def
+R11569:11570 FlatAdmissibleSN <> ge:53 var
+R11575:11578 FlatAdmissibleSN <> size def
+R11581:11583 Corelib.Init.Datatypes <> snd def
+R11585:11586 FlatAdmissibleSN <> ge:53 var
+R11683:11690 Stdlib.Lists.List <> list_sum def
+R11693:11695 Corelib.Lists.ListDef <> map def
+R11821:11822 FlatAdmissibleSN <> es:50 var
+R11711:11713 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R11707:11710 FlatAdmissibleSN <> FAdm ind
+R11714:11717 FlatAdmissibleSN <> FAdm ind
+binder 11702:11703 <> ge:54
+R11747:11793 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R11722:11725 FlatAdmissibleSN <> size def
+R11728:11732 FlatAdmissibleSN <> subst def
+R11745:11745 FlatAdmissibleSN <> u:49 var
+R11743:11743 FlatAdmissibleSN <> k:51 var
+R11735:11737 Corelib.Init.Datatypes <> fst def
+R11739:11740 FlatAdmissibleSN <> ge:54 var
+R11794:11797 FlatAdmissibleSN <> size def
+R11800:11804 FlatAdmissibleSN <> subst def
+R11817:11817 FlatAdmissibleSN <> u:49 var
+R11815:11815 FlatAdmissibleSN <> k:51 var
+R11807:11809 Corelib.Init.Datatypes <> snd def
+R11811:11812 FlatAdmissibleSN <> ge:54 var
+prf 12094:12103 <> subst_size
+binder 12116:12116 <> u:55
+binder 12118:12118 <> t:56
+binder 12120:12120 <> k:57
+R12155:12157 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R12145:12147 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R12127:12130 FlatAdmissibleSN <> size def
+R12133:12137 FlatAdmissibleSN <> subst def
+R12143:12143 FlatAdmissibleSN <> u:55 var
+R12141:12141 FlatAdmissibleSN <> k:57 var
+R12139:12139 FlatAdmissibleSN <> t:56 var
+R12148:12150 FlatAdmissibleSN <> occ def
+R12154:12154 FlatAdmissibleSN <> k:57 var
+R12152:12152 FlatAdmissibleSN <> t:56 var
+R12164:12166 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R12158:12161 FlatAdmissibleSN <> size def
+R12163:12163 FlatAdmissibleSN <> t:56 var
+R12174:12176 Corelib.Init.Peano <> ::nat_scope:x_'*'_x not
+R12167:12169 FlatAdmissibleSN <> occ def
+R12173:12173 FlatAdmissibleSN <> k:57 var
+R12171:12171 FlatAdmissibleSN <> t:56 var
+R12177:12180 FlatAdmissibleSN <> size def
+R12182:12182 FlatAdmissibleSN <> u:55 var
+R12453:12457 FlatAdmissibleSN <> subst def
+R12459:12461 FlatAdmissibleSN <> occ def
+R12475:12481 Stdlib.Arith.PeanoNat Nat eqb def
+R12475:12481 Stdlib.Arith.PeanoNat Nat eqb def
+R12546:12549 FlatAdmissibleSN <> size def
+R12627:12630 FlatAdmissibleSN <> size def
+R12796:12796 Corelib.Init.Datatypes <> S constr
+R12796:12796 Corelib.Init.Datatypes <> S constr
+R12890:12906 FlatAdmissibleSN <> map_branches_size thm
+R12890:12906 FlatAdmissibleSN <> map_branches_size thm
+R12890:12906 FlatAdmissibleSN <> map_branches_size thm
+R13111:13125 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13058:13066 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13003:13010 Stdlib.Lists.List <> list_sum def
+R13013:13015 Corelib.Lists.ListDef <> map def
+binder 13022:13023 <> ce:58
+R13028:13031 FlatAdmissibleSN <> size def
+R13034:13038 FlatAdmissibleSN <> subst def
+R13041:13043 Corelib.Init.Datatypes <> snd def
+R13045:13046 FlatAdmissibleSN <> ce:58 var
+R13067:13074 Stdlib.Lists.List <> list_sum def
+R13077:13079 Corelib.Lists.ListDef <> map def
+binder 13086:13087 <> ce:59
+R13092:13094 FlatAdmissibleSN <> occ def
+R13097:13099 Corelib.Init.Datatypes <> snd def
+R13101:13102 FlatAdmissibleSN <> ce:59 var
+R13169:13177 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13126:13133 Stdlib.Lists.List <> list_sum def
+R13136:13138 Corelib.Lists.ListDef <> map def
+binder 13145:13146 <> ce:60
+R13151:13154 FlatAdmissibleSN <> size def
+R13157:13159 Corelib.Init.Datatypes <> snd def
+R13161:13162 FlatAdmissibleSN <> ce:60 var
+R13222:13224 Corelib.Init.Peano <> ::nat_scope:x_'*'_x not
+R13178:13185 Stdlib.Lists.List <> list_sum def
+R13188:13190 Corelib.Lists.ListDef <> map def
+binder 13197:13198 <> ce:61
+R13203:13205 FlatAdmissibleSN <> occ def
+R13208:13210 Corelib.Init.Datatypes <> snd def
+R13212:13213 FlatAdmissibleSN <> ce:61 var
+R13225:13228 FlatAdmissibleSN <> size def
+R13111:13125 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13058:13066 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13003:13010 Stdlib.Lists.List <> list_sum def
+R13013:13015 Corelib.Lists.ListDef <> map def
+binder 13022:13023 <> ce:62
+R13028:13031 FlatAdmissibleSN <> size def
+R13034:13038 FlatAdmissibleSN <> subst def
+R13041:13043 Corelib.Init.Datatypes <> snd def
+R13045:13046 FlatAdmissibleSN <> ce:62 var
+R13067:13074 Stdlib.Lists.List <> list_sum def
+R13077:13079 Corelib.Lists.ListDef <> map def
+binder 13086:13087 <> ce:63
+R13092:13094 FlatAdmissibleSN <> occ def
+R13097:13099 Corelib.Init.Datatypes <> snd def
+R13101:13102 FlatAdmissibleSN <> ce:63 var
+R13169:13177 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13126:13133 Stdlib.Lists.List <> list_sum def
+R13136:13138 Corelib.Lists.ListDef <> map def
+binder 13145:13146 <> ce:64
+R13151:13154 FlatAdmissibleSN <> size def
+R13157:13159 Corelib.Init.Datatypes <> snd def
+R13161:13162 FlatAdmissibleSN <> ce:64 var
+R13222:13224 Corelib.Init.Peano <> ::nat_scope:x_'*'_x not
+R13178:13185 Stdlib.Lists.List <> list_sum def
+R13188:13190 Corelib.Lists.ListDef <> map def
+binder 13197:13198 <> ce:65
+R13203:13205 FlatAdmissibleSN <> occ def
+R13208:13210 Corelib.Init.Datatypes <> snd def
+R13212:13213 FlatAdmissibleSN <> ce:65 var
+R13225:13228 FlatAdmissibleSN <> size def
+R13353:13365 FlatAdmissibleSN <> size_branches def
+R13442:13454 FlatAdmissibleSN <> map_excs_size thm
+R13442:13454 FlatAdmissibleSN <> map_excs_size thm
+R13442:13454 FlatAdmissibleSN <> map_excs_size thm
+R13665:13679 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13595:13603 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13481:13488 Stdlib.Lists.List <> list_sum def
+R13491:13493 Corelib.Lists.ListDef <> map def
+binder 13500:13501 <> ge:66
+R13531:13564 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13506:13509 FlatAdmissibleSN <> size def
+R13512:13516 FlatAdmissibleSN <> subst def
+R13519:13521 Corelib.Init.Datatypes <> fst def
+R13523:13524 FlatAdmissibleSN <> ge:66 var
+R13565:13568 FlatAdmissibleSN <> size def
+R13571:13575 FlatAdmissibleSN <> subst def
+R13578:13580 Corelib.Init.Datatypes <> snd def
+R13582:13583 FlatAdmissibleSN <> ge:66 var
+R13604:13611 Stdlib.Lists.List <> list_sum def
+R13614:13616 Corelib.Lists.ListDef <> map def
+binder 13623:13624 <> ge:67
+R13643:13645 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13629:13631 FlatAdmissibleSN <> occ def
+R13634:13636 Corelib.Init.Datatypes <> fst def
+R13638:13639 FlatAdmissibleSN <> ge:67 var
+R13646:13648 FlatAdmissibleSN <> occ def
+R13651:13653 Corelib.Init.Datatypes <> snd def
+R13655:13656 FlatAdmissibleSN <> ge:67 var
+R13739:13747 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13680:13687 Stdlib.Lists.List <> list_sum def
+R13690:13692 Corelib.Lists.ListDef <> map def
+binder 13699:13700 <> ge:68
+R13718:13720 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13705:13708 FlatAdmissibleSN <> size def
+R13711:13713 Corelib.Init.Datatypes <> fst def
+R13715:13716 FlatAdmissibleSN <> ge:68 var
+R13721:13724 FlatAdmissibleSN <> size def
+R13727:13729 Corelib.Init.Datatypes <> snd def
+R13731:13732 FlatAdmissibleSN <> ge:68 var
+R13809:13811 Corelib.Init.Peano <> ::nat_scope:x_'*'_x not
+R13748:13755 Stdlib.Lists.List <> list_sum def
+R13758:13760 Corelib.Lists.ListDef <> map def
+binder 13767:13768 <> ge:69
+R13787:13789 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13773:13775 FlatAdmissibleSN <> occ def
+R13778:13780 Corelib.Init.Datatypes <> fst def
+R13782:13783 FlatAdmissibleSN <> ge:69 var
+R13790:13792 FlatAdmissibleSN <> occ def
+R13795:13797 Corelib.Init.Datatypes <> snd def
+R13799:13800 FlatAdmissibleSN <> ge:69 var
+R13812:13815 FlatAdmissibleSN <> size def
+R13665:13679 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13595:13603 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13481:13488 Stdlib.Lists.List <> list_sum def
+R13491:13493 Corelib.Lists.ListDef <> map def
+binder 13500:13501 <> ge:70
+R13531:13564 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13506:13509 FlatAdmissibleSN <> size def
+R13512:13516 FlatAdmissibleSN <> subst def
+R13519:13521 Corelib.Init.Datatypes <> fst def
+R13523:13524 FlatAdmissibleSN <> ge:70 var
+R13565:13568 FlatAdmissibleSN <> size def
+R13571:13575 FlatAdmissibleSN <> subst def
+R13578:13580 Corelib.Init.Datatypes <> snd def
+R13582:13583 FlatAdmissibleSN <> ge:70 var
+R13604:13611 Stdlib.Lists.List <> list_sum def
+R13614:13616 Corelib.Lists.ListDef <> map def
+binder 13623:13624 <> ge:71
+R13643:13645 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13629:13631 FlatAdmissibleSN <> occ def
+R13634:13636 Corelib.Init.Datatypes <> fst def
+R13638:13639 FlatAdmissibleSN <> ge:71 var
+R13646:13648 FlatAdmissibleSN <> occ def
+R13651:13653 Corelib.Init.Datatypes <> snd def
+R13655:13656 FlatAdmissibleSN <> ge:71 var
+R13739:13747 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13680:13687 Stdlib.Lists.List <> list_sum def
+R13690:13692 Corelib.Lists.ListDef <> map def
+binder 13699:13700 <> ge:72
+R13718:13720 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13705:13708 FlatAdmissibleSN <> size def
+R13711:13713 Corelib.Init.Datatypes <> fst def
+R13715:13716 FlatAdmissibleSN <> ge:72 var
+R13721:13724 FlatAdmissibleSN <> size def
+R13727:13729 Corelib.Init.Datatypes <> snd def
+R13731:13732 FlatAdmissibleSN <> ge:72 var
+R13809:13811 Corelib.Init.Peano <> ::nat_scope:x_'*'_x not
+R13748:13755 Stdlib.Lists.List <> list_sum def
+R13758:13760 Corelib.Lists.ListDef <> map def
+binder 13767:13768 <> ge:73
+R13787:13789 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R13773:13775 FlatAdmissibleSN <> occ def
+R13778:13780 Corelib.Init.Datatypes <> fst def
+R13782:13783 FlatAdmissibleSN <> ge:73 var
+R13790:13792 FlatAdmissibleSN <> occ def
+R13795:13797 Corelib.Init.Datatypes <> snd def
+R13799:13800 FlatAdmissibleSN <> ge:73 var
+R13812:13815 FlatAdmissibleSN <> size def
+R13964:13972 FlatAdmissibleSN <> size_excs def
+R14024:14024 Corelib.Init.Datatypes <> S constr
+R14024:14024 Corelib.Init.Datatypes <> S constr
+prf 14370:14386 <> subst_size_affine
+binder 14399:14399 <> u:74
+binder 14401:14404 <> body:75
+R14426:14433 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R14421:14424 Corelib.Init.Peano <> ::nat_scope:x_'<='_x not
+R14411:14413 FlatAdmissibleSN <> occ def
+R14415:14418 FlatAdmissibleSN <> body:75 var
+R14455:14458 Corelib.Init.Peano <> ::nat_scope:x_'<='_x not
+R14434:14437 FlatAdmissibleSN <> size def
+R14440:14444 FlatAdmissibleSN <> subst def
+R14453:14453 FlatAdmissibleSN <> u:74 var
+R14446:14449 FlatAdmissibleSN <> body:75 var
+R14477:14479 Corelib.Init.Peano <> ::nat_scope:x_'-'_x not
+R14468:14470 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R14459:14462 FlatAdmissibleSN <> size def
+R14464:14467 FlatAdmissibleSN <> body:75 var
+R14471:14474 FlatAdmissibleSN <> size def
+R14476:14476 FlatAdmissibleSN <> u:74 var
+R14526:14535 FlatAdmissibleSN <> subst_size thm
+R14526:14535 FlatAdmissibleSN <> subst_size thm
+R14569:14576 FlatAdmissibleSN <> size_pos thm
+R14569:14576 FlatAdmissibleSN <> size_pos thm
+R14605:14612 FlatAdmissibleSN <> size_pos thm
+R14605:14612 FlatAdmissibleSN <> size_pos thm
+R14661:14664 Corelib.Init.Logic <> ::type_scope:x_'\/'_x not
+R14657:14659 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R14647:14649 FlatAdmissibleSN <> occ def
+R14675:14677 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R14665:14667 FlatAdmissibleSN <> occ def
+R14661:14664 Corelib.Init.Logic <> ::type_scope:x_'\/'_x not
+R14657:14659 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R14647:14649 FlatAdmissibleSN <> occ def
+R14675:14677 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R14665:14667 FlatAdmissibleSN <> occ def
+R14833:14835 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R14824:14827 FlatAdmissibleSN <> size def
+R14837:14839 Corelib.Init.Peano <> ::nat_scope:x_'*'_x not
+R14840:14843 FlatAdmissibleSN <> size def
+R14854:14857 FlatAdmissibleSN <> size def
+R14833:14835 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R14824:14827 FlatAdmissibleSN <> size def
+R14837:14839 Corelib.Init.Peano <> ::nat_scope:x_'*'_x not
+R14840:14843 FlatAdmissibleSN <> size def
+R14854:14857 FlatAdmissibleSN <> size def
+R15012:15014 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R15003:15006 FlatAdmissibleSN <> size def
+R15016:15018 Corelib.Init.Peano <> ::nat_scope:x_'*'_x not
+R15019:15022 FlatAdmissibleSN <> size def
+R15042:15044 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R15033:15036 FlatAdmissibleSN <> size def
+R15045:15048 FlatAdmissibleSN <> size def
+R15012:15014 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R15003:15006 FlatAdmissibleSN <> size def
+R15016:15018 Corelib.Init.Peano <> ::nat_scope:x_'*'_x not
+R15019:15022 FlatAdmissibleSN <> size def
+R15042:15044 Corelib.Init.Peano <> ::nat_scope:x_'+'_x not
+R15033:15036 FlatAdmissibleSN <> size def
+R15045:15048 FlatAdmissibleSN <> size def
+def 15769:15779 <> exc_body_in
+R15786:15789 FlatAdmissibleSN <> FAdm ind
+binder 15782:15782 <> b:76
+R15798:15801 Corelib.Init.Datatypes <> list ind
+R15808:15810 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R15804:15807 FlatAdmissibleSN <> FAdm ind
+R15811:15814 FlatAdmissibleSN <> FAdm ind
+binder 15793:15794 <> es:77
+R15836:15837 FlatAdmissibleSN <> es:77 var
+R15848:15849 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R15854:15858 Corelib.Init.Logic <> False ind
+R15871:15874 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R15864:15864 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15866:15867 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15870:15870 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15889:15892 Corelib.Init.Logic <> ::type_scope:x_'\/'_x not
+R15884:15886 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R15883:15883 FlatAdmissibleSN <> b:76 var
+R15893:15903 FlatAdmissibleSN <> exc_body_in:78 def
+R15905:15905 FlatAdmissibleSN <> b:76 var
+prf 15926:15941 <> exc_body_in_size
+binder 15954:15954 <> b:80
+binder 15956:15957 <> es:81
+R15976:15979 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R15960:15970 FlatAdmissibleSN <> exc_body_in def
+R15974:15975 FlatAdmissibleSN <> es:81 var
+R15972:15972 FlatAdmissibleSN <> b:80 var
+R15986:15989 Corelib.Init.Peano <> ::nat_scope:x_'<='_x not
+R15980:15983 FlatAdmissibleSN <> size def
+R15985:15985 FlatAdmissibleSN <> b:80 var
+R15990:15998 FlatAdmissibleSN <> size_excs def
+R16000:16001 FlatAdmissibleSN <> es:81 var
+R16139:16147 FlatAdmissibleSN <> size_excs def
+R16192:16200 FlatAdmissibleSN <> size_excs def
+ind 16236:16239 <> step
+constr 16321:16334 <> step_let_const
+constr 16431:16446 <> step_match_const
+constr 16618:16630 <> step_def_base
+constr 16868:16879 <> step_def_exc
+constr 17096:17104 <> step_beta
+constr 17260:17271 <> step_ctx_let
+constr 17407:17420 <> step_ctx_match
+constr 17543:17554 <> step_ctx_def
+constr 17685:17698 <> step_ctx_app_l
+constr 17954:17967 <> step_ctx_app_r
+R16247:16250 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R16243:16246 FlatAdmissibleSN <> FAdm ind
+R16255:16258 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R16251:16254 FlatAdmissibleSN <> FAdm ind
+binder 16345:16345 <> c:84
+binder 16347:16347 <> e:85
+R16356:16359 FlatAdmissibleSN <> step:82 ind
+R16380:16380 FlatAdmissibleSN <> e:85 var
+R16362:16365 FlatAdmissibleSN <> Let_ constr
+R16377:16377 FlatAdmissibleSN <> e:85 var
+R16368:16372 FlatAdmissibleSN <> Const constr
+R16374:16374 FlatAdmissibleSN <> c:84 var
+binder 16457:16457 <> c:86
+binder 16459:16460 <> bs:87
+binder 16462:16462 <> e:88
+R16496:16505 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R16487:16489 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R16471:16481 FlatAdmissibleSN <> find_branch def
+R16485:16486 FlatAdmissibleSN <> bs:87 var
+R16483:16483 FlatAdmissibleSN <> c:86 var
+R16490:16493 Corelib.Init.Datatypes <> Some constr
+R16495:16495 FlatAdmissibleSN <> e:88 var
+R16506:16509 FlatAdmissibleSN <> step:82 ind
+R16531:16531 FlatAdmissibleSN <> e:88 var
+R16512:16515 FlatAdmissibleSN <> Mtch constr
+R16527:16528 FlatAdmissibleSN <> bs:87 var
+R16518:16522 FlatAdmissibleSN <> Const constr
+R16524:16524 FlatAdmissibleSN <> c:86 var
+binder 16641:16641 <> c:89
+R16650:16653 FlatAdmissibleSN <> step:82 ind
+R16675:16679 FlatAdmissibleSN <> Const constr
+R16681:16681 FlatAdmissibleSN <> c:89 var
+R16656:16658 FlatAdmissibleSN <> Def constr
+R16670:16671 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R16661:16665 FlatAdmissibleSN <> Const constr
+R16667:16667 FlatAdmissibleSN <> c:89 var
+binder 16890:16890 <> c:90
+binder 16892:16892 <> b:91
+binder 16894:16895 <> es:92
+R16920:16929 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R16904:16914 FlatAdmissibleSN <> exc_body_in def
+R16918:16919 FlatAdmissibleSN <> es:92 var
+R16916:16916 FlatAdmissibleSN <> b:91 var
+R16930:16933 FlatAdmissibleSN <> step:82 ind
+R16954:16954 FlatAdmissibleSN <> b:91 var
+R16936:16938 FlatAdmissibleSN <> Def constr
+R16950:16951 FlatAdmissibleSN <> es:92 var
+R16941:16945 FlatAdmissibleSN <> Const constr
+R16947:16947 FlatAdmissibleSN <> c:90 var
+binder 17115:17118 <> body:93
+binder 17120:17120 <> v:94
+R17136:17145 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R17129:17133 FlatAdmissibleSN <> value ind
+R17135:17135 FlatAdmissibleSN <> v:94 var
+R17161:17170 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R17156:17159 Corelib.Init.Peano <> ::nat_scope:x_'<='_x not
+R17146:17148 FlatAdmissibleSN <> occ def
+R17150:17153 FlatAdmissibleSN <> body:93 var
+R17171:17174 FlatAdmissibleSN <> step:82 ind
+R17196:17200 FlatAdmissibleSN <> subst def
+R17209:17209 FlatAdmissibleSN <> v:94 var
+R17202:17205 FlatAdmissibleSN <> body:93 var
+R17177:17179 FlatAdmissibleSN <> App constr
+R17192:17192 FlatAdmissibleSN <> v:94 var
+R17182:17184 FlatAdmissibleSN <> Lam constr
+R17186:17189 FlatAdmissibleSN <> body:93 var
+binder 17282:17283 <> e1:95
+binder 17285:17287 <> e1':96
+binder 17289:17290 <> e2:97
+R17310:17319 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R17299:17302 FlatAdmissibleSN <> step:82 ind
+R17307:17309 FlatAdmissibleSN <> e1':96 var
+R17304:17305 FlatAdmissibleSN <> e1:95 var
+R17320:17323 FlatAdmissibleSN <> step:82 ind
+R17339:17342 FlatAdmissibleSN <> Let_ constr
+R17348:17349 FlatAdmissibleSN <> e2:97 var
+R17344:17346 FlatAdmissibleSN <> e1':96 var
+R17326:17329 FlatAdmissibleSN <> Let_ constr
+R17334:17335 FlatAdmissibleSN <> e2:97 var
+R17331:17332 FlatAdmissibleSN <> e1:95 var
+binder 17431:17431 <> e:98
+binder 17433:17434 <> e':99
+binder 17436:17437 <> bs:100
+R17455:17464 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R17446:17449 FlatAdmissibleSN <> step:82 ind
+R17453:17454 FlatAdmissibleSN <> e':99 var
+R17451:17451 FlatAdmissibleSN <> e:98 var
+R17465:17468 FlatAdmissibleSN <> step:82 ind
+R17483:17486 FlatAdmissibleSN <> Mtch constr
+R17491:17492 FlatAdmissibleSN <> bs:100 var
+R17488:17489 FlatAdmissibleSN <> e':99 var
+R17471:17474 FlatAdmissibleSN <> Mtch constr
+R17478:17479 FlatAdmissibleSN <> bs:100 var
+R17476:17476 FlatAdmissibleSN <> e:98 var
+binder 17565:17565 <> e:101
+binder 17567:17568 <> e':102
+binder 17570:17571 <> es:103
+R17589:17598 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R17580:17583 FlatAdmissibleSN <> step:82 ind
+R17587:17588 FlatAdmissibleSN <> e':102 var
+R17585:17585 FlatAdmissibleSN <> e:101 var
+R17599:17602 FlatAdmissibleSN <> step:82 ind
+R17616:17618 FlatAdmissibleSN <> Def constr
+R17623:17624 FlatAdmissibleSN <> es:103 var
+R17620:17621 FlatAdmissibleSN <> e':102 var
+R17605:17607 FlatAdmissibleSN <> Def constr
+R17611:17612 FlatAdmissibleSN <> es:103 var
+R17609:17609 FlatAdmissibleSN <> e:101 var
+binder 17709:17709 <> f:104
+binder 17711:17712 <> f':105
+binder 17714:17714 <> a:106
+R17732:17741 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R17723:17726 FlatAdmissibleSN <> step:82 ind
+R17730:17731 FlatAdmissibleSN <> f':105 var
+R17728:17728 FlatAdmissibleSN <> f:104 var
+R17742:17745 FlatAdmissibleSN <> step:82 ind
+R17758:17760 FlatAdmissibleSN <> App constr
+R17765:17765 FlatAdmissibleSN <> a:106 var
+R17762:17763 FlatAdmissibleSN <> f':105 var
+R17748:17750 FlatAdmissibleSN <> App constr
+R17754:17754 FlatAdmissibleSN <> a:106 var
+R17752:17752 FlatAdmissibleSN <> f:104 var
+binder 17978:17978 <> v:107
+binder 17980:17980 <> a:108
+binder 17982:17983 <> a':109
+R17999:18008 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R17992:17996 FlatAdmissibleSN <> value ind
+R17998:17998 FlatAdmissibleSN <> v:107 var
+R18018:18027 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R18009:18012 FlatAdmissibleSN <> step:82 ind
+R18016:18017 FlatAdmissibleSN <> a':109 var
+R18014:18014 FlatAdmissibleSN <> a:108 var
+R18028:18031 FlatAdmissibleSN <> step:82 ind
+R18044:18046 FlatAdmissibleSN <> App constr
+R18050:18051 FlatAdmissibleSN <> a':109 var
+R18048:18048 FlatAdmissibleSN <> v:107 var
+R18034:18036 FlatAdmissibleSN <> App constr
+R18040:18040 FlatAdmissibleSN <> a:108 var
+R18038:18038 FlatAdmissibleSN <> v:107 var
+scheme 16236:16239 <> step_ind
+scheme 16236:16239 <> step_sind
+prf 18307:18325 <> step_decreases_size
+binder 18338:18338 <> t:110
+binder 18340:18341 <> t':111
+R18353:18356 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R18344:18347 FlatAdmissibleSN <> step ind
+R18351:18352 FlatAdmissibleSN <> t':111 var
+R18349:18349 FlatAdmissibleSN <> t:110 var
+R18364:18366 Corelib.Init.Peano <> ::nat_scope:x_'<'_x not
+R18357:18360 FlatAdmissibleSN <> size def
+R18362:18363 FlatAdmissibleSN <> t':111 var
+R18367:18370 FlatAdmissibleSN <> size def
+R18372:18372 FlatAdmissibleSN <> t:110 var
+R18540:18555 FlatAdmissibleSN <> find_branch_size thm
+R18540:18555 FlatAdmissibleSN <> find_branch_size thm
+R18575:18590 FlatAdmissibleSN <> size_Mtch_unfold thm
+R18575:18590 FlatAdmissibleSN <> size_Mtch_unfold thm
+R18575:18590 FlatAdmissibleSN <> size_Mtch_unfold thm
+R18671:18685 FlatAdmissibleSN <> size_Def_unfold thm
+R18671:18685 FlatAdmissibleSN <> size_Def_unfold thm
+R18671:18685 FlatAdmissibleSN <> size_Def_unfold thm
+R18695:18703 FlatAdmissibleSN <> size_excs def
+R18789:18804 FlatAdmissibleSN <> exc_body_in_size thm
+R18789:18804 FlatAdmissibleSN <> exc_body_in_size thm
+R18824:18838 FlatAdmissibleSN <> size_Def_unfold thm
+R18824:18838 FlatAdmissibleSN <> size_Def_unfold thm
+R18824:18838 FlatAdmissibleSN <> size_Def_unfold thm
+R18944:18960 FlatAdmissibleSN <> subst_size_affine thm
+R18944:18960 FlatAdmissibleSN <> subst_size_affine thm
+R18996:19003 FlatAdmissibleSN <> size_pos thm
+R18996:19003 FlatAdmissibleSN <> size_pos thm
+R19031:19038 FlatAdmissibleSN <> size_pos thm
+R19031:19038 FlatAdmissibleSN <> size_pos thm
+R19198:19213 FlatAdmissibleSN <> size_Mtch_unfold thm
+R19198:19213 FlatAdmissibleSN <> size_Mtch_unfold thm
+R19198:19213 FlatAdmissibleSN <> size_Mtch_unfold thm
+R19198:19213 FlatAdmissibleSN <> size_Mtch_unfold thm
+R19198:19213 FlatAdmissibleSN <> size_Mtch_unfold thm
+R19281:19295 FlatAdmissibleSN <> size_Def_unfold thm
+R19281:19295 FlatAdmissibleSN <> size_Def_unfold thm
+R19281:19295 FlatAdmissibleSN <> size_Def_unfold thm
+R19281:19295 FlatAdmissibleSN <> size_Def_unfold thm
+R19281:19295 FlatAdmissibleSN <> size_Def_unfold thm
+def 19948:19949 <> SN
+R19956:19959 FlatAdmissibleSN <> FAdm ind
+binder 19952:19952 <> t:112
+R19972:19974 Corelib.Init.Wf <> Acc ind
+R19998:19998 FlatAdmissibleSN <> t:112 var
+binder 19981:19981 <> x:113
+binder 19983:19983 <> y:114
+R19988:19991 FlatAdmissibleSN <> step ind
+R19995:19995 FlatAdmissibleSN <> x:113 var
+R19993:19993 FlatAdmissibleSN <> y:114 var
+prf 20062:20066 <> lt_wf
+R20070:20081 Corelib.Init.Wf <> well_founded def
+R20083:20084 Corelib.Init.Peano <> lt def
+R20100:20110 Stdlib.Arith.PeanoNat Nat lt_wf_0 thm
+R20100:20110 Stdlib.Arith.PeanoNat Nat lt_wf_0 thm
+prf 20248:20265 <> flat_admissible_sn
+binder 20276:20276 <> t:115
+R20279:20280 FlatAdmissibleSN <> SN def
+R20282:20282 FlatAdmissibleSN <> t:115 var
+R20316:20319 FlatAdmissibleSN <> size def
+R20316:20319 FlatAdmissibleSN <> size def
+R20383:20398 Corelib.Init.Wf <> well_founded_ind thm
+R20400:20404 FlatAdmissibleSN <> lt_wf thm
+R20383:20398 Corelib.Init.Wf <> well_founded_ind thm
+R20400:20404 FlatAdmissibleSN <> lt_wf thm
+R20470:20488 FlatAdmissibleSN <> step_decreases_size thm
+R20470:20488 FlatAdmissibleSN <> step_decreases_size thm
+R20513:20516 FlatAdmissibleSN <> size def
+R20531:20537 Corelib.Init.Logic <> eq_refl constr
+R20513:20516 FlatAdmissibleSN <> size def
+R20531:20537 Corelib.Init.Logic <> eq_refl constr
+prf 20603:20624 <> flat_admissible_sn_ext
+binder 20635:20635 <> t:116
+R20638:20639 FlatAdmissibleSN <> SN def
+R20641:20641 FlatAdmissibleSN <> t:116 var
+R20657:20674 FlatAdmissibleSN <> flat_admissible_sn thm
+R20657:20674 FlatAdmissibleSN <> flat_admissible_sn thm
+prf 20768:20790 <> reduction_chain_bounded
+binder 20803:20803 <> t:117
+binder 20805:20806 <> t':118
+R20836:20839 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R20809:20823 Stdlib.Relations.Relation_Operators <> clos_refl_trans ind
+R20832:20832 FlatAdmissibleSN <> t:117 var
+R20834:20835 FlatAdmissibleSN <> t':118 var
+R20827:20830 FlatAdmissibleSN <> step ind
+R20847:20850 Corelib.Init.Peano <> ::nat_scope:x_'<='_x not
+R20840:20843 FlatAdmissibleSN <> size def
+R20845:20846 FlatAdmissibleSN <> t':118 var
+R20851:20854 FlatAdmissibleSN <> size def
+R20856:20856 FlatAdmissibleSN <> t:117 var
+R20906:20924 FlatAdmissibleSN <> step_decreases_size thm
+R20906:20924 FlatAdmissibleSN <> step_decreases_size thm
+R25118:25135 FlatAdmissibleSN <> flat_admissible_sn thm
+R25144:25165 FlatAdmissibleSN <> flat_admissible_sn_ext thm
+R25174:25192 FlatAdmissibleSN <> step_decreases_size thm
+R25201:25210 FlatAdmissibleSN <> subst_size thm
+R25219:25235 FlatAdmissibleSN <> subst_size_affine thm
+R25244:25266 FlatAdmissibleSN <> reduction_chain_bounded thm
+R25287:25308 FlatAdmissibleSN <> flat_admissible_sn_ext thm
