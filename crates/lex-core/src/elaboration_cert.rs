@@ -72,6 +72,15 @@ pub enum ElaborationCertError {
     CanonicalizationFailed(String),
     /// System clock is before the UNIX epoch.
     ClockBeforeEpoch,
+    /// Structural preservation analysis is not yet implemented.
+    ///
+    /// The elaboration certificate cannot assert preservation of refinement
+    /// predicates or effect rows until the sound structural check is in
+    /// place — a walk over both the surface and core ASTs that verifies each
+    /// surface refinement survives on the corresponding core term.
+    /// Substring matching on source text is unsound because any comment that
+    /// happens to mention a keyword would trivially pass.
+    PreservationCheckUnimplemented,
 }
 
 impl std::fmt::Display for ElaborationCertError {
@@ -88,6 +97,10 @@ impl std::fmt::Display for ElaborationCertError {
             Self::ClockBeforeEpoch => {
                 write!(f, "system clock is before the UNIX epoch")
             }
+            Self::PreservationCheckUnimplemented => write!(
+                f,
+                "refinement-predicate and effect-row preservation check is not yet implemented"
+            ),
         }
     }
 }
@@ -101,6 +114,11 @@ impl std::error::Error for ElaborationCertError {}
 /// `mez_core::digest`. The certificate is content-addressed: its own
 /// `certificate_digest` is the SHA-256 of the canonical serialization
 /// with `certificate_digest` set to the empty string.
+///
+/// Currently returns [`ElaborationCertError::PreservationCheckUnimplemented`]
+/// because the sound structural preservation check is not yet in place.
+/// See [`extract_preserved_predicates`] and [`extract_preserved_effects`]
+/// for the contract.
 pub fn produce_elaboration_certificate(
     surface_source: &str,
     core_output: &str,
@@ -114,42 +132,23 @@ pub fn produce_elaboration_certificate(
 
     let surface_canonical = CanonicalBytes::new(&surface_source)
         .map_err(|e| ElaborationCertError::CanonicalizationFailed(e.to_string()))?;
-    let surface_hash = sha256_digest(&surface_canonical).to_hex();
+    let _surface_hash = sha256_digest(&surface_canonical).to_hex();
 
     let core_canonical = CanonicalBytes::new(&core_output)
         .map_err(|e| ElaborationCertError::CanonicalizationFailed(e.to_string()))?;
-    let core_hash = sha256_digest(&core_canonical).to_hex();
+    let _core_hash = sha256_digest(&core_canonical).to_hex();
 
-    // Extract preserved refinement predicates by scanning for semantic markers
-    // in both surface and core. A predicate is "preserved" if the core output
-    // retains the corresponding structure from the surface source.
-    let refinement_predicates_preserved = extract_preserved_predicates(surface_source, core_output);
-    let effects_preserved = extract_preserved_effects(surface_source, core_output);
+    // Extract preserved refinement predicates and effect rows. Both must be
+    // computed by a sound structural walk over the elaborated AST; the
+    // public API currently refuses to issue a certificate because that
+    // check is not yet implemented.
+    let _predicates = extract_preserved_predicates(surface_source, core_output)?;
+    let _effects = extract_preserved_effects(surface_source, core_output)?;
 
-    if refinement_predicates_preserved.is_empty() {
-        return Err(ElaborationCertError::NoPredicatesPreserved);
-    }
-
-    let secs = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|_| ElaborationCertError::ClockBeforeEpoch)?
-        .as_secs();
-    let certified_at = unix_secs_to_iso8601(secs);
-
-    let mut cert = ElaborationCertificate {
-        surface_hash,
-        core_hash,
-        refinement_predicates_preserved,
-        effects_preserved,
-        certified_at,
-        certificate_digest: String::new(),
-    };
-
-    let canonical = CanonicalBytes::new(&cert)
-        .map_err(|e| ElaborationCertError::CanonicalizationFailed(e.to_string()))?;
-    cert.certificate_digest = sha256_digest(&canonical).to_hex();
-
-    Ok(cert)
+    // Unreachable once the preservation check exists; reachable today
+    // because the calls above always return
+    // `PreservationCheckUnimplemented`.
+    Err(ElaborationCertError::PreservationCheckUnimplemented)
 }
 
 /// Verify that an elaboration certificate is structurally valid.
@@ -174,12 +173,43 @@ fn is_valid_sha256_hex(s: &str) -> bool {
     s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit())
 }
 
-/// Extract preserved refinement predicates by detecting structural markers
-/// present in both surface and core representations.
-fn extract_preserved_predicates(surface: &str, core: &str) -> Vec<String> {
-    // Structural predicates that can be detected by keyword presence.
-    // When elaboration resolves names and assigns de Bruijn indices, these
-    // structural properties of the source are preserved in the core output.
+/// Extract preserved refinement predicates.
+///
+/// TODO: a sound structural check must walk the AST of the surface term and
+/// the corresponding core term, verifying each surface refinement survives
+/// on the corresponding core term. Substring matching on source text is
+/// unsound and has been withdrawn — any comment mentioning a keyword would
+/// have trivially passed the old check.
+///
+/// Until the structural walk is implemented, this function returns
+/// [`ElaborationCertError::PreservationCheckUnimplemented`].
+fn extract_preserved_predicates(
+    _surface: &str,
+    _core: &str,
+) -> Result<Vec<String>, ElaborationCertError> {
+    Err(ElaborationCertError::PreservationCheckUnimplemented)
+}
+
+/// Extract preserved effect annotations.
+///
+/// TODO: a sound structural check must walk the AST of the surface term and
+/// the corresponding core term, verifying each surface effect annotation
+/// appears in the effect row of the corresponding core term. Substring
+/// matching on source text is unsound and has been withdrawn.
+///
+/// Until the structural walk is implemented, this function returns
+/// [`ElaborationCertError::PreservationCheckUnimplemented`].
+fn extract_preserved_effects(
+    _surface: &str,
+    _core: &str,
+) -> Result<Vec<String>, ElaborationCertError> {
+    Err(ElaborationCertError::PreservationCheckUnimplemented)
+}
+
+/// Unsound substring-based preservation detection. RETAINED for reference
+/// only; callers must not use this. The sound replacement walks the ASTs.
+#[allow(dead_code, non_snake_case)]
+fn extract_preserved_predicates_STUB(surface: &str, core: &str) -> Vec<String> {
     let candidate_predicates = [
         ("match", "exhaustive_match"),
         ("if", "conditional_branch"),
@@ -202,8 +232,11 @@ fn extract_preserved_predicates(surface: &str, core: &str) -> Vec<String> {
         .collect()
 }
 
-/// Extract preserved effect annotations present in both surface and core.
-fn extract_preserved_effects(surface: &str, core: &str) -> Vec<String> {
+/// Unsound substring-based effect-preservation detection. RETAINED for
+/// reference only; callers must not use this. The sound replacement walks
+/// the ASTs and inspects effect rows.
+#[allow(dead_code, non_snake_case)]
+fn extract_preserved_effects_STUB(surface: &str, core: &str) -> Vec<String> {
     let candidate_effects = [
         "Sanctions",
         "DataPrivacy",
@@ -234,7 +267,10 @@ fn extract_preserved_effects(surface: &str, core: &str) -> Vec<String> {
 
 /// Convert UNIX epoch seconds to an ISO 8601 UTC timestamp string.
 ///
-/// Produces `YYYY-MM-DDTHH:MM:SSZ` without pulling in `chrono`.
+/// Produces `YYYY-MM-DDTHH:MM:SSZ` without pulling in `chrono`. RETAINED
+/// for the public API that will issue certificates once the structural
+/// preservation check is implemented.
+#[allow(dead_code)]
 fn unix_secs_to_iso8601(epoch_secs: u64) -> String {
     const DAYS_IN_MONTH: [[u64; 12]; 2] = [
         [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
@@ -286,24 +322,26 @@ mod tests {
     use super::*;
 
     #[test]
-    fn produce_certificate_hashes_surface_and_core() {
+    fn produce_certificate_refuses_without_structural_check() {
         let surface = "rule check_sanctions { match entity { Sanctioned => NonCompliant } }";
         let core = "rule check_sanctions { match entity { Sanctioned => NonCompliant } }";
-        let cert = produce_elaboration_certificate(surface, core).unwrap();
-
-        assert!(is_valid_sha256_hex(&cert.surface_hash));
-        assert!(is_valid_sha256_hex(&cert.core_hash));
-        assert!(is_valid_sha256_hex(&cert.certificate_digest));
-        assert!(!cert.refinement_predicates_preserved.is_empty());
-        assert!(cert.certified_at.ends_with('Z'));
-        assert!(cert.certified_at.contains('T'));
+        let err = produce_elaboration_certificate(surface, core).unwrap_err();
+        assert_eq!(err, ElaborationCertError::PreservationCheckUnimplemented);
     }
 
     #[test]
-    fn verify_valid_certificate() {
-        let surface = "rule r { match x { A => let y = 1 in y } }";
-        let core = "rule r { match x { A => let y = 1 in y } }";
-        let cert = produce_elaboration_certificate(surface, core).unwrap();
+    fn verify_valid_manually_constructed_certificate() {
+        // The public API refuses to issue certificates until the structural
+        // preservation walk is implemented; construct one by hand here
+        // solely to exercise `verify_elaboration_certificate`'s invariants.
+        let cert = ElaborationCertificate {
+            surface_hash: "ab".repeat(32),
+            core_hash: "cd".repeat(32),
+            refinement_predicates_preserved: vec!["exhaustive_match".to_string()],
+            effects_preserved: vec!["Sanctions".to_string()],
+            certified_at: "2026-04-15T00:00:00Z".to_string(),
+            certificate_digest: "ef".repeat(32),
+        };
         assert!(verify_elaboration_certificate(&cert));
     }
 
@@ -346,25 +384,37 @@ mod tests {
     }
 
     #[test]
-    fn different_inputs_produce_different_digests() {
+    fn stub_substring_logic_still_detects_keywords_for_reference() {
+        // Sanity-check that the withdrawn substring detectors, preserved
+        // under `_STUB` names for reference, still behave as before. This
+        // documents the old (unsound) behavior so reviewers can see what
+        // was replaced.
         let surface_a = "rule a { match x { A => let y = 1 in y } }";
         let core_a = "rule a { match x { A => let y = 1 in y } }";
-        let surface_b = "rule b { match z { B => let w = 2 in w } }";
-        let core_b = "rule b { match z { B => let w = 2 in w } }";
+        let predicates = extract_preserved_predicates_STUB(surface_a, core_a);
+        assert!(predicates.contains(&"exhaustive_match".to_string()));
+        assert!(predicates.contains(&"let_binding".to_string()));
 
-        let cert_a = produce_elaboration_certificate(surface_a, core_a).unwrap();
-        let cert_b = produce_elaboration_certificate(surface_b, core_b).unwrap();
-
-        assert_ne!(cert_a.surface_hash, cert_b.surface_hash);
-        assert_ne!(cert_a.core_hash, cert_b.core_hash);
+        let surface_b = "rule r { effect Sanctions; match x { A => let y = 1 in y } }";
+        let core_b = "rule r { effect Sanctions; match x { A => let y = 1 in y } }";
+        let effects = extract_preserved_effects_STUB(surface_b, core_b);
+        assert!(effects.contains(&"Sanctions".to_string()));
     }
 
     #[test]
-    fn effects_are_preserved_when_present() {
+    fn effect_extractor_public_api_refuses_without_structural_check() {
         let surface = "rule r { effect Sanctions; match x { A => let y = 1 in y } }";
         let core = "rule r { effect Sanctions; match x { A => let y = 1 in y } }";
-        let cert = produce_elaboration_certificate(surface, core).unwrap();
-        assert!(cert.effects_preserved.contains(&"Sanctions".to_string()));
+        let err = extract_preserved_effects(surface, core).unwrap_err();
+        assert_eq!(err, ElaborationCertError::PreservationCheckUnimplemented);
+    }
+
+    #[test]
+    fn predicate_extractor_public_api_refuses_without_structural_check() {
+        let surface = "rule r { match x { A => let y = 1 in y } }";
+        let core = "rule r { match x { A => let y = 1 in y } }";
+        let err = extract_preserved_predicates(surface, core).unwrap_err();
+        assert_eq!(err, ElaborationCertError::PreservationCheckUnimplemented);
     }
 
     #[test]
@@ -396,9 +446,16 @@ mod tests {
 
     #[test]
     fn serde_roundtrip_elaboration_certificate() {
-        let surface = "rule r { match x { A => let y = 1 in y } }";
-        let core = "rule r { match x { A => let y = 1 in y } }";
-        let cert = produce_elaboration_certificate(surface, core).unwrap();
+        // Construct by hand — the public API refuses to issue a certificate
+        // until the structural preservation check is implemented.
+        let cert = ElaborationCertificate {
+            surface_hash: "ab".repeat(32),
+            core_hash: "cd".repeat(32),
+            refinement_predicates_preserved: vec!["exhaustive_match".to_string()],
+            effects_preserved: vec!["Sanctions".to_string()],
+            certified_at: "2026-04-15T00:00:00Z".to_string(),
+            certificate_digest: "ef".repeat(32),
+        };
 
         let json = serde_json::to_string(&cert).unwrap();
         let deserialized: ElaborationCertificate = serde_json::from_str(&json).unwrap();
