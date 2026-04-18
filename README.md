@@ -1,5 +1,11 @@
 # Lex
 
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![CI](https://github.com/momentum-sez/lex/actions/workflows/ci.yml/badge.svg)](https://github.com/momentum-sez/lex/actions/workflows/ci.yml)
+[![Coq](https://github.com/momentum-sez/lex/actions/workflows/coq.yml/badge.svg)](https://github.com/momentum-sez/lex/actions/workflows/coq.yml)
+[![Release](https://img.shields.io/badge/release-0.1.0-orange.svg)](https://github.com/momentum-sez/lex/releases)
+[![Rust](https://img.shields.io/badge/rust-1.93.0-brown.svg)](rust-toolchain.toml)
+
 Lex is a dependently-typed, effect-typed programming language for
 jurisdictional compliance rules. The calculus has defeasible rules with typed
 priority, two temporal sorts that syntactically separate frozen historical
@@ -215,6 +221,16 @@ and `ensures` contracts and discharges them as part of its effect row. Lex
 is the rule and proof layer; Op is the workflow layer. The interface is
 preconditions, postconditions, and effect discharge; neither language
 redefines the other's semantics.
+
+## Reproducibility
+
+See [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) for the exact toolchain pin,
+expected test counts, example outputs, and hardware budgets. The repository
+ships with a pinned Rust toolchain (`rust-toolchain.toml`), GitHub Actions
+CI for Rust and Rocq, and a self-contained workspace that compiles from a
+cold clone without sibling checkouts. CI builds default features only; the
+opt-in `kernel-integration` feature requires a sibling kernel checkout and
+is not enabled in CI.
 
 ## Contributing
 
