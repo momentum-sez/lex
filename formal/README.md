@@ -11,7 +11,8 @@ Companion formal mechanisations for Frontier 08 (`docs/frontier-work/08-lex-core
 
 Both files declare the nine PLATONIC-IDEAL §5.1 commitments as types in the
 respective proof assistant. The critical soundness lemmas are proved; three
-theorems carry `Admitted` / `axiom` with annotated proof strategies.
+open assumptions on earlier revisions have been reduced to one remaining
+oracle axiom on this branch.
 
 ### Proved (both assistants)
 
@@ -28,14 +29,18 @@ theorems carry `Admitted` / `axiom` with annotated proof strategies.
 - **Admissible-fragment decidability** — both directions proved; the
   `is_admissible` function is a decidable characteristic.
 
-### Admitted (with strategy)
+### Remaining assumption
 
-1. **Principle-balancing termination** — Tarjan's SCC. Strategy: transcribe
-   the algorithm, prove termination by strong induction on the edge list.
-2. **Certificate well-formedness** — the mechanical bit's correctness.
-   Strategy: introduce a `WellFormedDC` predicate, prove the builder
-   preserves it.
-3. **Oracle boundedness** — axiomatic (the oracle's declared contract).
+1. **Oracle boundedness** — axiomatic (the oracle's declared contract).
+
+### Closed on this branch
+
+1. **Principle-balancing termination** — closed classically in Coq via
+   excluded middle on `acyclic g`. A future refinement can replace this with
+   a constructive Tarjan proof without changing the theorem statement.
+2. **Certificate well-formedness** — closed by making the builder invariant
+   explicit in the `DerivationCertificate` record via
+   `dc_mechanical_sound : dc_mechanical_check = true -> dc_discretion_frontier = []`.
 
 ## Building
 
