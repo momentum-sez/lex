@@ -6,8 +6,20 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
+[features]
+default = []
+# Switch foundational types from the bundled standalone `mez-core-min` crate
+# to the kernel tree's full `mez-core` at `../kernel/mez/crates/mez-core`.
+# Off by default — a cold clone of this repository compiles without the
+# kernel checked out as a sibling directory.
+kernel-integration = ["dep:mez-core"]
+
 [dependencies]
-mez-core = { workspace = true }
+mez-core-min = { workspace = true }
+# Optional: kernel-integration feature activates the full kernel mez-core at
+# the sibling path. Unresolved unless the feature is enabled, so a cold clone
+# without a sibling kernel checkout compiles without this path being present.
+mez-core = { path = "../../../kernel/mez/crates/mez-core", optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sha2 = "0.10"

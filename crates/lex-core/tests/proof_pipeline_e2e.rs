@@ -12,7 +12,13 @@
 //!    with the exported decision procedures, then assembles a compliance
 //!    certificate.
 
+#[cfg(not(feature = "kernel-integration"))]
+use mez_core_min::canonical::CanonicalBytes;
+#[cfg(not(feature = "kernel-integration"))]
+use mez_core_min::digest::sha256_digest;
+#[cfg(feature = "kernel-integration")]
 use mez_core::canonical::CanonicalBytes;
+#[cfg(feature = "kernel-integration")]
 use mez_core::digest::sha256_digest;
 use lex_core::ast::{
     Branch, Constructor, DefeasibleRule, Exception, Ident, Level, Pattern, QualIdent, Sort, Term,

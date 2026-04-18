@@ -4,6 +4,7 @@ members = [
     "crates/lex-core",
     "crates/lex-diag",
     "crates/lex-cli",
+    "crates/mez-core-min",
 ]
 
 [workspace.package]
@@ -13,9 +14,17 @@ rust-version = "1.93"
 license = "Apache-2.0"
 
 [workspace.dependencies]
-# Lex depends on mez-core for foundational types (EntityId, ComplianceDomain, etc.)
-# This is a path dependency to the kernel workspace.
-mez-core = { path = "../kernel/mez/crates/mez-core" }
+# Lex vendors the subset of mez-core it depends on (CanonicalBytes,
+# sha256_digest, ComplianceDomain) as a standalone crate, so a cold clone of
+# this repository compiles without requiring an external kernel checkout.
+#
+# The `kernel-integration` feature on `lex-core` switches foundational types
+# to the kernel tree's full `mez-core` crate at `../kernel/mez/crates/mez-core`,
+# for ecosystem builds that want byte-identical shared infrastructure across
+# Lex and the kernel. The kernel path dependency is declared directly on
+# `lex-core` as an optional dep, so a cold clone without a sibling kernel
+# checkout still resolves cleanly when the feature is off.
+mez-core-min = { path = "crates/mez-core-min" }
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
