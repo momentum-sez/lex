@@ -1086,6 +1086,52 @@ pub fn is_prelude_type(name: &str) -> bool {
     CORE_TYPES.contains(&name)
 }
 
+/// Registry mapping prelude datatypes to their variant constructors.
+///
+/// Used by the admissibility checker to verify that every constructor in a
+/// `Match` expression belongs to the scrutinee's datatype and that the set
+/// of constructors covers the datatype (either exhaustively or via a
+/// wildcard branch).
+pub struct PreludeRegistry;
+
+impl PreludeRegistry {
+    /// Return the full constructor list for a named prelude datatype, or
+    /// `None` if `datatype_name` is not a known prelude type.
+    ///
+    /// `ComplianceTag` is finite but very large (hundreds of TAG_CONSTRUCTORS);
+    /// it is returned in full so exhaustive-coverage checks can decide
+    /// whether a `Match` covers the entire tag set or requires a wildcard.
+    pub fn lookup_variant_constructors(datatype_name: &str) -> Option<Vec<&'static str>> {
+        match datatype_name {
+            "ComplianceVerdict" => Some(VERDICT_CONSTRUCTORS.to_vec()),
+            "Bool" => Some(BOOL_CONSTRUCTORS.to_vec()),
+            "Nat" => Some(NAT_CONSTRUCTORS.to_vec()),
+            "SanctionsResult" => Some(SANCTIONS_CONSTRUCTORS.to_vec()),
+            "ComplianceTag" => Some(TAG_CONSTRUCTORS.to_vec()),
+            _ => None,
+        }
+    }
+
+    /// Given a prelude constructor name, return the datatype it belongs to
+    /// (e.g. `"Compliant" -> Some("ComplianceVerdict")`). Returns `None` for
+    /// names that are not prelude constructors.
+    pub fn constructor_datatype(ctor_name: &str) -> Option<&'static str> {
+        if VERDICT_CONSTRUCTORS.contains(&ctor_name) {
+            Some("ComplianceVerdict")
+        } else if BOOL_CONSTRUCTORS.contains(&ctor_name) {
+            Some("Bool")
+        } else if NAT_CONSTRUCTORS.contains(&ctor_name) {
+            Some("Nat")
+        } else if SANCTIONS_CONSTRUCTORS.contains(&ctor_name) {
+            Some("SanctionsResult")
+        } else if TAG_CONSTRUCTORS.contains(&ctor_name) {
+            Some("ComplianceTag")
+        } else {
+            None
+        }
+    }
+}
+
 /// Build the compliance prelude as a typechecker context with a global
 /// constant signature.
 pub fn compliance_prelude() -> Context {

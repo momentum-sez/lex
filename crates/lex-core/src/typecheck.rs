@@ -169,6 +169,35 @@ pub enum AdmissibilityViolation {
         /// The constructor name that is not a prelude constructor.
         constructor_name: String,
     },
+    /// `Match` scrutinee could not be resolved to a known prelude datatype.
+    ///
+    /// The scrutinee must either be a prelude constructor (e.g. `Compliant`,
+    /// whose datatype is `ComplianceVerdict`) or a term whose inferred type
+    /// is a named prelude datatype. Until the admissibility check is
+    /// extended to run full type inference on the scrutinee, only the
+    /// constructor-form is supported.
+    MatchScrutineeDatatypeUnresolved,
+    /// `Match` branch constructor does not belong to the scrutinee's
+    /// datatype.
+    ///
+    /// e.g. scrutinee is a `ComplianceVerdict` but a branch matches `True`
+    /// (constructor of `Bool`).
+    MatchBranchConstructorMismatch {
+        /// Datatype of the scrutinee.
+        scrutinee_datatype: String,
+        /// Constructor that does not belong to `scrutinee_datatype`.
+        branch_constructor: String,
+        /// Datatype the branch constructor actually belongs to, if known.
+        branch_constructor_datatype: Option<String>,
+    },
+    /// `Match` expression is not exhaustive: not every constructor of the
+    /// scrutinee's datatype is covered, and no wildcard branch is present.
+    MatchNonExhaustive {
+        /// Datatype of the scrutinee.
+        scrutinee_datatype: String,
+        /// Constructors that are missing from the branch set.
+        missing_constructors: Vec<String>,
+    },
     /// `Pair` introduction not yet supported.
     PairNotSupported,
     /// `Proj` projection not yet supported.
@@ -217,6 +246,35 @@ impl std::fmt::Display for AdmissibilityViolation {
                 f,
                 "match on non-prelude constructor type: '{}'",
                 constructor_name
+            ),
+            Self::MatchScrutineeDatatypeUnresolved => write!(
+                f,
+                "match scrutinee datatype could not be resolved to a known prelude type"
+            ),
+            Self::MatchBranchConstructorMismatch {
+                scrutinee_datatype,
+                branch_constructor,
+                branch_constructor_datatype,
+            } => match branch_constructor_datatype {
+                Some(dt) => write!(
+                    f,
+                    "match branch constructor '{}' (of datatype '{}') does not belong to the scrutinee datatype '{}'",
+                    branch_constructor, dt, scrutinee_datatype
+                ),
+                None => write!(
+                    f,
+                    "match branch constructor '{}' does not belong to the scrutinee datatype '{}'",
+                    branch_constructor, scrutinee_datatype
+                ),
+            },
+            Self::MatchNonExhaustive {
+                scrutinee_datatype,
+                missing_constructors,
+            } => write!(
+                f,
+                "match on '{}' is not exhaustive; missing constructors: [{}]; add a wildcard branch or cover the remaining cases",
+                scrutinee_datatype,
+                missing_constructors.join(", ")
             ),
             Self::PairNotSupported => write!(f, "pair introduction not yet supported"),
             Self::ProjectionNotSupported => write!(f, "projections not yet supported"),
@@ -939,18 +997,12 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
             return_ty,
             branches,
         } => {
-            // Allow Match when every pattern is either Wildcard or a
-            // Constructor with a prelude constructor name.  Reject if any
-            // pattern references a non-prelude constructor.
+            // Step 1 — every constructor pattern must be a prelude
+            // constructor; wildcards are allowed unconditionally.
             for branch in branches {
                 match &branch.pattern {
                     Pattern::Wildcard => {}
-                    Pattern::Constructor {
-                        constructor,
-                        ..
-                    } => {
-                        // Constructor names are QualIdent — for prelude
-                        // constructors we expect a single-segment name.
+                    Pattern::Constructor { constructor, .. } => {
                         let ctor_name = constructor.name.segments.join(".");
                         if !is_prelude_constructor(&ctor_name) {
                             return Err(TypeError::Admissibility {
@@ -963,6 +1015,105 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
                     }
                 }
             }
+
+            // Step 2 — infer the scrutinee's datatype. The admissibility
+            // check is lightweight (it runs without a typing context), so
+            // scrutinee-datatype inference uses a narrow set of syntactic
+            // rules that cover the admissible fragment:
+            //
+            //   - `Term::Constant(name)` where `name` is itself a prelude
+            //     type (e.g. `Nat`): the datatype is that name;
+            //   - `Term::Constant(name)` where `name` is a prelude
+            //     constructor (e.g. `Zero`): the datatype is the type the
+            //     constructor belongs to;
+            //   - otherwise, resolution falls back to the branch
+            //     constructors — if every constructor pattern belongs to
+            //     the same datatype, that datatype is used.
+            //
+            // The last fallback keeps the match-on-wildcard-only form
+            // admissible without requiring a typing context.
+            let scrutinee_datatype =
+                resolve_match_scrutinee_datatype(scrutinee, branches);
+
+            let datatype = match scrutinee_datatype {
+                Some(dt) => dt,
+                None => {
+                    // If every branch is a wildcard we can't pin the
+                    // datatype, but the match is still exhaustive — accept
+                    // without coverage checks.
+                    if branches
+                        .iter()
+                        .all(|b| matches!(b.pattern, Pattern::Wildcard))
+                    {
+                        check_admissibility_inner(scrutinee, depth + 1)?;
+                        check_admissibility_inner(return_ty, depth + 1)?;
+                        for branch in branches {
+                            check_admissibility_inner(&branch.body, depth + 1)?;
+                        }
+                        return Ok(());
+                    }
+                    return Err(TypeError::Admissibility {
+                        violation: AdmissibilityViolation::MatchScrutineeDatatypeUnresolved,
+                        term: term.clone(),
+                    });
+                }
+            };
+
+            // Step 3 — every constructor pattern must belong to the
+            // scrutinee's datatype.
+            let expected_constructors =
+                crate::prelude::PreludeRegistry::lookup_variant_constructors(&datatype)
+                    .unwrap_or_default();
+            for branch in branches {
+                if let Pattern::Constructor { constructor, .. } = &branch.pattern {
+                    let ctor_name = constructor.name.segments.join(".");
+                    if !expected_constructors.iter().any(|c| *c == ctor_name) {
+                        let actual_datatype =
+                            crate::prelude::PreludeRegistry::constructor_datatype(&ctor_name)
+                                .map(str::to_string);
+                        return Err(TypeError::Admissibility {
+                            violation:
+                                AdmissibilityViolation::MatchBranchConstructorMismatch {
+                                    scrutinee_datatype: datatype.clone(),
+                                    branch_constructor: ctor_name,
+                                    branch_constructor_datatype: actual_datatype,
+                                },
+                            term: term.clone(),
+                        });
+                    }
+                }
+            }
+
+            // Step 4 — coverage: full finite coverage OR a wildcard branch.
+            let has_wildcard = branches
+                .iter()
+                .any(|b| matches!(b.pattern, Pattern::Wildcard));
+            if !has_wildcard {
+                let covered: std::collections::BTreeSet<String> = branches
+                    .iter()
+                    .filter_map(|b| match &b.pattern {
+                        Pattern::Constructor { constructor, .. } => {
+                            Some(constructor.name.segments.join("."))
+                        }
+                        Pattern::Wildcard => None,
+                    })
+                    .collect();
+                let missing: Vec<String> = expected_constructors
+                    .iter()
+                    .filter(|c| !covered.contains(**c))
+                    .map(|c| (*c).to_string())
+                    .collect();
+                if !missing.is_empty() {
+                    return Err(TypeError::Admissibility {
+                        violation: AdmissibilityViolation::MatchNonExhaustive {
+                            scrutinee_datatype: datatype.clone(),
+                            missing_constructors: missing,
+                        },
+                        term: term.clone(),
+                    });
+                }
+            }
+
             // Recursively check scrutinee, return type, and branch bodies.
             check_admissibility_inner(scrutinee, depth + 1)?;
             check_admissibility_inner(return_ty, depth + 1)?;
@@ -1040,6 +1191,55 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
             })
         }
     }
+}
+
+/// Resolve the datatype of a match scrutinee for the admissibility check.
+///
+/// The admissibility check does not run full type inference, so the
+/// scrutinee's datatype is recovered syntactically:
+///
+///   1. If `scrutinee` is `Term::Constant(name)` and `name` is itself a
+///      prelude type (e.g. `"Nat"`), the datatype is `name`.
+///   2. If `scrutinee` is `Term::Constant(name)` and `name` is a prelude
+///      constructor (e.g. `"Compliant"`), the datatype is the one that
+///      constructor belongs to (e.g. `"ComplianceVerdict"`).
+///   3. Otherwise, if every constructor pattern across `branches` belongs
+///      to the same prelude datatype, that datatype is returned.
+///
+/// Returns `None` if none of those rules fire (e.g. opaque variable
+/// scrutinee with only-wildcard branches); the caller decides how to
+/// handle that case.
+fn resolve_match_scrutinee_datatype(
+    scrutinee: &Term,
+    branches: &[crate::ast::Branch],
+) -> Option<String> {
+    use crate::prelude::{is_prelude_type, PreludeRegistry};
+
+    // Rule 1 and 2: the scrutinee is a Constant.
+    if let Term::Constant(q) = scrutinee {
+        let name = q.segments.join(".");
+        if is_prelude_type(&name) {
+            return Some(name);
+        }
+        if let Some(dt) = PreludeRegistry::constructor_datatype(&name) {
+            return Some(dt.to_string());
+        }
+    }
+
+    // Rule 3: every constructor pattern shares a datatype.
+    let mut shared: Option<&'static str> = None;
+    for branch in branches {
+        if let Pattern::Constructor { constructor, .. } = &branch.pattern {
+            let ctor_name = constructor.name.segments.join(".");
+            let dt = PreludeRegistry::constructor_datatype(&ctor_name)?;
+            match shared {
+                None => shared = Some(dt),
+                Some(prev) if prev == dt => {}
+                Some(_) => return None,
+            }
+        }
+    }
+    shared.map(str::to_string)
 }
 
 // ---------------------------------------------------------------------------
@@ -2347,13 +2547,22 @@ mod tests {
             ty: Box::new(type0()),
             body: Box::new(var(0)),
         };
+        // Cover both constructors of Bool so the match is exhaustive; the
+        // body-level Rec must still be rejected by the inner admissibility
+        // check.
         let term = Term::match_expr(
             Term::constant("True"),
             Term::constant("Bool"),
-            vec![Branch {
-                pattern: ctor_pat("True"),
-                body: rec_body,
-            }],
+            vec![
+                Branch {
+                    pattern: ctor_pat("True"),
+                    body: rec_body,
+                },
+                Branch {
+                    pattern: ctor_pat("False"),
+                    body: Term::constant("Compliant"),
+                },
+            ],
         );
         let result = check_admissibility(&term);
         assert!(result.is_err());

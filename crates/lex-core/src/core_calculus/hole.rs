@@ -29,14 +29,62 @@ use std::marker::PhantomData;
 /// An authority authorized to fill a discretion hole.
 ///
 /// Authorities are opaque identifiers — in production they resolve to
-/// PCAuth-signed keys. The `validate` method is called by the verifier to
-/// check that a supplied filler's PCAuth witness satisfies the authority.
+/// PCAuth-signed keys. The `validate` method runs a STRUCTURAL precheck
+/// only — it verifies the signer-key hash matches and that the signature
+/// bytes are non-empty. Cryptographic verification of the signature
+/// happens at the outer proof-kernel boundary via a [`PCAuthVerifier`];
+/// the typing rule must not embed cryptographic checks directly.
 pub trait Authority {
     /// Stable identifier for this authority (used in certificates).
     fn id(&self) -> &str;
 
-    /// Validate a PCAuth witness against this authority.
+    /// Structural precheck of a PCAuth witness against this authority.
+    ///
+    /// This is NOT cryptographic verification. See [`witness_structural_precheck`]
+    /// and [`PCAuthVerifier`] for the full story.
     fn validate(&self, witness: &PCAuthWitness) -> Result<(), AuthorityError>;
+}
+
+/// Verifier of cryptographic PCAuth signatures.
+///
+/// Implementations of this trait live at the elaboration-certificate
+/// boundary — OUTSIDE the typing rule. The typing rule only asks each
+/// [`Authority`] for its [`Authority::validate`] structural precheck; the
+/// certificate-issuance code calls [`PCAuthVerifier::verify`] before
+/// admitting a filled hole into the proof.
+pub trait PCAuthVerifier {
+    /// Verify the cryptographic signature on `witness` against the public
+    /// key hash `expected_key_hash`. Implementations must be resistant to
+    /// timing attacks and must handle the [`PCAuthWitness::cryptographic_epoch`]
+    /// per PLATONIC-IDEAL §5.3.
+    fn verify(
+        &self,
+        witness: &PCAuthWitness,
+        expected_key_hash: &str,
+    ) -> Result<(), AuthorityError>;
+}
+
+/// Structural precheck of a PCAuth witness.
+///
+/// Checks only that the signer public-key hash equals `expected_key_hash`
+/// and that the signature bytes are non-empty. Cryptographic signature
+/// verification happens at the outer proof-kernel boundary — it is
+/// performed by a [`PCAuthVerifier`] at the elaboration-certificate
+/// boundary, NOT inside the typing rule.
+pub fn witness_structural_precheck(
+    witness: &PCAuthWitness,
+    expected_key_hash: &str,
+) -> Result<(), AuthorityError> {
+    if witness.signer_public_key_hash != expected_key_hash {
+        return Err(AuthorityError::SignerMismatch {
+            expected: expected_key_hash.to_string(),
+            got: witness.signer_public_key_hash.clone(),
+        });
+    }
+    if witness.signature.is_empty() {
+        return Err(AuthorityError::MissingSignature);
+    }
+    Ok(())
 }
 
 /// A concrete named authority (e.g., "ADGM-FSRA").
@@ -54,17 +102,11 @@ impl Authority for NamedAuthority {
         &self.id
     }
 
+    /// Structural precheck only. Cryptographic signature verification
+    /// happens at the outer proof-kernel boundary, not inside the typing
+    /// rule.
     fn validate(&self, witness: &PCAuthWitness) -> Result<(), AuthorityError> {
-        if witness.signer_public_key_hash != self.public_key_hash {
-            return Err(AuthorityError::SignerMismatch {
-                expected: self.public_key_hash.clone(),
-                got: witness.signer_public_key_hash.clone(),
-            });
-        }
-        if witness.signature.is_empty() {
-            return Err(AuthorityError::MissingSignature);
-        }
-        Ok(())
+        witness_structural_precheck(witness, &self.public_key_hash)
     }
 }
 
