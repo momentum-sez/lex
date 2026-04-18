@@ -1,0 +1,27 @@
+name: Coq
+
+on:
+  push:
+    branches: [main, master, frontier/core-calculus, develop]
+    paths:
+      - 'formal/coq/**'
+      - '.github/workflows/coq.yml'
+  pull_request:
+    paths:
+      - 'formal/coq/**'
+      - '.github/workflows/coq.yml'
+  workflow_dispatch:
+
+jobs:
+  coqc:
+    name: rocq/coqc typecheck
+    runs-on: ubuntu-latest
+    container:
+      image: rocq/rocq:9.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: rocq version
+        run: coqc --version
+      - name: typecheck LexCore.v
+        working-directory: formal/coq
+        run: coqc LexCore.v
