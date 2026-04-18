@@ -89,72 +89,103 @@ cd <unique-path>
 Never silently break the concurrency invariant.
 
 <!-- END MULTI-AGENT-CONCURRENCY -->
-Lex: A Logic for Jurisdictional Rules. Dependently-typed, effect-typed,
-defeasible logic with temporal stratification, authority-relative interpretation,
-and typed discretion holes.
 
-**Paper:** "Lex: A Logic for Jurisdictional Rules" — research.momentum.inc
+## What Lex is
 
-## Repository Structure
+Lex is a dependently-typed, effect-typed, defeasible logic for jurisdictional
+rules. It supports temporal stratification, authority-relative interpretation,
+and typed discretion holes. The headline primitive is the hole: `? : T @ A`
+marks the frontier between mechanical derivation and human judgment, and is
+part of the calculus rather than an afterthought.
+
+This repo is Apache-2.0 and public at `github.com/momentum-sez/lex`. The
+canonical paper lives at research.momentum.inc as part of the Momentum
+research programme.
+
+## Repository structure
 
 ```
 lex/
 ├── crates/
-│   ├── lex-core/     # The Lex language — 22 modules, 470+ unit tests
+│   ├── lex-core/           # Parser, type checker, evaluator, obligations, core calculus
 │   │   ├── src/
-│   │   │   ├── ast.rs           # Core AST types (Term, Sort, Level, Ident, QualIdent)
-│   │   │   ├── certificate.rs   # Lex proof certificate issuance
-│   │   │   ├── compose.rs       # Fiber composition
-│   │   │   ├── debruijn.rs      # De Bruijn index assignment and substitution
-│   │   │   ├── decide.rs        # Decision procedures
-│   │   │   ├── decision_table.rs # Decision table compilation
-│   │   │   ├── effects.rs       # Effect row algebra
-│   │   │   ├── elaborate.rs     # Surface → core elaboration
-│   │   │   ├── evaluate.rs      # Term evaluation
-│   │   │   ├── fuel.rs          # Fuel-typed fibers (bounded evaluation budgets)
-│   │   │   ├── levels.rs        # Universe level management
-│   │   │   ├── lexer.rs         # Tokenizer
-│   │   │   ├── obligations.rs   # Proof obligation tracking
-│   │   │   ├── parser.rs        # Parser
-│   │   │   ├── prelude.rs       # 363-symbol compliance prelude
-│   │   │   ├── pretty.rs        # Pretty-printer
-│   │   │   ├── principles.rs    # Principle conflict calculus
-│   │   │   ├── smt.rs           # SMT integration
-│   │   │   ├── temporal.rs      # Temporal stratification
-│   │   │   ├── token.rs         # Token types
-│   │   │   ├── tty.rs           # Accessibility text projection (screen readers)
-│   │   │   └── typecheck.rs     # Bidirectional type checker
-│   │   ├── tests/               # 5 integration test suites
-│   │   └── benches/             # Criterion benchmarks
-│   ├── lex-diag/     # Structured diagnostic ontology — 41 categories, 20 tests
-│   └── lex-cli/      # Air-gapped command-line authoring tool
-├── Cargo.toml        # Workspace root
-└── CLAUDE.md         # This file
+│   │   │   ├── ast.rs             # Core AST (Term, Sort, Level, Ident, QualIdent)
+│   │   │   ├── certificate.rs     # Lex proof certificate issuance
+│   │   │   ├── compose.rs         # Fiber composition
+│   │   │   ├── core_calculus/     # Narrow API for the nine design commitments
+│   │   │   ├── debruijn.rs        # De Bruijn index assignment and substitution
+│   │   │   ├── decide.rs          # Decision procedures
+│   │   │   ├── decision_table.rs  # Decision table compilation
+│   │   │   ├── effects.rs         # Effect row algebra
+│   │   │   ├── elaborate.rs       # Surface → core elaboration
+│   │   │   ├── elaboration_cert.rs # Elaboration certificate
+│   │   │   ├── evaluate.rs        # Term evaluation
+│   │   │   ├── fuel.rs            # Fuel-typed fibers (bounded evaluation budgets)
+│   │   │   ├── level_check.rs     # Universe level well-formedness check
+│   │   │   ├── levels.rs          # Universe level management
+│   │   │   ├── lexer.rs           # Tokenizer
+│   │   │   ├── obligations.rs     # Proof obligation tracking
+│   │   │   ├── open_world.rs      # Open-world closure with oracle
+│   │   │   ├── oracle_termination.rs # Witness-supply oracle boundedness
+│   │   │   ├── parser.rs          # Parser
+│   │   │   ├── prelude.rs         # Compliance prelude symbols
+│   │   │   ├── pretty.rs          # Pretty-printer
+│   │   │   ├── principles.rs      # Principle conflict calculus
+│   │   │   ├── smt.rs             # SMT integration
+│   │   │   ├── temporal.rs        # Temporal stratification
+│   │   │   ├── token.rs           # Token types
+│   │   │   ├── tty.rs             # Accessibility text projection (screen readers)
+│   │   │   └── typecheck.rs       # Bidirectional type checker
+│   │   ├── tests/                 # Integration test suites (ADGM, Seychelles IBC,
+│   │   │                          #   adversarial attacks, proof pipeline, proptest)
+│   │   └── benches/               # Criterion benchmarks
+│   ├── lex-diag/           # Structured diagnostic ontology, controlled-English messages
+│   └── lex-cli/            # Air-gapped command-line authoring tool
+├── formal/
+│   ├── coq/                # Coq mechanisation of the nine design commitments
+│   ├── lean/               # Lean 4 mirror
+│   └── README.md           # Admitted theorems with declared proof strategies
+├── docs/
+│   └── frontier-work/      # Design notes for in-progress calculus extensions
+├── Cargo.toml              # Workspace root
+├── CLAUDE.md               # This file
+├── README.md               # Public entry point for external contributors
+└── LICENSE                 # Apache-2.0
 ```
 
-## Key Design Properties
+## Key design properties
 
-1. **Defeasibility** — rules override other rules by priority (lex specialis, lex posterior)
-2. **Temporal stratification** — stratum-0 (frozen historical) vs stratum-1 (derived legal)
-3. **Authority-relative interpretation** — same rule text, different meaning per tribunal
-4. **Typed discretion holes** — `? : T @ Authority` marks where computation stops and human judgment begins
-5. **Principle conflict calculus** — acyclic priority DAG on PrincipleId × CaseCategory product graph
-6. **Fuel-typed fibers** — bounded evaluation with Indeterminate verdict on exhaustion
-7. **Effect typing** — path-indexed effect rows prevent privilege creep
+1. **Defeasibility** — rules override other rules by priority (lex specialis, lex posterior).
+2. **Temporal stratification** — stratum-0 (frozen historical) vs stratum-1 (derived legal); lift is total, demotion is not expressible.
+3. **Authority-relative interpretation** — same rule text, different meaning per tribunal; composition requires matching `(Time, Jurisdiction, Version, Tribunal)` or an explicit `TribunalCoercion`.
+4. **Typed discretion holes** — `? : T @ Authority` marks where computation stops and human judgment begins; filled only by a `HoleFill` whose signer matches the hole's authority.
+5. **Principle conflict calculus** — acyclic priority DAG on `PrincipleId × CaseCategory`; cycles detected at load time.
+6. **Fuel-typed fibers** — bounded evaluation; `Indeterminate` on fuel exhaustion is a proper verdict, not a timeout exception.
+7. **Effect typing** — path-indexed effect rows prevent privilege creep under composition.
 
 ## Dependency on mez-core
 
-Lex depends on `mez-core` for foundational types (`ComplianceDomain`, `EntityId`, etc.).
-This is a path dependency to `../kernel/mez/crates/mez-core`. When Lex is published
-as a crate, `mez-core` will be published first.
+Lex uses `mez-core` for foundational identifier and domain types
+(`EntityId`, `ComplianceDomain`). The workspace declares `mez-core` as a
+path dependency at `../kernel/mez/crates/mez-core` for in-tree development.
+When Lex ships as a crate, `mez-core` is published first and the path
+dependency is replaced by a version dependency.
 
-## Test Suite
+The calculus itself — parser, type checker, evaluator, obligations, proof
+pipeline — is defined entirely in this repository. `mez-core` supplies only
+shared types, not logic.
 
-567 tests total:
-- lex-core unit tests: 470+
-- lex-core integration tests: 5 suites (ADGM rules, adversarial attacks, proof pipeline, proptest, Seychelles IBC)
-- lex-diag: 20 tests
-- Property-based testing via proptest (10 proptest tests verifying type soundness)
+## Test suite
+
+Run `cargo test --workspace` to execute all tests. Layers:
+
+- `lex-core` unit tests — inline per-module.
+- `lex-core` integration suites under `crates/lex-core/tests/` — ADGM rules,
+  Seychelles IBC rules, proof-pipeline end-to-end, adversarial attacks,
+  proptest type soundness.
+- `lex-diag` unit tests.
+- Criterion benchmarks under `crates/lex-core/benches/` (run with
+  `cargo bench`).
 
 ## Build
 
@@ -177,11 +208,13 @@ lex check-principles <file>    # Check priority DAG acyclicity
 
 ## License
 
-Apache-2.0. Lex is a contribution to human knowledge about legal logic —
-not a proprietary implementation detail. Published as part of the Momentum
-research programme at research.momentum.inc.
+Apache-2.0. See `LICENSE`. Lex is a contribution to the public record on
+legal logic, not a proprietary implementation detail. Published as part of
+the Momentum research programme at research.momentum.inc.
 
-## Git Commit Rules
+## Git commit rules
 
-- **No LLM credit in git commits.** NEVER include `Co-Authored-By` lines referencing Claude, Opus, GPT, Codex, or any LLM in commit messages. The author is the human operator.
+- **No LLM credit in git commits.** NEVER include `Co-Authored-By` lines
+  referencing Claude, Opus, GPT, Codex, or any LLM in commit messages. The
+  author is the human operator.
 
