@@ -47,17 +47,43 @@ type system, and the proof pipeline are fully defined here.
 ```
 lex/
 ├── crates/
-│   ├── lex-core/     # Parser, type checker, evaluator, obligations, core calculus
-│   ├── lex-diag/     # Structured diagnostic ontology with controlled-English messages
-│   └── lex-cli/      # Command-line authoring tool with air-gapped signing
+│   ├── lex-core/             # Parser, type checker, evaluator, obligations, core calculus
+│   │   ├── src/              # Library source
+│   │   ├── tests/            # End-to-end ADGM, Seychelles IBC, adversarial, proptest suites
+│   │   ├── benches/          # Criterion benchmarks
+│   │   └── examples/         # Runnable examples (hello-lex)
+│   ├── lex-diag/             # Structured diagnostic ontology with controlled-English messages
+│   └── lex-cli/              # Command-line authoring tool with air-gapped signing
 ├── formal/
-│   ├── coq/          # Coq mechanisation of the nine design commitments
-│   └── lean/         # Lean 4 mirror of the Coq scaffold
+│   ├── coq/                  # Coq mechanisation of the nine design commitments
+│   └── lean/                 # Lean 4 mirror of the Coq scaffold
 ├── docs/
-│   └── frontier-work/  # Design notes for in-progress calculus extensions
+│   ├── getting-started.md    # 5-minute cold-reader walk-through
+│   ├── language-spec.md      # Language reference
+│   └── frontier-work/        # Design notes for in-progress calculus extensions
 ├── Cargo.toml
 └── LICENSE
 ```
+
+## Quickstart
+
+Clone, test, and run the end-to-end example in three commands:
+
+```bash
+git clone https://github.com/momentum-sez/lex.git
+cd lex
+cargo run --example hello-lex -p lex-core
+```
+
+The example walks a real statute (Seychelles International Business
+Companies Act 2016 s.66) through the full Lex pipeline — AST construction,
+De Bruijn indexing, temporal stratification, type checking, proof-obligation
+extraction, obligation discharge, and content-addressed certificate issuance —
+and then illustrates the typed discretion hole on a "fit and proper person"
+judgment. Read the source at `crates/lex-core/examples/hello-lex.rs`.
+
+The 5-minute cold-reader walk-through is at `docs/getting-started.md`. The
+language reference is at `docs/language-spec.md`.
 
 ## Build
 
@@ -93,7 +119,13 @@ accepts the fiber for evaluation.
 
 ## Examples
 
-The `crates/lex-core/tests/` directory contains end-to-end examples:
+Runnable:
+
+- `crates/lex-core/examples/hello-lex.rs` — the minimum-viable walk
+  through every non-trivial calculus primitive. Run with
+  `cargo run --example hello-lex -p lex-core`.
+
+End-to-end test suites under `crates/lex-core/tests/`:
 
 - `adgm_rules.rs` — Abu Dhabi Global Market rule fragments, exercising
   authority-relative interpretation.
