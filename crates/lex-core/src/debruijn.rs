@@ -8,7 +8,7 @@
 //! binder, index 1 to the next enclosing binder, etc. Free variables
 //! that are not bound by any enclosing binder produce `DebruijnError::Unbound`.
 //!
-//! Reference: `docs/architecture/LEX-CORE-GRAMMAR.md` §3.
+//! Reference: `docs/language-reference.md` (variables and binding).
 
 use crate::ast::{
     Branch, DefeasibleRule, Exception, Hole, Ident, Pattern, PrincipleBalancingStep, Term,

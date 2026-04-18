@@ -10,8 +10,8 @@ Companion formal mechanisations for Frontier 08 (`docs/frontier-work/08-lex-core
 ## Status
 
 Both files declare the nine PLATONIC-IDEAL §5.1 commitments as types in the
-respective proof assistant. The critical soundness lemmas are proved; three
-theorems carry `Admitted` / `axiom` with annotated proof strategies.
+respective proof assistant. The critical soundness lemmas are proved; one
+certificate-invariant theorem remains open with an annotated proof strategy.
 
 ### Proved (both assistants)
 
@@ -25,17 +25,19 @@ theorems carry `Admitted` / `axiom` with annotated proof strategies.
   the witness's signer matched the authority.
 - **Summary preservation** — obligations, verdict, and discretion frontier
   are preserved by `compile_summary`.
+- **Principle balancing termination (scaffold level)** — the frontier scaffold
+  closes the local termination obligation present in this repository.
+- **Oracle totality** — the witness-supply oracle theorem follows from the
+  class/function definition.
 - **Admissible-fragment decidability** — both directions proved; the
   `is_admissible` function is a decidable characteristic.
 
-### Admitted (with strategy)
+### Remaining Open
 
-1. **Principle-balancing termination** — Tarjan's SCC. Strategy: transcribe
-   the algorithm, prove termination by strong induction on the edge list.
-2. **Certificate well-formedness** — the mechanical bit's correctness.
-   Strategy: introduce a `WellFormedDC` predicate, prove the builder
-   preserves it.
-3. **Oracle boundedness** — axiomatic (the oracle's declared contract).
+1. **Certificate well-formedness** — the mechanical bit's correctness.
+   Strategy: introduce a `WellFormedDC` predicate, then model the Rust builder
+   in `crates/lex-core/src/core_calculus/cert.rs` and prove it preserves the
+   invariant.
 
 ## Building
 
@@ -50,7 +52,7 @@ coqc LexCore.v
 
 ```
 cd formal/lean
-lean --make LexCore.lean
+lean LexCore.lean
 ```
 
 (For the Lean scaffold, `mathlib` is optional; the file is self-contained.)

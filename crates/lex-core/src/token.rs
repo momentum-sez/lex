@@ -1,7 +1,7 @@
 //! Token types for the Lex lexer.
 //!
 //! Defines the complete token vocabulary for Core Lex as specified in
-//! `docs/architecture/LEX-CORE-GRAMMAR.md` §1 (Lexical structure).
+//! `docs/language-reference.md` (lexical structure).
 
 use std::fmt;
 

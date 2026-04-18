@@ -1,8 +1,16 @@
 # Frontier Work 08 — Lex Core Calculus
 
-Status: first-cut (frontier/core-calculus)
-Scope: elite-grade first-cut of the nine PLATONIC-IDEAL §5.1 commitments
+Status: frontier design note
+Scope: typed frontier model for the nine PLATONIC-IDEAL §5.1 commitments
 Audience: kernel engineers, formal-methods reviewers, and Lex paper authors
+
+Canonical public reference: `docs/language-reference.md`
+
+This note is not the canonical public language reference. It documents the
+frontier `core_calculus` model. The executable admissible checker in
+`crates/lex-core/src/typecheck.rs` still rejects surface `Term::Hole` and
+`Term::HoleFill`, and `compose::evaluate_all_fibers` is still a stub. The
+public claim set for those boundaries lives in `docs/language-reference.md`.
 
 ## 0. Motivation
 
@@ -15,8 +23,9 @@ language (AST, parser, elaborator, typechecker, obligations) but the nine
 commitments were data records not type-system constraints. This frontier
 lifts them to the type system.
 
-The headline primitive is the **typed discretion hole** `Hole<T, A>`. Every
-other commitment exists to make the discretion hole tractable — levels so
+The headline primitive inside the frontier core calculus is the **typed
+discretion hole** `Hole<T, A>`. Every other commitment exists to make the
+discretion hole tractable — levels so
 that meta-holes can be distinguished from object holes, temporal stratification
 so that "fit and proper person as of 2026-01-01" is a different hole from
 "fit and proper person as of 2026-04-15", tribunal modality so that an ADGM
@@ -43,7 +52,8 @@ Pre-existing Lex modules (`ast.rs`, `typecheck.rs`, `obligations.rs`, etc.)
 remain the runtime authority for the full surface language. The frontier
 `core_calculus` module exposes the *nine commitments* as a narrow, strongly-typed
 API that downstream consumers — kernel crates, proof assistants, agents —
-can use without descending into the surface AST.
+can use without descending into the surface AST. It is still opt-in rather than
+the production execution path.
 
 ## 2. Type-system encodings
 

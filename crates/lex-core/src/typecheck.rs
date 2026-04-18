@@ -2,9 +2,8 @@
 
 //! Bidirectional type checker for the Core Lex **admissible fragment**.
 //!
-//! Implements the typing judgments from `docs/architecture/LEX-CORE-GRAMMAR.md`
-//! §10 and the admissibility restrictions from
-//! `docs/architecture/LEX-ADMISSIBLE-FRAGMENT.md`.
+//! Implements the typing judgments and executable admissibility boundary
+//! documented in `docs/language-reference.md`.
 //!
 //! The checker operates on [`crate::ast::Term`] with De Bruijn indices and uses
 //! a bidirectional discipline: [`infer`] synthesizes a type, [`check`] verifies
@@ -16,11 +15,13 @@
 //! Terms outside the admissible fragment are rejected with
 //! [`TypeError::Admissibility`]. The conservatively rejected constructs are:
 //! - `Rec` (fix — structural recursion checker not yet wired)
-//! - `Hole` (unfilled discretion hole)
+//! - `Hole` (surface discretion-hole syntax is parsed and elaborated, but not
+//!   admitted by the checker)
 //! - `Sigma`, `Pair`, `Proj` (require inductive type metadata)
 //! - `Match` on non-prelude types (prelude-type matches are admissible)
 //! - `AxiomUse` (requires axiom metadata)
-//! - `InductiveIntro`, `HoleFill`, `DefeatElim` (not yet supported)
+//! - `InductiveIntro`, `HoleFill`, `DefeatElim` (not yet supported in the
+//!   executable admissible checker)
 //! - All modal forms (`ModalAt`, `ModalEventually`, `ModalAlways`,
 //!   `ModalIntro`, `ModalElim`, `SanctionsDominance`)
 //! - `PrincipleBalance`, `Unlock`, `Lift0`, `Derive1`, `ContentRefTerm`
