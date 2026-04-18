@@ -9,16 +9,47 @@
 //!
 //! Air-gapped workflow: author on offline machine, `lex sign` with hardware key,
 //! transfer signed fiber via USB, submit to kernel.
+//!
+//! Run with no arguments to see a brief orientation and a pointer to the
+//! end-to-end `hello-lex` example.
 
 use clap::{Parser, Subcommand};
+
+const ORIENTATION: &str = concat!(
+    "lex — a logic for jurisdictional rules.\n",
+    "\n",
+    "Lex expresses legal rules as typed programs. Defeasibility, temporal\n",
+    "stratification, authority-relative interpretation, and typed discretion\n",
+    "holes are primitives of the calculus.\n",
+    "\n",
+    "Run the end-to-end example (builds a rule, type-checks, extracts\n",
+    "obligations, discharges them, issues a signed certificate, and shows a\n",
+    "typed discretion hole):\n",
+    "\n",
+    "    cargo run --example hello-lex -p lex-core\n",
+    "\n",
+    "Read the 5-minute walk-through at docs/getting-started.md.\n",
+    "Read the canonical paper at https://research.momentum.inc/papers/lex.\n",
+    "\n",
+    "Subcommands:\n",
+    "    lex check <file.lex>            Type-check a Lex fiber\n",
+    "    lex parse <file.lex>            Parse and pretty-print the AST\n",
+    "    lex elaborate <file.lex>        Surface → core elaboration\n",
+    "    lex sign <file.lex> --key <k>   Sign a fiber for air-gapped submission\n",
+    "    lex verify <file.lex.signed>    Verify a signed fiber\n",
+    "    lex check-principles <file>    Check principle priority DAG acyclicity\n",
+    "\n",
+    "Pass --help after any subcommand for its flags.\n",
+);
 
 #[derive(Parser)]
 #[command(name = "lex")]
 #[command(about = "Lex: A Logic for Jurisdictional Rules — CLI")]
 #[command(version)]
+#[command(long_about = ORIENTATION)]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
@@ -73,7 +104,15 @@ enum Commands {
 fn main() {
     let cli = Cli::parse();
 
-    match cli.command {
+    let command = match cli.command {
+        Some(c) => c,
+        None => {
+            print!("{ORIENTATION}");
+            return;
+        }
+    };
+
+    match command {
         Commands::Check { file, verbose } => {
             println!("Type-checking: {file}");
             if verbose {
