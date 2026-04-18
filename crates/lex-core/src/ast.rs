@@ -1,7 +1,7 @@
 //! Abstract syntax tree types for Core Lex.
 //!
 //! Defines the `Term` enum and all supporting types for the core calculus as
-//! specified in `docs/architecture/LEX-CORE-GRAMMAR.md`.
+//! specified in `docs/language-reference.md`.
 //!
 //! All binders carry explicit domain annotations. There are no implicit
 //! arguments in core form. Variables carry a De Bruijn index populated

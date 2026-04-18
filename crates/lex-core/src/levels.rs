@@ -1,7 +1,7 @@
 //! Universe level solver for Core Lex.
 //!
 //! Implements constraint solving in the **\u2115-max-plus semiring** as specified in
-//! `docs/architecture/LEX-CORE-GRAMMAR.md` \u00a72 (Universe hierarchy).
+//! `docs/language-reference.md` (universe hierarchy).
 //!
 //! ## Level expressions
 //!

@@ -1,6 +1,6 @@
 //! Temporal stratification enforcement for the Lex core language.
 //!
-//! Per `docs/architecture/LEX-CORE-GRAMMAR.md` §4 and the PLATONIC-IDEAL §5.1
+//! Per `docs/language-reference.md` and the PLATONIC-IDEAL §5.1
 //! ("Temporal stratification"), Lex separates **Time₀** (frozen at transition
 //! commit) from **Time₁** (derived transitions from tolling/savings/statute
 //! rewrites). These are syntactically distinct sorts. A term that mixes them

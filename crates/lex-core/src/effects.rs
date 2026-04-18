@@ -1,7 +1,7 @@
 //! Effect row algebra for Core Lex.
 //!
 //! Implements the path-indexed effect system specified in
-//! `docs/architecture/LEX-CORE-GRAMMAR.md` §3.1. Effect rows are first-class
+//! `docs/language-reference.md`. Effect rows are first-class
 //! types at sort `Type₀` and form a bounded semilattice under `⊕` (join) with
 //! `∅` (the empty/pure row) as unit.
 //!

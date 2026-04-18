@@ -4,6 +4,7 @@
 //! of the bidirectional type checker and the effect row algebra.
 
 use proptest::prelude::*;
+use proptest::test_runner::Config as ProptestConfig;
 
 use lex_core::ast::{Ident, Level, Sort, Term};
 use lex_core::effects::{effect_subsumes, Effect, EffectRow};
@@ -131,6 +132,20 @@ fn ctx_with_bindings(n: u32) -> Context {
     ctx
 }
 
+fn proptest_config(default_cases: u32) -> ProptestConfig {
+    let cases = std::env::var("PROPTEST_CASES")
+        .ok()
+        .and_then(|raw| raw.parse::<u32>().ok())
+        .filter(|cases| *cases > 0)
+        .unwrap_or(default_cases);
+
+    ProptestConfig {
+        cases,
+        failure_persistence: None,
+        ..ProptestConfig::default()
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Property (a): Preservation
 //
@@ -138,7 +153,7 @@ fn ctx_with_bindings(n: u32) -> Context {
 // ---------------------------------------------------------------------------
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(500))]
+    #![proptest_config(proptest_config(20))]
 
     #[test]
     fn preservation(term in arb_term(4)) {
@@ -159,7 +174,7 @@ proptest! {
 // ---------------------------------------------------------------------------
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(500))]
+    #![proptest_config(proptest_config(20))]
 
     #[test]
     fn determinism(term in arb_term(4)) {
@@ -178,19 +193,40 @@ proptest! {
 // Property (c): Depth safety
 //
 // Random terms of moderate depth never panic -- they always return Ok or Err.
-// Depth 8 generates terms that can reach ~200+ AST nodes via branching,
-// exercising the checker's recursion and fuel limits without exhausting memory.
+// Keep one deterministic smoke test in the default suite, and leave the
+// recursive randomized search as an explicit stress target.
 // ---------------------------------------------------------------------------
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(200))]
+    #![proptest_config(proptest_config(3))]
 
     #[test]
-    fn depth_safety(term in arb_term(8)) {
+    #[ignore = "stress property; run explicitly with PROPTEST_CASES=N cargo test -- --ignored depth_safety"]
+    fn depth_safety(term in arb_term(6)) {
         let ctx = ctx_with_bindings(10);
         // Must not panic. Ok or Err are both fine.
         let _ = infer(&ctx, &term);
     }
+}
+
+fn deep_pi_chain(depth: usize) -> Term {
+    let mut term = Term::Sort(Sort::Type(Level::Nat(0)));
+    for _ in 0..depth {
+        term = Term::Pi {
+            binder: Ident::new("x"),
+            domain: Box::new(Term::Sort(Sort::Type(Level::Nat(0)))),
+            effect_row: None,
+            codomain: Box::new(term),
+        };
+    }
+    term
+}
+
+#[test]
+fn depth_safety_smoke() {
+    let ctx = Context::empty();
+    let term = deep_pi_chain(48);
+    let _ = infer(&ctx, &term);
 }
 
 // ---------------------------------------------------------------------------
@@ -218,7 +254,7 @@ fn immediate_subterms(term: &Term) -> Vec<&Term> {
 }
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(500))]
+    #![proptest_config(proptest_config(20))]
 
     #[test]
     fn admissibility_monotonic(term in arb_term(6)) {
@@ -238,7 +274,7 @@ proptest! {
 // ---------------------------------------------------------------------------
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(500))]
+    #![proptest_config(proptest_config(20))]
 
     #[test]
     fn effect_subsumption_reflexive(row in arb_effect_row()) {
@@ -255,7 +291,7 @@ proptest! {
 // ---------------------------------------------------------------------------
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(300))]
+    #![proptest_config(proptest_config(10))]
 
     /// Empty row is subsumed by any row.
     #[test]

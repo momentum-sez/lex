@@ -1,8 +1,8 @@
 //! Recursive descent parser for Core Lex.
 //!
 //! Consumes a token stream (from `crate::token`) and produces AST nodes
-//! from `crate::ast`. Implements the grammar in
-//! `docs/architecture/LEX-CORE-GRAMMAR.md`.
+//! from `crate::ast`. Implements the grammar documented in
+//! `docs/language-reference.md`.
 //!
 //! ## Precedence (tightest to loosest)
 //!

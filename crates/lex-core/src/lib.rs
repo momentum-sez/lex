@@ -1,6 +1,7 @@
 pub mod ast;
 pub mod certificate;
 pub mod compose;
+pub mod core_calculus;
 pub mod debruijn;
 pub mod decide;
 pub mod decision_table;
