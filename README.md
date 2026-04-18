@@ -67,6 +67,20 @@ cryptographic authorization witness, and downstream auditors receive a proof
 term that exposes the mechanical fragment and the discretionary fragment as
 independently inspectable.
 
+## Quickstart
+
+Clone and run the end-to-end example in three commands:
+
+```bash
+git clone https://github.com/momentum-sez/lex.git
+cd lex
+cargo run --example hello-lex -p lex-core
+```
+
+The example walks the Seychelles International Business Companies Act 2016 s.66 — first-shareholder-meeting requirement — through the full Lex pipeline: AST construction, De Bruijn indexing, temporal stratification, type inference, proof-obligation extraction and discharge, certificate issuance. It then constructs a typed discretion hole for `fit_and_proper : Prop @ regulator` and extracts its scope obligations, demonstrating the judgment-boundary primitive that makes Lex distinct from other rule engines.
+
+Further reading: [`docs/getting-started.md`](docs/getting-started.md) for a five-minute cold-reader walk; [`docs/language-spec.md`](docs/language-spec.md) for the language reference; the paper *Lex: A Logic for Jurisdictional Rules* (research.momentum.inc) for formal treatment.
+
 ## Instant run
 
 ```
