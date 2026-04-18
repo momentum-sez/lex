@@ -180,10 +180,16 @@ cargo test --workspace
 cargo clippy --workspace -- -D warnings
 ```
 
-Rust 1.93 or newer. The workspace takes `mez-core` as a path dependency at
-`../kernel/mez/crates/mez-core` for foundational identifier and domain types
-(`EntityId`, `ComplianceDomain`). A sibling `kernel` checkout is required
-until `mez-core` is published.
+Rust 1.93 or newer. Self-contained build — no external repository checkouts
+required. Foundational types (`CanonicalBytes`, `sha256_digest`,
+`ComplianceDomain`) are provided by `crates/mez-core-min`, a standalone
+vendor of the subset of Momentum's `mez-core` crate that Lex depends on.
+
+Ecosystem builds that have the full `mez-core` checked out at
+`../kernel/mez/crates/mez-core` may opt in with
+`cargo check -p lex-core --features kernel-integration`; byte-for-byte
+identical canonicalization, digests, and `ComplianceDomain` wire-format are
+preserved across both configurations.
 
 ## CLI
 

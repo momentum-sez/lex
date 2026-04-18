@@ -37,7 +37,13 @@ use lex_core::prelude;
 use lex_core::temporal;
 use lex_core::typecheck;
 
+#[cfg(not(feature = "kernel-integration"))]
+use mez_core_min::canonical::CanonicalBytes;
+#[cfg(not(feature = "kernel-integration"))]
+use mez_core_min::digest::sha256_digest;
+#[cfg(feature = "kernel-integration")]
 use mez_core::canonical::CanonicalBytes;
+#[cfg(feature = "kernel-integration")]
 use mez_core::digest::sha256_digest;
 
 // ── AST helpers ────────────────────────────────────────────────────────────

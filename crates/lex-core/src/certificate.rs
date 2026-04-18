@@ -11,7 +11,13 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
+#[cfg(not(feature = "kernel-integration"))]
+use mez_core_min::canonical::CanonicalBytes;
+#[cfg(not(feature = "kernel-integration"))]
+use mez_core_min::digest::sha256_digest;
+#[cfg(feature = "kernel-integration")]
 use mez_core::canonical::CanonicalBytes;
+#[cfg(feature = "kernel-integration")]
 use mez_core::digest::sha256_digest;
 use serde::{Deserialize, Serialize};
 

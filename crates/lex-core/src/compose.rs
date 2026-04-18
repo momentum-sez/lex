@@ -18,6 +18,9 @@
 
 use std::collections::BTreeMap;
 
+#[cfg(not(feature = "kernel-integration"))]
+use mez_core_min::ComplianceDomain;
+#[cfg(feature = "kernel-integration")]
 use mez_core::ComplianceDomain;
 use serde::{Deserialize, Serialize};
 

@@ -1,0 +1,17 @@
+[package]
+name = "mez-core-min"
+description = "Minimal foundational types for Lex: canonical serialization (MCF), SHA-256 content digests, and the 23-variant ComplianceDomain enum. Standalone reimplementation of the subset of mez-core that Lex depends on, so Lex can be built without an external kernel checkout."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+chrono = { version = "0.4", default-features = false, features = ["serde", "clock"] }
+sha2 = "0.10"
+
+[dev-dependencies]
+proptest = { workspace = true }
