@@ -833,28 +833,64 @@ impl<'a> Parser<'a> {
         })
     }
 
-    /// `coerce[T ⇒ T'] e`
+    /// Tribunal coercion requires an explicit `CanonBridge` witness.
+    ///
+    /// Accepted forms (both equivalent at the AST level):
+    ///   - `coerce[T1 => T2](e, w)`
+    ///   - `coerce[T1 => T2] e with witness w`
+    ///
+    /// The one-argument form `coerce[T1 => T2] e` is rejected — paper §4.6
+    /// mandates an explicit witness inhabiting the `CanonBridge` relation.
     fn parse_coerce(&mut self, depth: usize) -> Result<Term, ParseError> {
+        let coerce_span = self.peek_span();
         self.expect(&Token::Coerce)?;
         self.expect(&Token::Lbracket)?;
         let (from_name, _) = self.expect_ident()?;
         self.expect(&Token::DoubleArrow)?;
         let (to_name, _) = self.expect_ident()?;
         self.expect(&Token::Rbracket)?;
-        let body = self.parse_atom(self.next_depth(depth)?)?;
 
-        // The witness is the second argument; for now parse one arg.
-        // Full form: `coerce[T ⇒ T'](e, witness)`. We support both the
-        // simplified `coerce[T ⇒ T'] e` (witness is implicit) and can be
-        // extended later.
+        let next_depth = self.next_depth(depth)?;
+
+        // Form 1: `coerce[T1 => T2](e, w)`
+        if self.check(&Token::Lparen) {
+            self.expect(&Token::Lparen)?;
+            let body = self.parse_term(next_depth)?;
+            self.expect(&Token::Comma)?;
+            let witness = self.parse_term(next_depth)?;
+            self.expect(&Token::Rparen)?;
+            return Ok(Term::ModalElim {
+                from_tribunal: TribunalRef::Named(QualIdent::simple(&from_name)),
+                to_tribunal: TribunalRef::Named(QualIdent::simple(&to_name)),
+                term: Box::new(body),
+                witness: Box::new(witness),
+            });
+        }
+
+        // Form 2: `coerce[T1 => T2] e with witness w`
+        let body = self.parse_atom(next_depth)?;
+
+        if !self.check(&Token::With) {
+            // Single-argument `coerce[T1 => T2] e` is no longer accepted —
+            // emit a tribunal-coercion-specific diagnostic with the span
+            // pointing at the `coerce` keyword.
+            return Err(ParseError {
+                span: coerce_span,
+                expected: "tribunal coercion requires an explicit CanonBridge witness: use `coerce[T1 => T2](e, w)` or `coerce[T1 => T2] e with witness w`".to_string(),
+                found: format!("{}", self.peek()),
+            });
+        }
+
+        self.expect(&Token::With)?;
+        // Require the contextual keyword `witness`.
+        self.expect_named_ident("witness")?;
+        let witness = self.parse_atom(next_depth)?;
+
         Ok(Term::ModalElim {
             from_tribunal: TribunalRef::Named(QualIdent::simple(&from_name)),
             to_tribunal: TribunalRef::Named(QualIdent::simple(&to_name)),
             term: Box::new(body),
-            witness: Box::new(Term::Var {
-                name: Ident::new("_coerce_witness"),
-                index: 0,
-            }),
+            witness: Box::new(witness),
         })
     }
 
@@ -1794,8 +1830,8 @@ mod tests {
     // ── Test 16: Coerce modal ───────────────────────────────────────
 
     #[test]
-    fn test_coerce_modal() {
-        // coerce[T1 ⇒ T2] x
+    fn test_coerce_modal_single_arg_rejected() {
+        // coerce[T1 ⇒ T2] x  — NOT ACCEPTED: witness is mandatory.
         let tokens = vec![
             tok(Token::Coerce, 0),
             tok(Token::Lbracket, 1),
@@ -1807,17 +1843,78 @@ mod tests {
             tok(Token::Eof, 7),
         ];
 
+        let err = parse(&tokens).expect_err("single-arg coerce must be rejected");
+        assert!(
+            err.expected.contains("CanonBridge"),
+            "error should mention CanonBridge witness requirement, got: {}",
+            err.expected
+        );
+    }
+
+    #[test]
+    fn test_coerce_modal_paren_form() {
+        // coerce[T1 ⇒ T2](x, w)
+        let tokens = vec![
+            tok(Token::Coerce, 0),
+            tok(Token::Lbracket, 1),
+            ident("T1", 2),
+            tok(Token::DoubleArrow, 3),
+            ident("T2", 4),
+            tok(Token::Rbracket, 5),
+            tok(Token::Lparen, 6),
+            ident("x", 7),
+            tok(Token::Comma, 8),
+            ident("w", 9),
+            tok(Token::Rparen, 10),
+            tok(Token::Eof, 11),
+        ];
+
         let result = parse(&tokens).unwrap();
         match &result {
             Term::ModalElim {
                 from_tribunal,
                 to_tribunal,
                 term,
-                ..
+                witness,
             } => {
                 assert!(matches!(from_tribunal, TribunalRef::Named(q) if q.segments == vec!["T1"]));
                 assert!(matches!(to_tribunal, TribunalRef::Named(q) if q.segments == vec!["T2"]));
                 assert!(matches!(term.as_ref(), Term::Var { name, .. } if name.name == "x"));
+                assert!(matches!(witness.as_ref(), Term::Var { name, .. } if name.name == "w"));
+            }
+            other => panic!("expected ModalElim, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_coerce_modal_with_witness_form() {
+        // coerce[T1 ⇒ T2] x with witness w
+        let tokens = vec![
+            tok(Token::Coerce, 0),
+            tok(Token::Lbracket, 1),
+            ident("T1", 2),
+            tok(Token::DoubleArrow, 3),
+            ident("T2", 4),
+            tok(Token::Rbracket, 5),
+            ident("x", 6),
+            tok(Token::With, 7),
+            ident("witness", 8),
+            ident("w", 9),
+            tok(Token::Eof, 10),
+        ];
+
+        let result = parse(&tokens).unwrap();
+        match &result {
+            Term::ModalElim {
+                from_tribunal,
+                to_tribunal,
+                term,
+                witness,
+            } => {
+                assert!(matches!(from_tribunal, TribunalRef::Named(q) if q.segments == vec!["T1"]));
+                assert!(matches!(to_tribunal, TribunalRef::Named(q) if q.segments == vec!["T2"]));
+                assert!(matches!(term.as_ref(), Term::Var { name, .. } if name.name == "x"));
+                assert!(matches!(witness.as_ref(), Term::Var { name, .. } if name.name == "w"));
             }
             other => panic!("expected ModalElim, got {:?}", other),
         }
