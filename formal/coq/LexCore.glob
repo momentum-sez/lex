@@ -1,0 +1,561 @@
+DIGEST f7261feebbd29a86370e6bd3420ffcb8
+FLexCore
+R1185:1188 Stdlib.Lists.List <> <> lib
+R1190:1194 Stdlib.Arith.Arith <> <> lib
+R1196:1199 Stdlib.Bool.Bool <> <> lib
+R1201:1203 Stdlib.micromega.Lia <> <> lib
+R1205:1210 Stdlib.Strings.String <> <> lib
+R1212:1231 Stdlib.Logic.ClassicalDescription <> <> lib
+R1241:1253 Stdlib.Lists.List ListNotations <> mod
+def 1510:1514 <> Level
+R1519:1521 Corelib.Init.Datatypes <> nat ind
+rec 1589:1592 <> Rule
+proj 1615:1624 <> rule_level
+proj 1637:1647 <> rule_digest
+R1628:1632 LexCore <> Level def
+R1651:1656 Stdlib.Strings.String <> string ind
+def 1756:1757 <> Lt
+R1767:1771 LexCore <> Level def
+binder 1760:1760 <> l:4
+binder 1762:1763 <> l':5
+R1785:1787 Corelib.Init.Peano <> ::nat_scope:x_'<'_x not
+R1784:1784 LexCore <> l:4 var
+R1788:1789 LexCore <> l':5 var
+rec 1981:1988 <> MetaRule
+proj 2015:2024 <> meta_level
+proj 2037:2045 <> meta_body
+proj 2058:2064 <> meta_wf
+R2028:2032 LexCore <> Level def
+R2050:2053 LexCore <> Rule rec
+R2071:2072 LexCore <> Lt def
+R2097:2106 LexCore <> meta_level:7 meth
+R2075:2084 LexCore <> rule_level proj
+R2086:2094 LexCore <> meta_body:8 meth
+prf 2356:2374 <> no_self_application
+R2390:2394 LexCore <> Level def
+binder 2386:2386 <> l:10
+R2402:2405 LexCore <> Rule rec
+binder 2398:2398 <> r:11
+R2427:2432 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2423:2425 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R2411:2420 LexCore <> rule_level proj
+R2422:2422 LexCore <> r:11 var
+R2426:2426 LexCore <> l:10 var
+R2433:2434 Corelib.Init.Logic <> ::type_scope:'~'_x not
+R2435:2436 LexCore <> Lt def
+R2453:2453 LexCore <> l:10 var
+R2439:2448 LexCore <> rule_level proj
+R2450:2450 LexCore <> r:11 var
+R2491:2492 LexCore <> Lt def
+rec 2762:2770 <> FourTuple
+proj 2798:2804 <> ft_time
+proj 2826:2840 <> ft_jurisdiction
+proj 2854:2863 <> ft_version
+proj 2882:2892 <> ft_tribunal
+R2816:2821 Stdlib.Strings.String <> string ind
+R2844:2849 Stdlib.Strings.String <> string ind
+R2872:2877 Stdlib.Strings.String <> string ind
+R2900:2905 Stdlib.Strings.String <> string ind
+rec 2994:2998 <> Proof
+proj 3022:3032 <> proof_tuple
+proj 3051:3063 <> proof_payload
+R3038:3046 LexCore <> FourTuple rec
+R3067:3072 Stdlib.Strings.String <> string ind
+def 3090:3099 <> same_tuple
+R3108:3112 LexCore <> Proof rec
+binder 3102:3102 <> p:20
+binder 3104:3104 <> q:21
+R3140:3142 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R3127:3137 LexCore <> proof_tuple proj
+R3139:3139 LexCore <> p:20 var
+R3143:3153 LexCore <> proof_tuple proj
+R3155:3155 LexCore <> q:21 var
+def 3228:3239 <> compose_same
+R3248:3252 LexCore <> Proof rec
+binder 3242:3242 <> p:22
+binder 3244:3244 <> q:23
+R3260:3269 LexCore <> same_tuple def
+R3273:3273 LexCore <> q:23 var
+R3271:3271 LexCore <> p:22 var
+binder 3256:3256 <> H:24
+R3278:3282 LexCore <> Proof rec
+R3289:3295 LexCore <> mkProof constr
+R3329:3332 Stdlib.Strings.String <> ::string_scope:x_'++'_x not
+R3314:3326 LexCore <> proof_payload proj
+R3328:3328 LexCore <> p:22 var
+R3333:3345 LexCore <> proof_payload proj
+R3347:3347 LexCore <> q:23 var
+R3298:3308 LexCore <> proof_tuple proj
+R3310:3310 LexCore <> p:22 var
+def 3555:3570 <> TribunalCoercion
+R3580:3583 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3575:3579 LexCore <> Proof rec
+R3584:3589 Corelib.Init.Datatypes <> option ind
+R3591:3595 LexCore <> Proof rec
+def 3649:3659 <> id_coercion
+R3663:3678 LexCore <> TribunalCoercion def
+binder 3687:3687 <> p:25
+R3692:3695 Corelib.Init.Datatypes <> Some constr
+R3697:3697 LexCore <> p:25 var
+def 3839:3856 <> no_bridge_coercion
+R3860:3875 LexCore <> TribunalCoercion def
+R3889:3892 Corelib.Init.Datatypes <> None constr
+prf 3902:3918 <> id_coercion_total
+binder 3929:3929 <> p:26
+R3945:3947 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R3932:3942 LexCore <> id_coercion def
+R3944:3944 LexCore <> p:26 var
+R3948:3951 Corelib.Init.Datatypes <> Some constr
+R3953:3953 LexCore <> p:26 var
+prf 3988:4012 <> no_bridge_is_totally_none
+binder 4023:4023 <> p:27
+R4046:4048 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4026:4043 LexCore <> no_bridge_coercion def
+R4045:4045 LexCore <> p:27 var
+R4049:4052 Corelib.Init.Datatypes <> None constr
+ind 4520:4523 <> Asof
+constr 4546:4550 <> asof0
+constr 4576:4584 <> asof_lift
+R4530:4533 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4527:4529 Corelib.Init.Datatypes <> nat ind
+R4561:4564 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4555:4560 Stdlib.Strings.String <> string ind
+R4565:4568 LexCore <> Asof:28 ind
+binder 4595:4595 <> n:30
+R4604:4607 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4598:4601 LexCore <> Asof:28 ind
+R4603:4603 LexCore <> n:30 var
+R4608:4611 LexCore <> Asof:28 ind
+R4614:4614 Corelib.Init.Datatypes <> S constr
+R4616:4616 LexCore <> n:30 var
+scheme 4520:4523 <> Asof_rect
+scheme 4520:4523 <> Asof_ind
+scheme 4520:4523 <> Asof_rec
+scheme 4520:4523 <> Asof_sind
+def 4689:4695 <> lift_to
+R4702:4704 Corelib.Init.Datatypes <> nat ind
+binder 4698:4698 <> n:31
+R4712:4715 LexCore <> Asof ind
+binder 4708:4708 <> t:32
+R4722:4725 LexCore <> Asof ind
+R4727:4727 LexCore <> n:31 var
+R4740:4740 LexCore <> n:31 var
+R4759:4759 LexCore <> t:32 var
+R4765:4765 Corelib.Init.Datatypes <> S constr
+R4773:4781 LexCore <> asof_lift constr
+R4784:4790 LexCore <> lift_to:33 def
+R4795:4795 LexCore <> t:32 var
+prf 4951:4971 <> lift_preserves_source
+R4989:4992 LexCore <> Asof ind
+binder 4985:4985 <> t:35
+R5002:5009 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R5020:5022 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R5014:5017 LexCore <> Asof ind
+binder 5010:5010 <> s:36
+R5024:5026 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5023:5023 LexCore <> s:36 var
+R5027:5035 LexCore <> asof_lift constr
+R5037:5037 LexCore <> t:35 var
+R5064:5072 LexCore <> asof_lift constr
+R5064:5072 LexCore <> asof_lift constr
+rec 5469:5472 <> Hole
+proj 5495:5501 <> hole_id
+proj 5522:5535 <> hole_authority
+proj 5549:5558 <> hole_scope
+R5512:5517 Stdlib.Strings.String <> string ind
+R5539:5544 Stdlib.Strings.String <> string ind
+R5566:5571 Stdlib.Strings.String <> string ind
+rec 5702:5707 <> PCAuth
+proj 5732:5740 <> pc_signer
+proj 5758:5765 <> pc_valid
+proj 5782:5793 <> pc_signed_at
+R5748:5753 Stdlib.Strings.String <> string ind
+R5774:5777 Corelib.Init.Datatypes <> bool ind
+R5798:5803 Stdlib.Strings.String <> string ind
+def 5942:5951 <> authorised
+R5958:5961 LexCore <> Hole rec
+binder 5954:5954 <> h:45
+R5969:5974 LexCore <> PCAuth rec
+binder 5965:5965 <> w:46
+R6019:6022 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R6000:6002 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5989:5997 LexCore <> pc_signer proj
+R5999:5999 LexCore <> w:46 var
+R6003:6016 LexCore <> hole_authority proj
+R6018:6018 LexCore <> h:45 var
+R6033:6035 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R6023:6030 LexCore <> pc_valid proj
+R6032:6032 LexCore <> w:46 var
+R6036:6039 Corelib.Init.Datatypes <> true constr
+rec 6177:6184 <> HoleFill
+proj 6211:6217 <> fh_hole
+proj 6232:6240 <> fh_filler
+proj 6255:6264 <> fh_witness
+proj 6278:6285 <> fh_tuple
+proj 6304:6310 <> fh_auth
+R6224:6227 LexCore <> Hole rec
+R6245:6250 Stdlib.Strings.String <> string ind
+R6268:6273 LexCore <> PCAuth rec
+R6291:6299 LexCore <> FourTuple rec
+R6317:6326 LexCore <> authorised def
+R6336:6345 LexCore <> fh_witness:50 meth
+R6328:6334 LexCore <> fh_hole:48 meth
+prf 6565:6584 <> hole_fill_authorised
+R6603:6610 LexCore <> HoleFill rec
+binder 6598:6599 <> hf:53
+R6618:6627 LexCore <> authorised def
+R6643:6652 LexCore <> fh_witness proj
+R6654:6655 LexCore <> hf:53 var
+R6630:6636 LexCore <> fh_hole proj
+R6638:6639 LexCore <> hf:53 var
+R6683:6689 LexCore <> fh_auth proj
+R6683:6689 LexCore <> fh_auth proj
+ind 6954:6960 <> Verdict
+constr 6972:6981 <> VCompliant
+constr 6985:6992 <> VPending
+constr 6996:7008 <> VNonCompliant
+scheme 6954:6960 <> Verdict_rect
+scheme 6954:6960 <> Verdict_ind
+scheme 6954:6960 <> Verdict_rec
+scheme 6954:6960 <> Verdict_sind
+rec 7019:7028 <> Obligation
+proj 7057:7063 <> ob_kind
+proj 7077:7083 <> ob_data
+R7067:7072 Stdlib.Strings.String <> string ind
+R7087:7092 Stdlib.Strings.String <> string ind
+rec 7106:7114 <> ProofBody
+proj 7142:7151 <> pb_verdict
+proj 7177:7190 <> pb_obligations
+proj 7220:7241 <> pb_discretion_frontier
+R7166:7172 LexCore <> Verdict ind
+R7201:7204 Corelib.Init.Datatypes <> list ind
+R7206:7215 LexCore <> Obligation rec
+R7245:7248 Corelib.Init.Datatypes <> list ind
+R7250:7255 Stdlib.Strings.String <> string ind
+rec 7269:7280 <> ProofSummary
+proj 7311:7320 <> ps_verdict
+proj 7346:7359 <> ps_obligations
+proj 7389:7410 <> ps_discretion_frontier
+R7335:7341 LexCore <> Verdict ind
+R7370:7373 Corelib.Init.Datatypes <> list ind
+R7375:7384 LexCore <> Obligation rec
+R7414:7417 Corelib.Init.Datatypes <> list ind
+R7419:7424 Stdlib.Strings.String <> string ind
+def 7442:7456 <> compile_summary
+R7463:7471 LexCore <> ProofBody rec
+binder 7459:7459 <> p:67
+R7476:7487 LexCore <> ProofSummary rec
+R7494:7507 LexCore <> mkProofSummary constr
+R7556:7577 LexCore <> pb_discretion_frontier proj
+R7579:7579 LexCore <> p:67 var
+R7533:7546 LexCore <> pb_obligations proj
+R7548:7548 LexCore <> p:67 var
+R7514:7523 LexCore <> pb_verdict proj
+R7525:7525 LexCore <> p:67 var
+prf 7718:7740 <> obligation_preservation
+R7758:7766 LexCore <> ProofBody rec
+binder 7754:7754 <> p:68
+R7774:7783 LexCore <> Obligation rec
+binder 7770:7770 <> o:69
+R7814:7817 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R7791:7792 Stdlib.Lists.List <> In def
+R7797:7810 LexCore <> pb_obligations proj
+R7812:7812 LexCore <> p:68 var
+R7794:7794 LexCore <> o:69 var
+R7818:7819 Stdlib.Lists.List <> In def
+R7824:7837 LexCore <> ps_obligations proj
+R7840:7854 LexCore <> compile_summary def
+R7856:7856 LexCore <> p:68 var
+R7821:7821 LexCore <> o:69 var
+prf 7941:7960 <> verdict_preservation
+R7978:7986 LexCore <> ProofBody rec
+binder 7974:7974 <> p:70
+R8024:8026 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R7994:8003 LexCore <> ps_verdict proj
+R8006:8020 LexCore <> compile_summary def
+R8022:8022 LexCore <> p:70 var
+R8027:8036 LexCore <> pb_verdict proj
+R8038:8038 LexCore <> p:70 var
+prf 8116:8138 <> discretion_preservation
+R8156:8164 LexCore <> ProofBody rec
+binder 8152:8152 <> p:71
+R8172:8177 Stdlib.Strings.String <> string ind
+binder 8168:8168 <> h:72
+R8216:8223 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8185:8186 Stdlib.Lists.List <> In def
+R8191:8212 LexCore <> pb_discretion_frontier proj
+R8214:8214 LexCore <> p:71 var
+R8188:8188 LexCore <> h:72 var
+R8224:8225 Stdlib.Lists.List <> In def
+R8230:8251 LexCore <> ps_discretion_frontier proj
+R8254:8268 LexCore <> compile_summary def
+R8270:8270 LexCore <> p:71 var
+R8227:8227 LexCore <> h:72 var
+def 8571:8581 <> PrincipleId
+R8586:8591 Stdlib.Strings.String <> string ind
+def 8605:8616 <> CaseCategory
+R8621:8626 Stdlib.Strings.String <> string ind
+rec 8637:8647 <> ProductNode
+proj 8677:8688 <> pn_principle
+proj 8707:8717 <> pn_category
+R8692:8702 LexCore <> PrincipleId def
+R8722:8733 LexCore <> CaseCategory def
+rec 8747:8759 <> PriorityGraph
+proj 8791:8798 <> pg_nodes
+proj 8822:8829 <> pg_edges
+R8802:8805 Corelib.Init.Datatypes <> list ind
+R8807:8817 LexCore <> ProductNode rec
+R8833:8836 Corelib.Init.Datatypes <> list ind
+R8850:8852 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R8839:8849 LexCore <> ProductNode rec
+R8853:8863 LexCore <> ProductNode rec
+ind 8922:8928 <> Reaches
+constr 8994:9005 <> reaches_refl
+constr 9037:9048 <> reaches_step
+R8935:8947 LexCore <> PriorityGraph rec
+binder 8931:8931 <> g:79
+R8963:8966 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8952:8962 LexCore <> ProductNode rec
+R8978:8981 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8967:8977 LexCore <> ProductNode rec
+binder 9016:9016 <> n:82
+R9019:9025 LexCore <> Reaches:80 ind
+R9031:9031 LexCore <> n:82 var
+R9029:9029 LexCore <> n:82 var
+R9027:9027 LexCore <> g:79 var
+binder 9059:9059 <> a:83
+binder 9061:9061 <> b:84
+binder 9063:9063 <> c:85
+R9094:9097 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R9072:9073 Stdlib.Lists.List <> In def
+R9083:9090 LexCore <> pg_edges proj
+R9092:9092 LexCore <> g:79 var
+R9075:9075 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R9077:9078 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R9080:9080 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R9076:9076 LexCore <> a:83 var
+R9079:9079 LexCore <> b:84 var
+R9111:9114 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R9098:9104 LexCore <> Reaches:80 ind
+R9110:9110 LexCore <> c:85 var
+R9108:9108 LexCore <> b:84 var
+R9106:9106 LexCore <> g:79 var
+R9115:9121 LexCore <> Reaches:80 ind
+R9127:9127 LexCore <> c:85 var
+R9125:9125 LexCore <> a:83 var
+R9123:9123 LexCore <> g:79 var
+scheme 8922:8928 <> Reaches_ind
+scheme 8922:8928 <> Reaches_sind
+def 9218:9224 <> acyclic
+R9231:9243 LexCore <> PriorityGraph rec
+binder 9227:9227 <> g:86
+binder 9265:9265 <> n:87
+binder 9267:9267 <> a:88
+R9292:9295 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R9270:9271 Stdlib.Lists.List <> In def
+R9281:9288 LexCore <> pg_edges proj
+R9290:9290 LexCore <> g:86 var
+R9273:9273 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R9275:9276 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R9278:9278 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R9274:9274 LexCore <> n:87 var
+R9277:9277 LexCore <> a:88 var
+R9296:9297 Corelib.Init.Logic <> ::type_scope:'~'_x not
+R9298:9304 LexCore <> Reaches ind
+R9310:9310 LexCore <> n:87 var
+R9308:9308 LexCore <> a:88 var
+R9306:9306 LexCore <> g:86 var
+prf 9401:9430 <> principle_balancing_terminates
+binder 9443:9443 <> g:89
+R9446:9447 Corelib.Init.Specif <> ::type_scope:'{'_x_':'_x_'|'_x_'}' not
+R9449:9451 Corelib.Init.Specif <> ::type_scope:'{'_x_':'_x_'|'_x_'}' not
+R9456:9459 Corelib.Init.Specif <> ::type_scope:'{'_x_':'_x_'|'_x_'}' not
+R9482:9484 Corelib.Init.Specif <> ::type_scope:'{'_x_':'_x_'|'_x_'}' not
+R9452:9455 Corelib.Init.Datatypes <> bool ind
+binder 9448:9448 <> b:90
+R9468:9472 Corelib.Init.Logic <> ::type_scope:x_'<->'_x not
+R9461:9463 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R9460:9460 LexCore <> b:90 var
+R9464:9467 Corelib.Init.Datatypes <> true constr
+R9473:9479 LexCore <> acyclic def
+R9481:9481 LexCore <> g:89 var
+R9517:9543 Stdlib.Logic.ClassicalDescription <> excluded_middle_informative thm
+R9546:9552 LexCore <> acyclic def
+R9517:9543 Stdlib.Logic.ClassicalDescription <> excluded_middle_informative thm
+R9546:9552 LexCore <> acyclic def
+R9591:9594 Corelib.Init.Datatypes <> true constr
+R9591:9594 Corelib.Init.Datatypes <> true constr
+R9686:9690 Corelib.Init.Datatypes <> false constr
+R9686:9690 Corelib.Init.Datatypes <> false constr
+def 10030:10036 <> Horizon
+R10041:10043 Corelib.Init.Datatypes <> nat ind
+rec 10054:10067 <> OracleResponse
+proj 10111:10122 <> or_witnesses
+proj 10146:10168 <> or_exclusion_commitment
+proj 10182:10199 <> or_horizon_reached
+proj 10218:10234 <> or_beyond_horizon
+binder 10070:10070 <> W:91
+R10136:10139 Corelib.Init.Datatypes <> list ind
+R10141:10141 LexCore <> W:91 var
+R10172:10177 Stdlib.Strings.String <> string ind
+R10207:10213 LexCore <> Horizon def
+R10243:10248 Corelib.Init.Datatypes <> option ind
+R10250:10255 Stdlib.Strings.String <> string ind
+rec 10295:10313 <> WitnessSupplyOracle
+proj 10342:10363 <> supply_bounded_horizon
+binder 10316:10316 <> Q:97
+binder 10318:10318 <> W:98
+R10368:10371 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R10367:10367 LexCore <> Q:97 var
+R10379:10382 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R10372:10378 LexCore <> Horizon def
+R10383:10396 LexCore <> OracleResponse rec
+R10398:10398 LexCore <> W:98 var
+prf 10477:10493 <> oracle_terminates
+binder 10507:10507 <> Q:101
+binder 10509:10509 <> W:102
+R10524:10542 LexCore <> WitnessSupplyOracle class
+R10546:10546 LexCore <> W:102 var
+R10544:10544 LexCore <> Q:101 var
+binder 10520:10520 <> O:103
+R10554:10554 LexCore <> Q:101 var
+binder 10550:10550 <> q:104
+R10562:10568 LexCore <> Horizon def
+binder 10558:10558 <> h:105
+R10576:10582 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R10603:10604 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R10587:10600 LexCore <> OracleResponse rec
+R10602:10602 LexCore <> W:102 var
+binder 10583:10583 <> r:106
+R10638:10640 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R10606:10627 LexCore <> supply_bounded_horizon meth
+R10629:10629 LexCore <> Q:101 var
+R10631:10631 LexCore <> W:102 var
+R10633:10633 LexCore <> O:103 var
+R10635:10635 LexCore <> q:104 var
+R10637:10637 LexCore <> h:105 var
+R10641:10641 LexCore <> r:106 var
+R10682:10703 LexCore <> supply_bounded_horizon meth
+R10682:10703 LexCore <> supply_bounded_horizon meth
+rec 10987:11007 <> DerivationCertificate
+proj 11047:11065 <> dc_mechanical_check
+proj 11081:11099 <> dc_discretion_steps
+proj 11124:11145 <> dc_discretion_frontier
+proj 11165:11177 <> dc_four_tuple
+proj 11204:11220 <> dc_summary_digest
+proj 11240:11249 <> dc_verdict
+proj 11277:11295 <> dc_mechanical_sound
+R11073:11076 Corelib.Init.Datatypes <> bool ind
+R11107:11110 Corelib.Init.Datatypes <> list ind
+R11112:11119 LexCore <> HoleFill rec
+R11150:11153 Corelib.Init.Datatypes <> list ind
+R11155:11160 Stdlib.Strings.String <> string ind
+R11191:11199 LexCore <> FourTuple rec
+R11230:11235 Stdlib.Strings.String <> string ind
+R11266:11272 LexCore <> Verdict ind
+R11333:11336 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R11326:11328 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R11307:11325 LexCore <> dc_mechanical_check:108 meth
+R11329:11332 Corelib.Init.Datatypes <> true constr
+R11359:11361 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R11337:11358 LexCore <> dc_discretion_frontier:110 meth
+R11362:11363 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+prf 11450:11471 <> mechanical_bit_correct
+R11490:11510 LexCore <> DerivationCertificate rec
+binder 11485:11486 <> dc:115
+R11547:11554 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R11540:11542 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R11518:11536 LexCore <> dc_mechanical_check proj
+R11538:11539 LexCore <> dc:115 var
+R11543:11546 Corelib.Init.Datatypes <> true constr
+R11580:11582 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R11555:11576 LexCore <> dc_discretion_frontier proj
+R11578:11579 LexCore <> dc:115 var
+R11583:11584 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R11628:11646 LexCore <> dc_mechanical_sound proj
+R11628:11646 LexCore <> dc_mechanical_sound proj
+rec 12187:12203 <> AdmissibleWitness
+proj 12239:12253 <> aw_no_unbounded
+proj 12273:12289 <> aw_empty_frontier
+proj 12307:12327 <> aw_acyclic_principles
+R12265:12268 Corelib.Init.Datatypes <> bool ind
+R12299:12302 Corelib.Init.Datatypes <> bool ind
+R12333:12336 Corelib.Init.Datatypes <> bool ind
+def 12354:12366 <> is_admissible
+R12373:12389 LexCore <> AdmissibleWitness rec
+binder 12369:12369 <> w:120
+R12394:12397 Corelib.Init.Datatypes <> bool ind
+R12444:12447 Corelib.Init.Datatypes <> ::bool_scope:x_'&&'_x not
+R12421:12424 Corelib.Init.Datatypes <> ::bool_scope:x_'&&'_x not
+R12404:12418 LexCore <> aw_no_unbounded proj
+R12420:12420 LexCore <> w:120 var
+R12425:12441 LexCore <> aw_empty_frontier proj
+R12443:12443 LexCore <> w:120 var
+R12448:12468 LexCore <> aw_acyclic_principles proj
+R12470:12470 LexCore <> w:120 var
+prf 12673:12700 <> admissible_decidable_forward
+R12718:12734 LexCore <> AdmissibleWitness rec
+binder 12714:12714 <> w:121
+R12766:12773 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R12759:12761 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R12742:12756 LexCore <> aw_no_unbounded proj
+R12758:12758 LexCore <> w:121 var
+R12762:12765 Corelib.Init.Datatypes <> true constr
+R12800:12807 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R12793:12795 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R12774:12790 LexCore <> aw_empty_frontier proj
+R12792:12792 LexCore <> w:121 var
+R12796:12799 Corelib.Init.Datatypes <> true constr
+R12838:12845 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R12831:12833 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R12808:12828 LexCore <> aw_acyclic_principles proj
+R12830:12830 LexCore <> w:121 var
+R12834:12837 Corelib.Init.Datatypes <> true constr
+R12861:12863 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R12846:12858 LexCore <> is_admissible def
+R12860:12860 LexCore <> w:121 var
+R12864:12867 Corelib.Init.Datatypes <> true constr
+R12907:12919 LexCore <> is_admissible def
+prf 13104:13131 <> admissible_decidable_reverse
+R13149:13165 LexCore <> AdmissibleWitness rec
+binder 13145:13145 <> w:122
+R13195:13202 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R13188:13190 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13173:13185 LexCore <> is_admissible def
+R13187:13187 LexCore <> w:122 var
+R13191:13194 Corelib.Init.Datatypes <> true constr
+R13227:13234 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R13220:13222 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13203:13217 LexCore <> aw_no_unbounded proj
+R13219:13219 LexCore <> w:122 var
+R13223:13226 Corelib.Init.Datatypes <> true constr
+R13261:13268 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R13254:13256 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13235:13251 LexCore <> aw_empty_frontier proj
+R13253:13253 LexCore <> w:122 var
+R13257:13260 Corelib.Init.Datatypes <> true constr
+R13292:13294 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13269:13289 LexCore <> aw_acyclic_principles proj
+R13291:13291 LexCore <> w:122 var
+R13295:13298 Corelib.Init.Datatypes <> true constr
+R13329:13341 LexCore <> is_admissible def
+R13357:13365 Corelib.Init.Datatypes <> andb_prop thm
+R13357:13365 Corelib.Init.Datatypes <> andb_prop thm
+R13405:13413 Corelib.Init.Datatypes <> andb_prop thm
+R13405:13413 Corelib.Init.Datatypes <> andb_prop thm
+prf 13608:13627 <> admissible_decidable
+R13645:13661 LexCore <> AdmissibleWitness rec
+binder 13641:13641 <> w:123
+R13669:13670 Corelib.Init.Specif <> ::type_scope:'{'_x_'}'_'+'_'{'_x_'}' not
+R13693:13699 Corelib.Init.Specif <> ::type_scope:'{'_x_'}'_'+'_'{'_x_'}' not
+R13723:13724 Corelib.Init.Specif <> ::type_scope:'{'_x_'}'_'+'_'{'_x_'}' not
+R13686:13688 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13671:13683 LexCore <> is_admissible def
+R13685:13685 LexCore <> w:123 var
+R13689:13692 Corelib.Init.Datatypes <> true constr
+R13715:13717 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13700:13712 LexCore <> is_admissible def
+R13714:13714 LexCore <> w:123 var
+R13718:13722 Corelib.Init.Datatypes <> false constr
+R13755:13767 LexCore <> is_admissible def
+R13755:13767 LexCore <> is_admissible def

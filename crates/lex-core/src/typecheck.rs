@@ -232,6 +232,19 @@ pub enum AdmissibilityViolation {
     UnresolvedLevelVar(u32),
     /// Pi type with non-trivial effect row.
     EffectfulPiNotSupported,
+    /// A `Defeasible` rule carries two or more exceptions at the same
+    /// priority, leaving the defeasible order non-total.
+    ///
+    /// Defeasible resolution relies on a TOTAL order over exceptions so
+    /// the compilation function stays deterministic. Two exceptions at
+    /// identical priority leave the search ambiguous: the winner depends
+    /// on iteration order of the underlying container. Reject at the
+    /// admissibility gate rather than let the ambiguity escape into
+    /// compiled output.
+    DefeasibleOrderNotTotal {
+        /// The shared priority value.
+        priority: u32,
+    },
 }
 
 impl std::fmt::Display for AdmissibilityViolation {
@@ -307,6 +320,11 @@ impl std::fmt::Display for AdmissibilityViolation {
             Self::EffectfulPiNotSupported => {
                 write!(f, "Pi types with effect rows not yet supported in checker")
             }
+            Self::DefeasibleOrderNotTotal { priority } => write!(
+                f,
+                "defeasible order is not total: two or more exceptions share priority {}",
+                priority
+            ),
         }
     }
 }
@@ -1146,6 +1164,31 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
         Term::Defeasible(rule) => {
             check_admissibility_inner(&rule.base_ty, depth + 1)?;
             check_admissibility_inner(&rule.base_body, depth + 1)?;
+            // Defeasible resolution depends on a TOTAL order over the
+            // exception set. Two or more exceptions that carry the same
+            // priority leave the order ambiguous (the compilation
+            // function would depend on container iteration order to
+            // pick a winner). Reject the rule at the admissibility gate.
+            // Exceptions with `priority = None` are not ordered by this
+            // check; they are left to the decision procedure's default
+            // tie-breaking. The total-order check applies only to the
+            // subset of exceptions that carry an explicit priority.
+            let mut prios: Vec<u32> = rule
+                .exceptions
+                .iter()
+                .filter_map(|e| e.priority)
+                .collect();
+            prios.sort_unstable();
+            for w in prios.windows(2) {
+                if w[0] == w[1] {
+                    return Err(TypeError::Admissibility {
+                        violation: AdmissibilityViolation::DefeasibleOrderNotTotal {
+                            priority: w[0],
+                        },
+                        term: term.clone(),
+                    });
+                }
+            }
             for exception in &rule.exceptions {
                 check_admissibility_inner(&exception.guard, depth + 1)?;
                 check_admissibility_inner(&exception.body, depth + 1)?;
