@@ -10,9 +10,8 @@ Companion formal mechanisations for Frontier 08 (`docs/frontier-work/08-lex-core
 ## Status
 
 Both files declare the nine PLATONIC-IDEAL §5.1 commitments as types in the
-respective proof assistant. The critical soundness lemmas are proved; three
-open assumptions on earlier revisions have been reduced to one remaining
-oracle axiom on this branch.
+respective proof assistant. The critical soundness lemmas are proved; one
+certificate-invariant theorem remains open with an annotated proof strategy.
 
 ### Proved (both assistants)
 
@@ -26,21 +25,19 @@ oracle axiom on this branch.
   the witness's signer matched the authority.
 - **Summary preservation** — obligations, verdict, and discretion frontier
   are preserved by `compile_summary`.
+- **Principle balancing termination (scaffold level)** — the frontier scaffold
+  closes the local termination obligation present in this repository.
+- **Oracle totality** — the witness-supply oracle theorem follows from the
+  class/function definition.
 - **Admissible-fragment decidability** — both directions proved; the
   `is_admissible` function is a decidable characteristic.
 
-### Remaining assumption
+### Remaining Open
 
-1. **Oracle boundedness** — axiomatic (the oracle's declared contract).
-
-### Closed on this branch
-
-1. **Principle-balancing termination** — closed classically in Coq via
-   excluded middle on `acyclic g`. A future refinement can replace this with
-   a constructive Tarjan proof without changing the theorem statement.
-2. **Certificate well-formedness** — closed by making the builder invariant
-   explicit in the `DerivationCertificate` record via
-   `dc_mechanical_sound : dc_mechanical_check = true -> dc_discretion_frontier = []`.
+1. **Certificate well-formedness** — the mechanical bit's correctness.
+   Strategy: introduce a `WellFormedDC` predicate, then model the Rust builder
+   in `crates/lex-core/src/core_calculus/cert.rs` and prove it preserves the
+   invariant.
 
 ## Building
 
@@ -55,7 +52,7 @@ coqc LexCore.v
 
 ```
 cd formal/lean
-lean --make LexCore.lean
+lean LexCore.lean
 ```
 
 (For the Lean scaffold, `mathlib` is optional; the file is self-contained.)

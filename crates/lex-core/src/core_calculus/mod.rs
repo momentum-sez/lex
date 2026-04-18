@@ -5,7 +5,8 @@
 //! This module is a narrow waist between the Lex surface language (AST,
 //! parser, elaborator, typechecker in the parent crate) and the proof kernel.
 //! Each submodule corresponds to one commitment. See
-//! `~/lex/docs/frontier-work/08-lex-core-calculus.md` for the design.
+//! `docs/frontier-work/08-lex-core-calculus.md` for the design and
+//! `docs/language-reference.md` for the canonical public scope statement.
 //!
 //! | # | Commitment                             | Module          |
 //! |---|----------------------------------------|-----------------|
@@ -22,6 +23,10 @@
 //! The module is **opt-in**: nothing in the existing Lex pipeline depends on
 //! it yet. Downstream consumers (kernel crates, proof assistants, agents) may
 //! import this module to obtain the strongly-typed narrow waist.
+//!
+//! Important boundary: typed discretion holes are executable here and in the
+//! formal scaffolds, but the shipped admissible checker in `typecheck.rs`
+//! still rejects `Term::Hole` and `Term::HoleFill`.
 
 pub(crate) mod digest;
 pub mod cert;

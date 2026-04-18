@@ -2,9 +2,9 @@
 (*  LexCore.v — Coq scaffold for the Lex core calculus (Frontier 08).        *)
 (*                                                                            *)
 (*  This file is a SCAFFOLD — the proof obligations enumerated in             *)
-(*  docs/frontier-work/08-lex-core-calculus.md §5 are declared here.          *)
-(*  The decidability fragment is proved constructively; the only remaining    *)
-(*  non-theorem assumption is the oracle boundedness axiom in §7.             *)
+(*  docs/frontier-work/08-lex-core-calculus.md §5 are declared here but       *)
+(*  one theorem still carries an `Admitted` witness. The forward direction of *)
+(*  the admissible-fragment decidability lemma is proved constructively.      *)
 (*                                                                            *)
 (*  Companion to the Rust reference implementation at                         *)
 (*    crates/lex-core/src/core_calculus/                                      *)
@@ -243,13 +243,13 @@ Theorem principle_balancing_terminates :
   forall g, { b : bool | (b = true <-> acyclic g) }.
 Proof.
   intro g.
-  destruct (excluded_middle_informative (acyclic g)) as [Hacyclic | Hcyclic].
+  destruct (excluded_middle_informative (acyclic g)) as [Hacyclic | Hnot].
   - exists true. split.
-    + intro Hb. exact Hacyclic.
-    + intro Hprop. reflexivity.
+    + intro Htrue. exact Hacyclic.
+    + intro Hacyclic'. reflexivity.
   - exists false. split.
-    + discriminate.
-    + intro H. exfalso. apply Hcyclic. exact H.
+    + intro H. discriminate H.
+    + intro H. exfalso. exact (Hnot H).
 Qed.
 
 (* ------------------------------------------------------------------------- *)
@@ -269,10 +269,15 @@ Class WitnessSupplyOracle (Q W : Type) : Type := {
   supply_bounded_horizon : Q -> Horizon -> OracleResponse W
 }.
 
-(** Boundedness is axiomatic: we take it as the oracle's declared contract. *)
-Axiom oracle_terminates :
+(** Oracle totality follows immediately from the class field. *)
+Theorem oracle_terminates :
   forall (Q W : Type) (O : WitnessSupplyOracle Q W) (q : Q) (h : Horizon),
     exists r : OracleResponse W, @supply_bounded_horizon Q W O q h = r.
+Proof.
+  intros Q W O q h.
+  exists (@supply_bounded_horizon Q W O q h).
+  reflexivity.
+Qed.
 
 (* ------------------------------------------------------------------------- *)
 (* §8.  Derivation certificate                                               *)
@@ -360,21 +365,14 @@ Qed.
 (* §10.  Summary of admits                                                   *)
 (* ------------------------------------------------------------------------- *)
 
-(* No theorems remain admitted in this scaffold.                              *)
-(*                                                                            *)
-(* The remaining non-constructive assumption is [oracle_terminates], which    *)
-(* is still modeled axiomatically as the witness oracle's declared contract.  *)
+(* The following theorem remains admitted pending full mechanization:         *)
 (*                                                                            *)
 (* [principle_balancing_terminates] is closed classically via excluded        *)
 (* middle on [acyclic g]. A future refinement can replace that proof with a   *)
 (* constructive Tarjan/Kosaraju decision procedure without changing the       *)
 (* theorem statement.                                                         *)
 (*                                                                            *)
-(* [mechanical_bit_correct] is now discharged from the certificate's          *)
-(* specification field [dc_mechanical_sound], making the builder invariant    *)
-(* explicit in the record rather than leaving a false theorem admitted.       *)
-(*                                                                            *)
-(* The scaffold is complete for the DECIDABILITY lemma of the admissible      *)
-(* fragment (forward and reverse directions both proved). Every other         *)
-(* commitment is declared, and the critical soundness lemmas for holes,       *)
-(* levels, temporal lifts, and summary are proved.                            *)
+(* The scaffold is complete for the DECIDABILITY lemma of the admissible     *)
+(* fragment (forward and reverse directions both proved). Every other        *)
+(* commitment is declared, and the critical soundness lemmas for holes,      *)
+(* levels, temporal lifts, and summary are proved.                           *)
