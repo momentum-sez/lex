@@ -234,24 +234,16 @@ Lemma step_neutral_inversion : forall t t',
   exists n f a a',
     t = TmApp (TmApp n f) a /\ t' = TmApp (TmApp n f) a' /\ step a a'.
 Proof.
+  (* This formulation is superseded by the head_neutral lemmas below.
+     We retain the statement for the proof-sketch narrative but admit all
+     three subcases. *)
   intros t t' Hneu Hstep. inversion Hneu; subst.
   - (* Var *) inversion Hstep.
   - (* App f a *)
     inversion Hstep; subst.
-    + (* step_beta: App (Lam _) _ — but the outer is App f a; f would have
-         to be a Lam, not neutral per the inner shape — but we didn't
-         actually require f neutral. Still, beta on App f a needs f=Lam,
-         which is fine syntactically; it just means we DO have a beta
-         redex in the "neutral shape". Let's reject the claim in this
-         form: we need a stronger neutral invariant. *)
-      (* This branch is actually reachable syntactically: Var is neutral
-         but App (Lam _) _ has no Var constraint. We must refine the
-         statement. See the actual workhorse below. *)
-      admit.
-    + left. exists f0, f', a0. split; [reflexivity|]. split; [constructor|].
-      left. split; auto.
-    + left. exists f0, f0, a0. split; [reflexivity|]. split; [constructor|].
-      right. eexists; split; eauto.
+    + admit. (* step_beta — unreachable under the intended strengthening *)
+    + admit. (* step_app_l *)
+    + admit. (* step_app_r *)
 Admitted.
 
 (* The inversion lemma above is unwieldy. A cleaner formulation: *)
@@ -321,20 +313,11 @@ Proof.
     + intros t'' Hstep''. inversion Hstep''; subst.
       * (* beta: t = Lam ..., contradicts head_neutral. *)
         simpl in Hhn. exfalso. exact Hhn.
-      * (* step_app_l: t --> f', need Red B (App f' u). *)
-        assert (Hhn' : head_neutral f') by (eapply head_neutral_preserved; eauto).
-        apply IHt; auto.
-        -- intros t2 Hs2. specialize (HallR _ (step_app_l u Hs2)).
-           (* reduct of t at App level is App (reduct) u; we need Red B. *)
-           (* Actually we need Red B (App f' t2'). But HallR gave us Red B
-              (App t' u). We need stepping via Hs2 which is f' --> t2. Let
-              me restructure: specialize HallR to the App f' u reduct. *)
-           admit.
-        -- admit.
-        -- exact Hu.
-        -- constructor. intros u' Hu'. apply (IHu u').
-           ++ exact Hu'.
-           ++ eapply Red_step; eauto.
+      * (* step_app_l: t --> f', need Red B (App f' u).
+           The argument requires re-specialising HallR via step_app_l
+           composition, plus an SN-preservation chain. Left to a later
+           pass; see SN-PROOF-SKETCH.md §3. *)
+        admit.
       * (* step_app_r: u --> a', apply IHu. *)
         apply IHu; auto. eapply Red_step; eauto.
 Admitted.
