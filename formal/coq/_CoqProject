@@ -1,0 +1,41 @@
+-R Lex Lex
+-R Propagation Propagation
+
+# Top-level standalone companions
+LexCore.v
+FlatAdmissibleSN.v
+NonAffineSN.v
+
+# Propagation lattice (imported by Lex.PropagationAlignment)
+Propagation/Graph.v
+
+# Paper-grade Lex mechanization — ordered to respect cross-file dependencies
+Lex/Syntax.v
+Lex/DeBruijn.v
+Lex/VerdictHeyting.v
+Lex/BoundedQuantifiers.v
+Lex/DefeasibilityPriority.v
+Lex/Typing.v
+Lex/Confluence.v
+Lex/Admissibility.v
+Lex/Requirements.v
+Lex/Typing_progress_skeleton.v
+Lex/TypingStructural.v
+Lex/TypingPreservationScaffold.v
+Lex/DefeasibleGuardFire.v
+Lex/TypingUnique.v
+Lex/DefeasibleGuardProgress.v
+Lex/ConfluenceScaffold.v
+Lex/PaperMechanization.v
+Lex/TensorAlignment.v
+Lex/PropagationAlignment.v
+Lex/Preservation.v
+
+# Worked case-study examples (paper §7)
+Lex/Examples/SeychellesS66.v
+Lex/Examples/ADGMFitAndProper.v
+Lex/Examples/PakistanDirectorsReportTolling.v
+Lex/Examples/ADGMDIFCMutualRecognition.v
+Lex/Examples/SanctionsHardBlock.v
+Lex/Examples/FATFTravelRule.v
+Lex/Examples/BaselIIICapitalRatio.v
