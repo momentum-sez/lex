@@ -117,6 +117,27 @@ Never silently break the concurrency invariant.
 
 <!-- END MULTI-AGENT-CONCURRENCY -->
 
+<!-- BEGIN OPEN-SOURCE-WHITELIST (canonical rule — do not remove or edit) -->
+
+## NON-NEGOTIABLE: Open-source whitelist for all public artifacts
+
+**Exactly four repositories are open source and may be cited in any paper, HTML, PDF, email, DOCX, briefing, slide deck, social post, or any other externally-visible artifact:**
+
+- `github.com/momentum-sez/gstore`
+- `github.com/momentum-sez/lex`
+- `github.com/momentum-sez/op`
+- `github.com/momentum-sez/stack`
+
+**Every other repository in the ecosystem is closed source** — `kernel`, `centcom`, `moxie`, `moxie-whitepaper`, `momentum`, `momentum-dev`, `momentum-docs`, and every other sibling — and must **NEVER** appear in any externally-visible artifact. This covers all forms: `~/kernel`, `/Users/raeez/kernel`, bare `kernel/` as a path, prose references to `kernel` as the subject of a mechanization claim, commit hashes, branch names, worktree IDs, crate paths, architectural doc paths, or any other form that reveals closed-repo structure or existence.
+
+Before committing anything intended for an external reader, grep for non-whitelist path forms and treat any hit as a blocker.
+
+When citing mechanizations, implementations, or architectural docs, the canonical location is the open-source repo. If an artifact currently only lives in a closed repo, that is a defect — port it to the appropriate open-source repo first, then cite from there.
+
+**Incident reference:** 2026-04-22, Lex whitepaper shipped on `research.momentum.inc` with 15 `~/kernel/formal/coq/Lex/*.v` citations plus closed-repo paths across Paper 2 (Lex), Paper 4 (SJN), `CLAUDE.md`, `AGENTS.md`, `SUPREMUM.md`, `KICKSTART-*.md`, and `_audit/*`. Full migration of `~/kernel/formal/coq/Lex/` and `~/kernel/formal/coq/Propagation/Graph.v` to `~/lex/formal/coq/` and full citation re-pointing followed.
+
+<!-- END OPEN-SOURCE-WHITELIST -->
+
 ## What Lex is
 
 Lex is a dependently-typed, effect-typed, defeasible logic for jurisdictional
