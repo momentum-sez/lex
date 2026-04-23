@@ -11,8 +11,8 @@
 //! fiber's closure, proving that all captured identifiers resolve to known
 //! definition sites.
 
-use mass_canonical::canonical::CanonicalBytes;
-use mass_canonical::digest::sha256_digest;
+use mez_canonical::canonical::CanonicalBytes;
+use mez_canonical::digest::sha256_digest;
 use serde::{Deserialize, Serialize};
 
 /// Certificate proving that elaboration from surface Lex to core Lex
@@ -111,7 +111,7 @@ impl std::error::Error for ElaborationCertError {}
 /// core output and recording preserved refinement predicates.
 ///
 /// Both `surface_source` and `core_output` are hashed with SHA-256 via
-/// `mass_canonical::digest`. The certificate is content-addressed: its own
+/// `mez_canonical::digest`. The certificate is content-addressed: its own
 /// `certificate_digest` is the SHA-256 of the canonical serialization
 /// with `certificate_digest` set to the empty string.
 ///

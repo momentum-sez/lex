@@ -18,7 +18,7 @@
 
 use std::collections::BTreeMap;
 
-use mass_canonical::ComplianceDomain;
+use mez_canonical::ComplianceDomain;
 use serde::{Deserialize, Serialize};
 
 use crate::ast::Term;

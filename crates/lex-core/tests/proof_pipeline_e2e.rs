@@ -12,8 +12,8 @@
 //!    with the exported decision procedures, then assembles a compliance
 //!    certificate.
 
-use mass_canonical::canonical::CanonicalBytes;
-use mass_canonical::digest::sha256_digest;
+use mez_canonical::canonical::CanonicalBytes;
+use mez_canonical::digest::sha256_digest;
 use lex_core::ast::{
     Branch, Constructor, DefeasibleRule, Exception, Ident, Level, Pattern, QualIdent, Sort, Term,
 };

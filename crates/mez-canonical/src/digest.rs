@@ -140,8 +140,8 @@ pub enum HexDigestError {
 /// # Example
 ///
 /// ```
-/// use mass_canonical::canonical::CanonicalBytes;
-/// use mass_canonical::digest::{sha256_digest, DigestAlgorithm};
+/// use mez_canonical::canonical::CanonicalBytes;
+/// use mez_canonical::digest::{sha256_digest, DigestAlgorithm};
 /// use serde_json::json;
 ///
 /// let canonical = CanonicalBytes::new(&json!({"key": "value"})).unwrap();

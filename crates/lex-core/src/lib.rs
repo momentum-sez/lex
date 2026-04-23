@@ -2,7 +2,7 @@
 //!
 //! Parser, type checker, evaluator, and proof-obligation generator for the
 //! Lex calculus. Foundational types (`CanonicalBytes`, `sha256_digest`,
-//! `ComplianceDomain`) come from the in-tree `mass-canonical` crate, so the
+//! `ComplianceDomain`) come from the in-tree `mez-canonical` crate, so the
 //! repository compiles from a cold clone with no external checkouts.
 
 pub mod ast;

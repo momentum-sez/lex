@@ -4,7 +4,7 @@ members = [
     "crates/lex-core",
     "crates/lex-diag",
     "crates/lex-cli",
-    "crates/mass-canonical",
+    "crates/mez-canonical",
 ]
 
 [workspace.package]
@@ -15,9 +15,9 @@ license = "Apache-2.0"
 
 [workspace.dependencies]
 # Foundational types (CanonicalBytes, sha256_digest, ComplianceDomain) are
-# provided by the in-tree `mass-canonical` crate, so a cold clone of this
+# provided by the in-tree `mez-canonical` crate, so a cold clone of this
 # repository compiles without external checkouts.
-mass-canonical = { path = "crates/mass-canonical" }
+mez-canonical = { path = "crates/mez-canonical" }
 
 # Serialization
 serde = { version = "1", features = ["derive"] }

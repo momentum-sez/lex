@@ -1,6 +1,6 @@
 #![deny(missing_docs)]
 
-//! # mass-canonical — Canonical Foundational Types
+//! # mez-canonical — Canonical Foundational Types
 //!
 //! The Mass ecosystem's canonical foundational types: Momentum Canonical
 //! Form (MCF) serialization ([`canonical::CanonicalBytes`]), SHA-256 content

@@ -37,8 +37,8 @@ use lex_core::prelude;
 use lex_core::temporal;
 use lex_core::typecheck;
 
-use mass_canonical::canonical::CanonicalBytes;
-use mass_canonical::digest::sha256_digest;
+use mez_canonical::canonical::CanonicalBytes;
+use mez_canonical::digest::sha256_digest;
 
 // ── AST helpers ────────────────────────────────────────────────────────────
 

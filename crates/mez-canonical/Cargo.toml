@@ -1,5 +1,5 @@
 [package]
-name = "mass-canonical"
+name = "mez-canonical"
 description = "Canonical foundational types for the Mass ecosystem: Momentum Canonical Form (MCF) serialization, SHA-256 content digests, and the 23-variant ComplianceDomain enum. The single source of truth for content-addressed compliance primitives across Lex, Op, gstore, and the downstream runtimes that consume them."
 version.workspace = true
 edition.workspace = true

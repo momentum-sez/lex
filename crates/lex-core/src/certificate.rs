@@ -11,8 +11,8 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use mass_canonical::canonical::CanonicalBytes;
-use mass_canonical::digest::sha256_digest;
+use mez_canonical::canonical::CanonicalBytes;
+use mez_canonical::digest::sha256_digest;
 use serde::{Deserialize, Serialize};
 
 /// The compliance verdict produced by evaluating a rule.
