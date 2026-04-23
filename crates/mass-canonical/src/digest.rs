@@ -22,8 +22,7 @@ pub enum DigestAlgorithm {
     Sha256,
     /// Poseidon2 — ZK-friendly arithmetic-circuit-native hash. The tag is
     /// stable in the canonical wire format; consumers that require Poseidon2
-    /// computation enable it as an opt-in feature in their own crate (see
-    /// kernel `mez-core` `poseidon2` feature).
+    /// computation enable it as an opt-in feature in their own crate.
     Poseidon2,
 }
 
@@ -94,7 +93,7 @@ impl ContentDigest {
     /// Construct a Poseidon2-tagged `ContentDigest` from raw 32-byte output.
     ///
     /// The Poseidon2 hash function itself is gated behind a downstream
-    /// feature (e.g. kernel `mez-core/poseidon2`); this constructor only
+    /// crate feature; this constructor only
     /// records the algorithm tag so already-computed Poseidon2 digests can
     /// flow through the canonical wire format without losing their
     /// algorithm identity.
