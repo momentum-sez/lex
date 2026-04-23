@@ -1,0 +1,63 @@
+name: forbidden-strings
+
+# Hygiene check: no closed-repository path references in public artifacts.
+# Fails the build on any match. This workflow file itself is excluded from
+# the scan since it necessarily names the forbidden substrings as patterns.
+
+on:
+  push:
+    branches: [main, master, frontier/core-calculus, develop]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  forbidden-strings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: scan for closed-repository references
+        run: |
+          set -euo pipefail
+          patterns=(
+            '\.\./kernel/'
+            '\.\./\.\./kernel/'
+            '\.\./\.\./\.\./kernel/'
+            '\.\./moxie/'
+            '\.\./centcom/'
+            '\.\./momentum/'
+            '\.\./momentum-research/'
+            '\.\./momentum-dev/'
+            '\.\./momentum-docs/'
+            '~/kernel/'
+            '~/moxie/'
+            '~/centcom/'
+            '~/momentum/'
+            '~/momentum-research/'
+            '~/momentum-dev/'
+            '~/momentum-docs/'
+            '/Users/[^/]*/kernel/'
+            '/home/[^/]*/kernel/'
+            'path = "\.\./.*kernel'
+            'kernel-integration'
+            'the kernel repo'
+            'in the kernel repo'
+            'kernel tree'
+          )
+          fail=0
+          for p in "${patterns[@]}"; do
+            matches=$(git grep -nE "$p" -- \
+              ':(exclude).github/workflows/forbidden-strings.yml' \
+              ':(exclude)Cargo.lock' \
+              || true)
+            if [ -n "$matches" ]; then
+              echo "::error::forbidden-strings matched pattern: $p"
+              echo "$matches"
+              fail=1
+            fi
+          done
+          if [ "$fail" -ne 0 ]; then
+            echo ""
+            echo "Closed-repository references detected in public files."
+            exit 1
+          fi
+          echo "No forbidden strings detected."
