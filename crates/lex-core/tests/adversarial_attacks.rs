@@ -1,4 +1,4 @@
-//! Adversarial attacks on the mez-lex type system.
+//! Adversarial attacks on the lex-core type system.
 //!
 //! Each test attempts to break a different invariant of the type system.
 //! Tests that SHOULD fail (system is sound) assert on the error.

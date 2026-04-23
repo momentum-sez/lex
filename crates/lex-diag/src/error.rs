@@ -4,7 +4,7 @@ use thiserror::Error;
 use crate::category::DiagnosticCategory;
 use crate::render::DiagContext;
 
-/// Errors internal to the mez-diag crate itself (not Lex elaboration errors).
+/// Errors internal to the lex-diag crate itself (not Lex elaboration errors).
 #[derive(Debug, Error)]
 pub enum DiagError {
     #[error("unknown diagnostic category: {0}")]

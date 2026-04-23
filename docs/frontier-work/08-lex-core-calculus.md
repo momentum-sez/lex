@@ -2,7 +2,7 @@
 
 Status: frontier design note
 Scope: typed frontier model for the nine PLATONIC-IDEAL §5.1 commitments
-Audience: kernel engineers, formal-methods reviewers, and Lex paper authors
+Audience: Lex implementers, formal-methods reviewers, and Lex paper authors
 
 Canonical public reference: `docs/language-reference.md`
 
@@ -14,14 +14,13 @@ public claim set for those boundaries lives in `docs/language-reference.md`.
 
 ## 0. Motivation
 
-The kernel exists to make multi-harbored entities possible. The logic that
-tells an AI agent whether a transition is admissible — and where it must stop
-and ask a human — is **Lex**. PLATONIC-IDEAL §5.1 specifies nine design
-commitments that Lex must discharge before it is honest to call the kernel
-"proof-producing." Until this frontier, Lex-core's surface was a rich term
-language (AST, parser, elaborator, typechecker, obligations) but the nine
-commitments were data records not type-system constraints. This frontier
-lifts them to the type system.
+Lex is the logic that tells an AI agent whether a transition is admissible —
+and where it must stop and ask a human. PLATONIC-IDEAL §5.1 specifies nine
+design commitments that Lex must discharge before it is honest to call any
+downstream runtime "proof-producing." Until this frontier, Lex-core's surface
+was a rich term language (AST, parser, elaborator, typechecker, obligations)
+but the nine commitments were data records not type-system constraints. This
+frontier lifts them to the type system.
 
 The headline primitive inside the frontier core calculus is the **typed
 discretion hole** `Hole<T, A>`. Every other commitment exists to make the
@@ -51,9 +50,9 @@ downstream consumers can distinguish mechanical derivation from discretion.
 Pre-existing Lex modules (`ast.rs`, `typecheck.rs`, `obligations.rs`, etc.)
 remain the runtime authority for the full surface language. The frontier
 `core_calculus` module exposes the *nine commitments* as a narrow, strongly-typed
-API that downstream consumers — kernel crates, proof assistants, agents —
-can use without descending into the surface AST. It is still opt-in rather than
-the production execution path.
+API that downstream consumers — proof assistants, compliance agents, AI
+runtimes — can use without descending into the surface AST. It is still opt-in
+rather than the production execution path.
 
 ## 2. Type-system encodings
 
@@ -326,10 +325,11 @@ from being treated as final.
   strategy.
 - The surface Lex parser and elaborator are NOT replaced — the frontier
   module is a strongly-typed *narrow waist* sitting between them and the
-  proof kernel. Existing tests continue to pass.
-- The bridge to `mez-lex` in the kernel is an **adapter** — it does not
-  rewrite the kernel's parallel Lex implementation. Wire compatibility is
-  preserved via `LexCertificate` serialization.
+  downstream proof-consuming runtime. Existing tests continue to pass.
+- Any out-of-tree adapter that binds this frontier into a production runtime
+  is an **adapter**: it does not rewrite the runtime's own parallel Lex
+  implementation. Wire compatibility is preserved via `LexCertificate`
+  serialization.
 
 ## 7. Files delivered
 
@@ -349,8 +349,11 @@ from being treated as final.
 ~/lex/formal/lean/LexCore.lean  — Lean 4 scaffold
 ~/lex/docs/frontier-work/08-lex-core-calculus.md  — this file
 ~/lex/REMAINING-WORK.md         — ledger
-~/kernel/mez/crates/mez-lex/src/core_calculus_bridge.rs  — wire adapter
 ```
+
+Embedder-side wire adapters that bind the frontier core calculus into a
+production runtime live out of tree, against the stable public surface
+exposed by `crates/lex-core/src/core_calculus/`.
 
 ## 8. Acknowledgements
 

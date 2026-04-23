@@ -2,16 +2,8 @@
 //!
 //! Parser, type checker, evaluator, and proof-obligation generator for the
 //! Lex calculus. Foundational types (`CanonicalBytes`, `sha256_digest`,
-//! `ComplianceDomain`) come from the standalone `mez-core-min` crate in
-//! this workspace so the repository compiles from a cold clone with no
-//! external kernel checkout.
-//!
-//! Builds that enable the `kernel-integration` feature flag swap the
-//! foundational-types dependency to the kernel tree's full `mez-core` crate
-//! (expected at `../kernel/mez/crates/mez-core` relative to the workspace
-//! root). Byte-level compatibility is preserved across the two paths: the
-//! imported `ComplianceDomain`, `canonical::CanonicalBytes`, and
-//! `digest::sha256_digest` resolve to the same definitions in either build.
+//! `ComplianceDomain`) come from the in-tree `mass-canonical` crate, so the
+//! repository compiles from a cold clone with no external checkouts.
 
 pub mod ast;
 pub mod certificate;

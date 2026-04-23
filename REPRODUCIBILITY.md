@@ -18,16 +18,9 @@ cd lex
 git checkout frontier/core-calculus
 ```
 
-The workspace is self-contained. `crates/mez-core-min` vendors the subset of
-the kernel `mez-core` crate that Lex depends on (`CanonicalBytes`,
-`sha256_digest`, `ComplianceDomain`), so a cold clone compiles without any
-sibling kernel checkout.
-
-An optional feature `kernel-integration` on `lex-core` swaps the vendored
-types for the full kernel `mez-core` at `../../../kernel/mez/crates/mez-core`.
-This feature is off by default. CI does not enable it. Enabling it requires a
-sibling `kernel/` checkout and is useful only for ecosystem builds that want
-byte-identical shared infrastructure across Lex and the kernel.
+The workspace is self-contained. `crates/mass-canonical` provides the
+foundational types (`CanonicalBytes`, `sha256_digest`, `ComplianceDomain`),
+so a cold clone compiles without any sibling checkouts.
 
 ## Toolchain
 
@@ -53,7 +46,7 @@ cargo test --workspace
 ```
 
 Expected: `742` tests pass across the four crates `lex-core`, `lex-diag`,
-`lex-cli`, `mez-core-min`. Zero failures.
+`lex-cli`, `mass-canonical`. Zero failures.
 
 Breakdown by binary at the time this document was written:
 
@@ -68,9 +61,9 @@ Breakdown by binary at the time this document was written:
 | `lex-core` integration: `proptest_typecheck` | 10 + 1 ignored | soundness proptests |
 | `lex-core` integration: `seychelles_ibc_rules` | 22 | Seychelles IBC fiber |
 | `lex-diag` unit tests | 20 | |
-| `mez-core-min` unit tests | 44 | |
+| `mass-canonical` unit tests | 44 | |
 | `lex-core` doc-tests | 6 | |
-| `mez-core-min` doc-tests | 1 | |
+| `mass-canonical` doc-tests | 1 | |
 
 ### Clippy and rustfmt
 
@@ -165,8 +158,8 @@ Disk footprint for the compiled `target/` directory is ~1.2 GB.
 ## Determinism
 
 - Canonical serialization (`CanonicalBytes`) and `sha256_digest` are exercised
-  against golden vectors at `crates/mez-core-min/src/{canonical,digest}.rs`
-  including a kernel-golden vector.
+  against golden vectors at `crates/mass-canonical/src/{canonical,digest}.rs`,
+  including stable byte-equality vectors over the canonical wire format.
 - `ComplianceDomain` wire-format round-trips through 44 unit tests; the 23
   domains are an invariant checked by `all_returns_23_domains` and
   `domain_count_invariant`.

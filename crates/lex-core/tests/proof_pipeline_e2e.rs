@@ -1,4 +1,4 @@
-//! End-to-end proof pipeline test for the current `mez-lex` public API.
+//! End-to-end proof pipeline test for the current `lex-core` public API.
 //!
 //! The crate exposes `obligations::extract_obligations()` for structural
 //! obligation extraction. The admissible type checker accepts `Defeasible`
@@ -12,14 +12,8 @@
 //!    with the exported decision procedures, then assembles a compliance
 //!    certificate.
 
-#[cfg(not(feature = "kernel-integration"))]
-use mez_core_min::canonical::CanonicalBytes;
-#[cfg(not(feature = "kernel-integration"))]
-use mez_core_min::digest::sha256_digest;
-#[cfg(feature = "kernel-integration")]
-use mez_core::canonical::CanonicalBytes;
-#[cfg(feature = "kernel-integration")]
-use mez_core::digest::sha256_digest;
+use mass_canonical::canonical::CanonicalBytes;
+use mass_canonical::digest::sha256_digest;
 use lex_core::ast::{
     Branch, Constructor, DefeasibleRule, Exception, Ident, Level, Pattern, QualIdent, Sort, Term,
 };

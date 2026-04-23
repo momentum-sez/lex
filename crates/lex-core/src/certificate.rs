@@ -7,18 +7,12 @@
 //! obligations → discharge obligations → assemble certificate.
 //!
 //! Certificates are Ed25519-signable (via `CanonicalBytes`) and convertible
-//! to W3C Verifiable Credentials at the `mez-vc` layer.
+//! to W3C Verifiable Credentials at the embedder's credential layer.
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[cfg(not(feature = "kernel-integration"))]
-use mez_core_min::canonical::CanonicalBytes;
-#[cfg(not(feature = "kernel-integration"))]
-use mez_core_min::digest::sha256_digest;
-#[cfg(feature = "kernel-integration")]
-use mez_core::canonical::CanonicalBytes;
-#[cfg(feature = "kernel-integration")]
-use mez_core::digest::sha256_digest;
+use mass_canonical::canonical::CanonicalBytes;
+use mass_canonical::digest::sha256_digest;
 use serde::{Deserialize, Serialize};
 
 /// The compliance verdict produced by evaluating a rule.

@@ -129,21 +129,34 @@ obligations directly from the hole's scope. The hole is filled only by a
 
 ## Next reads
 
-- `README.md` — the public entry point, with the design-property summary.
-- `docs/language-spec.md` — introductory reference for the core calculus.
-- `docs/frontier-work/08-lex-core-calculus.md` — in-progress calculus
-  extensions.
-- `formal/coq/LexCore.v` and `formal/lean/LexCore.lean` — mechanized
-  soundness proofs.
-- The canonical paper at research.momentum.inc.
+The repository separates three layers; reading paths into each are distinct.
+
+**Executable — what the type checker accepts and what `hello-lex` runs:**
+
+- `README.md` — public entry point with the design-property summary.
+- `docs/language-spec.md` — surface grammar and the admissible fragment.
+- `crates/lex-core/` — parser, elaborator, admissible type checker,
+  obligations, certificate.
+
+**Proved — soundness mechanisations of the executable layer:**
+
+- `formal/coq/LexCore.v`, `formal/lean/LexCore.lean` — mechanised
+  soundness for the nine PLATONIC-IDEAL §5.1 commitments.
+- `formal/README.md` — what is proved, what remains open, with declared
+  proof strategies.
+
+**Frontier — research material the admissible checker does not yet accept:**
+
+- `docs/frontier-work/08-lex-core-calculus.md` — typed-hole frontier
+  design note.
+- `crates/lex-core/src/core_calculus/` — the executable witness for the
+  frontier types; the admissible checker rejects them by design until the
+  PCAuth witness pipeline is wired through.
+
+The canonical paper *Lex: A Logic for Jurisdictional Rules* at
+research.momentum.inc gives the formal treatment.
 
 ## Troubleshooting
-
-`cargo test --workspace` fails with a `mez-core` path error: the
-workspace `Cargo.toml` declares `mez-core` at `../kernel/mez/crates/mez-core`.
-If the kernel repo is at a different location, set `CARGO_NET_GIT_FETCH_WITH_CLI=true`
-and add a `[patch.crates-io]` table to the workspace `Cargo.toml` pointing
-`mez-core` to the correct path.
 
 `cargo run -p lex-cli` without a subcommand prints the orientation text
 and the `cargo run --example hello-lex` line. Any subcommand

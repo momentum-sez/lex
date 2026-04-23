@@ -233,6 +233,18 @@ End Bridges.
 (** ** Open paper targets                                                    *)
 (* ------------------------------------------------------------------------- *)
 
+(** These three theorems are paper-level claims whose proofs are open.
+    Earlier revisions of this file wrapped each one in a Section that
+    introduced the conclusion itself as a Hypothesis (over uninterpreted
+    Parameters) and then closed the Theorem with [exact <that_hypothesis>].
+    That is formally [Qed]-closed but circular: a reader running
+    [grep Admitted] sees nothing, yet no actual content is proved.
+
+    The honest presentation below states each theorem against a minimal
+    abstract signature and leaves the body [Admitted].  Each one is
+    tracked as an open obligation in the Lex paper's Mechanization
+    Status appendix (§5.1, rows 5, 11, and 21). *)
+
 Section DiscretionHoleReductionTarget.
   Context {Adversary : Type}.
 
@@ -240,21 +252,11 @@ Section DiscretionHoleReductionTarget.
   Parameter euf_cma_advantage : Adversary -> nat -> nat.
   Parameter reduction_overhead : Adversary -> nat -> nat.
 
-  (* The standalone paper target abstracts away the concrete game-hopping
-     construction, so the reduction estimate is carried explicitly as the
-     section premise. *)
-  Hypothesis reduction_bound :
-    forall (A : Adversary) (k : nat),
-      hole_forgery_advantage A k <=
-      euf_cma_advantage A k + reduction_overhead A k.
-
   Theorem discretion_hole_reduction :
     forall (A : Adversary) (k : nat),
       hole_forgery_advantage A k <=
       euf_cma_advantage A k + reduction_overhead A k.
-  Proof.
-    exact reduction_bound.
-  Qed.
+  Admitted.
 End DiscretionHoleReductionTarget.
 
 Section EffectMonotonicityTarget.
@@ -264,20 +266,11 @@ Section EffectMonotonicityTarget.
   Parameter derivation_row : Derivation -> Row.
   Parameter subderivation : Derivation -> Derivation -> Prop.
 
-  (* At the paper layer the derivation system is abstract, so row
-     monotonicity is exposed as the semantic premise needed by the claim. *)
-  Hypothesis subderivation_rows_monotone :
-    forall (d_outer d_inner : Derivation),
-      subderivation d_outer d_inner ->
-      row_subsumed_target (derivation_row d_inner) (derivation_row d_outer).
-
   Theorem effect_monotonicity :
     forall (d_outer d_inner : Derivation),
       subderivation d_outer d_inner ->
       row_subsumed_target (derivation_row d_inner) (derivation_row d_outer).
-  Proof.
-    exact subderivation_rows_monotone.
-  Qed.
+  Admitted.
 End EffectMonotonicityTarget.
 
 Section WhnfBoundedTarget.
@@ -291,18 +284,6 @@ Section WhnfBoundedTarget.
   Parameter term_size : Term -> nat.
   Parameter let_depth : Term -> nat.
 
-  (* Bounded WHNF reduction depends on the concrete evaluator and typing
-     metatheory, so the witness-producing statement is made explicit here. *)
-  Hypothesis bounded_whnf_witness :
-    forall (t : Term) (A : Ty),
-      closed t ->
-      admissible t ->
-      well_typed t A ->
-      exists k v,
-        k <= term_size t + let_depth t /\
-        whnf_with_fuel k t = Some v /\
-        whnf_value v.
-
   Theorem whnf_bounded_reduction :
     forall (t : Term) (A : Ty),
       closed t ->
@@ -312,9 +293,7 @@ Section WhnfBoundedTarget.
         k <= term_size t + let_depth t /\
         whnf_with_fuel k t = Some v /\
         whnf_value v.
-  Proof.
-    exact bounded_whnf_witness.
-  Qed.
+  Admitted.
 End WhnfBoundedTarget.
 
 (** ** Further abstract-section structural properties (2026-04-20) *)

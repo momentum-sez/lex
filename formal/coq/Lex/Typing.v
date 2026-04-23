@@ -1,6 +1,6 @@
 (** * Lex/Typing.v — Bidirectional typing rules as inductive relations
 
-    Mirrors [mez/crates/mez-lex/src/typecheck.rs].
+    Mirrors [crates/lex-core/src/typecheck.rs].
 
     The Rust implementation uses a bidirectional discipline: [infer]
     synthesizes a type, [check] verifies against a known type, and

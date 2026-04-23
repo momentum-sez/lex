@@ -87,7 +87,7 @@ impl fmt::Display for OracleTerminationDecl {
 /// The proof kernel uses this to discharge the termination obligation for
 /// rules that invoke the oracle. Verification checks structural validity
 /// (non-empty fields, positive depth bound); cryptographic signature
-/// verification is deferred to the signing layer (`mez-crypto`).
+/// verification is deferred to the embedder's signing layer.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct OracleAttestation {
     /// The oracle this attestation covers.
@@ -123,7 +123,7 @@ impl fmt::Display for OracleAttestation {
 /// - `timestamp` is non-empty
 ///
 /// This is a structural check only. Cryptographic signature verification
-/// is performed at the `mez-crypto` layer when the attestation is bound
+/// is performed by the embedder's signing layer when the attestation is bound
 /// into a Lex certificate.
 pub fn verify_oracle_attestation(attestation: &OracleAttestation) -> bool {
     !attestation.oracle_id.is_empty()

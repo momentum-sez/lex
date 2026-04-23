@@ -5,7 +5,7 @@
 (*                                                                            *)
 (*  Companion to:                                                             *)
 (*    - paper §5 "The Admissible Fragment" in                                  *)
-(*      ~/momentum-research/papers/lex.md                                      *)
+(*      *Lex: A Logic for Jurisdictional Rules* (research.momentum.inc)        *)
 (*    - runtime evaluator `crates/lex-core/src/evaluate.rs`                    *)
 (*                                                                            *)
 (*  THEOREM (flat_admissible_sn_ext):                                          *)

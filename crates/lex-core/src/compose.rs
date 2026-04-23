@@ -12,16 +12,13 @@
 //! - `Pending` dominates `Compliant` but yields to `NonCompliant`.
 //! - `Compliant` is the top (best case).
 //!
-//! These semantics match `mez-tensor::ComplianceState::meet()` — the
-//! composition is pessimistic, ensuring that a single failing fiber for a
-//! domain blocks the domain.
+//! The composition is pessimistic — the lattice meet over per-fiber
+//! verdicts ensures that a single failing fiber for a domain blocks the
+//! domain.
 
 use std::collections::BTreeMap;
 
-#[cfg(not(feature = "kernel-integration"))]
-use mez_core_min::ComplianceDomain;
-#[cfg(feature = "kernel-integration")]
-use mez_core::ComplianceDomain;
+use mass_canonical::ComplianceDomain;
 use serde::{Deserialize, Serialize};
 
 use crate::ast::Term;

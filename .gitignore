@@ -15,6 +15,10 @@ Cargo.lock.bak
 .*.aux
 .lia.cache
 .nia.cache
+# Generated coq_makefile artifacts
+formal/coq/Makefile
+formal/coq/Makefile.conf
+formal/coq/.Makefile.d
 
 # Editor
 *.swp

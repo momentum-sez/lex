@@ -20,9 +20,6 @@ jobs:
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-      # Default features only — the `kernel-integration` feature points at a
-      # sibling kernel checkout that is not present in CI. A cold clone
-      # compiles without that feature.
       - run: cargo check --workspace --all-targets
 
   test:

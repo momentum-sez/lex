@@ -1,0 +1,26 @@
+[package]
+name = "mass-canonical"
+description = "Canonical foundational types for the Mass ecosystem: Momentum Canonical Form (MCF) serialization, SHA-256 content digests, and the 23-variant ComplianceDomain enum. The single source of truth for content-addressed compliance primitives across Lex, Op, gstore, and the downstream runtimes that consume them."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+# Conditionally derive utoipa::ToSchema on the foundational types
+# (ContentDigest, DigestAlgorithm, ComplianceDomain) for OpenAPI spec
+# generation. Required by API-server consumers that surface these types in
+# typed responses.
+openapi = ["dep:utoipa"]
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+chrono = { version = "0.4", default-features = false, features = ["serde", "clock"] }
+sha2 = "0.10"
+utoipa = { version = "4", optional = true }
+
+[dev-dependencies]
+proptest = { workspace = true }

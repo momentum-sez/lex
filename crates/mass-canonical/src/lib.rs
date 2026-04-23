@@ -1,17 +1,17 @@
 #![deny(missing_docs)]
 
-//! # mez-core-min — Foundational Types for Lex (standalone)
+//! # mass-canonical — Canonical Foundational Types
 //!
-//! A minimal, standalone crate providing the subset of `mez-core` that Lex
-//! depends on: canonical serialization ([`canonical::CanonicalBytes`]), SHA-256
-//! content digests ([`digest::sha256_digest`], [`digest::ContentDigest`]), and
-//! the 23-variant [`domain::ComplianceDomain`] enum.
+//! The Mass ecosystem's canonical foundational types: Momentum Canonical
+//! Form (MCF) serialization ([`canonical::CanonicalBytes`]), SHA-256 content
+//! digests ([`digest::sha256_digest`], [`digest::ContentDigest`]), and the
+//! 23-variant [`domain::ComplianceDomain`] enum.
 //!
-//! This crate reimplements those types so a cold clone of `~/lex` compiles
-//! without requiring an external kernel repository checkout. The definitions
-//! are kept byte-compatible with the kernel tree so fibers and certificates
-//! produced by Lex retain their content-addressed digests when consumed by
-//! the full kernel.
+//! This crate is the single source of truth for content-addressed compliance
+//! primitives across the public ecosystem (Lex, Op, gstore) and the kernel
+//! runtime that consumes them. Everything that needs to produce a
+//! content-addressed proof or interact with compliance domains depends on
+//! this crate; the wire format is stable across all consumers.
 //!
 //! ## Scope
 //!
@@ -42,6 +42,9 @@ pub mod domain;
 pub mod error;
 
 pub use canonical::CanonicalBytes;
-pub use digest::{sha256_bytes, sha256_digest, sha256_raw, ContentDigest, DigestAlgorithm};
+pub use digest::{
+    sha256_bytes, sha256_digest, sha256_raw, ContentDigest, DigestAlgorithm, HexDigestError,
+    Sha256Accumulator,
+};
 pub use domain::ComplianceDomain;
 pub use error::CanonicalizationError;

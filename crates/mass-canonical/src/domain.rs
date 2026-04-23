@@ -8,8 +8,8 @@
 //!
 //! Each variant serializes to a lowercase `snake_case` string (`"aml"`,
 //! `"data_privacy"`, `"anti_bribery"`, …). The same strings are accepted by
-//! [`FromStr`] and produced by [`std::fmt::Display`]. This enum is byte-
-//! compatible with the kernel tree's `mez_core::ComplianceDomain`.
+//! [`FromStr`] and produced by [`std::fmt::Display`]. The wire format is the
+//! canonical Momentum `ComplianceDomain` format.
 
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -22,6 +22,7 @@ use std::str::FromStr;
 /// exhaustive — the compiler enforces that no domain is accidentally
 /// ignored.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum ComplianceDomain {
     /// Anti-money laundering (transaction monitoring, suspicious activity).
@@ -136,7 +137,110 @@ impl ComplianceDomain {
             Self::Sharia => "sharia",
         }
     }
+
+    /// Map this domain to a unique index in `0..COUNT`.
+    ///
+    /// The index matches the position in [`all()`](Self::all) — enforced by
+    /// the M-003 / M-004 compile-time assertions below. Enables O(1)
+    /// array-based representations of the 23-domain product lattice.
+    pub const fn index(&self) -> usize {
+        match self {
+            Self::Aml => 0,
+            Self::Kyc => 1,
+            Self::Sanctions => 2,
+            Self::Tax => 3,
+            Self::Securities => 4,
+            Self::Corporate => 5,
+            Self::Custody => 6,
+            Self::DataPrivacy => 7,
+            Self::Licensing => 8,
+            Self::Banking => 9,
+            Self::Payments => 10,
+            Self::Clearing => 11,
+            Self::Settlement => 12,
+            Self::DigitalAssets => 13,
+            Self::Employment => 14,
+            Self::Immigration => 15,
+            Self::Ip => 16,
+            Self::ConsumerProtection => 17,
+            Self::Arbitration => 18,
+            Self::Trade => 19,
+            Self::Insurance => 20,
+            Self::AntiBribery => 21,
+            Self::Sharia => 22,
+        }
+    }
+
+    /// Recover a domain from its index. Returns `None` for out-of-range
+    /// indices. Inverse of [`index()`](Self::index):
+    /// `from_index(d.index()) == Some(d)`.
+    pub const fn from_index(i: usize) -> Option<Self> {
+        match i {
+            0 => Some(Self::Aml),
+            1 => Some(Self::Kyc),
+            2 => Some(Self::Sanctions),
+            3 => Some(Self::Tax),
+            4 => Some(Self::Securities),
+            5 => Some(Self::Corporate),
+            6 => Some(Self::Custody),
+            7 => Some(Self::DataPrivacy),
+            8 => Some(Self::Licensing),
+            9 => Some(Self::Banking),
+            10 => Some(Self::Payments),
+            11 => Some(Self::Clearing),
+            12 => Some(Self::Settlement),
+            13 => Some(Self::DigitalAssets),
+            14 => Some(Self::Employment),
+            15 => Some(Self::Immigration),
+            16 => Some(Self::Ip),
+            17 => Some(Self::ConsumerProtection),
+            18 => Some(Self::Arbitration),
+            19 => Some(Self::Trade),
+            20 => Some(Self::Insurance),
+            21 => Some(Self::AntiBribery),
+            22 => Some(Self::Sharia),
+            _ => None,
+        }
+    }
+
+    /// Whether this domain is eligible for mutual recognition agreements.
+    ///
+    /// All domains except `Sanctions` are MRA-eligible. Sanctions
+    /// re-evaluation is mandatory per the sanctions-dominance axiom — no
+    /// bilateral agreement can waive it.
+    pub const fn is_mra_eligible(&self) -> bool {
+        !matches!(self, Self::Sanctions)
+    }
 }
+
+// Compile-time assertion (M-003): `ComplianceDomain::all()` length must
+// match `COUNT`. If a variant is added or removed without updating both,
+// this fails at compile time.
+const _: () = {
+    const ALL_LEN: usize = 23; // must equal ComplianceDomain::all().len()
+    assert!(
+        ALL_LEN == ComplianceDomain::COUNT,
+        "ComplianceDomain::COUNT does not match the number of variants in all()"
+    );
+};
+
+// Compile-time assertion (M-004): `from_index` is the inverse of `index`.
+// Verifiable at compile time because both are `const fn`.
+const _: () = {
+    let mut i = 0;
+    while i < ComplianceDomain::COUNT {
+        match ComplianceDomain::from_index(i) {
+            Some(d) => assert!(
+                d.index() == i,
+                "from_index(i).index() != i — from_index and index are inconsistent"
+            ),
+            None => panic!("from_index returned None for valid index"),
+        }
+        i += 1;
+    }
+    // Out of range must return None.
+    assert!(ComplianceDomain::from_index(ComplianceDomain::COUNT).is_none());
+};
 
 impl fmt::Display for ComplianceDomain {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

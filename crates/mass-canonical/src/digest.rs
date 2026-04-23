@@ -16,12 +16,14 @@ use crate::canonical::CanonicalBytes;
 
 /// The hash algorithm used to compute a content-addressed digest.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum DigestAlgorithm {
     /// SHA-256 — standard content addressing.
     Sha256,
-    /// Poseidon2 — ZK-friendly arithmetic-circuit-native hash (tag only; the
-    /// minimal build does not implement Poseidon2 computation, but the tag is
-    /// kept for byte-compatibility with kernel-produced digests).
+    /// Poseidon2 — ZK-friendly arithmetic-circuit-native hash. The tag is
+    /// stable in the canonical wire format; consumers that require Poseidon2
+    /// computation enable it as an opt-in feature in their own crate (see
+    /// kernel `mez-core` `poseidon2` feature).
     Poseidon2,
 }
 
@@ -35,10 +37,12 @@ impl std::fmt::Display for DigestAlgorithm {
 }
 
 /// A content-addressed digest with its algorithm tag.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(deny_unknown_fields)]
 pub struct ContentDigest {
     algorithm: DigestAlgorithm,
+    #[cfg_attr(feature = "openapi", schema(value_type = Vec<u8>))]
     bytes: [u8; 32],
 }
 
@@ -86,6 +90,20 @@ impl ContentDigest {
             bytes,
         })
     }
+
+    /// Construct a Poseidon2-tagged `ContentDigest` from raw 32-byte output.
+    ///
+    /// The Poseidon2 hash function itself is gated behind a downstream
+    /// feature (e.g. kernel `mez-core/poseidon2`); this constructor only
+    /// records the algorithm tag so already-computed Poseidon2 digests can
+    /// flow through the canonical wire format without losing their
+    /// algorithm identity.
+    pub fn from_poseidon2_bytes(bytes: [u8; 32]) -> Self {
+        Self {
+            algorithm: DigestAlgorithm::Poseidon2,
+            bytes,
+        }
+    }
 }
 
 impl std::fmt::Display for ContentDigest {
@@ -123,8 +141,8 @@ pub enum HexDigestError {
 /// # Example
 ///
 /// ```
-/// use mez_core_min::canonical::CanonicalBytes;
-/// use mez_core_min::digest::{sha256_digest, DigestAlgorithm};
+/// use mass_canonical::canonical::CanonicalBytes;
+/// use mass_canonical::digest::{sha256_digest, DigestAlgorithm};
 /// use serde_json::json;
 ///
 /// let canonical = CanonicalBytes::new(&json!({"key": "value"})).unwrap();
@@ -164,6 +182,59 @@ pub fn sha256_bytes(data: &[u8]) -> [u8; 32] {
     hasher.finalize().into()
 }
 
+/// Streaming SHA-256 hasher for domain-separated and multi-part hashing.
+///
+/// Use when the input cannot be presented as a single `&[u8]` slice — for
+/// example, domain-separated hashing where a tag byte is appended to the
+/// payload before finalisation, or Merkle node hashing where a left and
+/// right child digest are concatenated.
+///
+/// For single-shot canonical JSON digests, prefer [`sha256_digest`].
+pub struct Sha256Accumulator {
+    hasher: Sha256,
+}
+
+impl Sha256Accumulator {
+    /// Construct an empty accumulator.
+    pub fn new() -> Self {
+        Self {
+            hasher: Sha256::new(),
+        }
+    }
+
+    /// Feed bytes into the accumulator.
+    pub fn update(&mut self, data: &[u8]) {
+        self.hasher.update(data);
+    }
+
+    /// Finalise into a SHA-256 [`ContentDigest`].
+    pub fn finalize(self) -> ContentDigest {
+        ContentDigest {
+            algorithm: DigestAlgorithm::Sha256,
+            bytes: self.hasher.finalize().into(),
+        }
+    }
+
+    /// Finalise into the raw 32-byte digest.
+    pub fn finalize_bytes(self) -> [u8; 32] {
+        self.hasher.finalize().into()
+    }
+
+    /// Finalise into a lowercase hex string.
+    pub fn finalize_hex(self) -> String {
+        self.finalize_bytes()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect()
+    }
+}
+
+impl Default for Sha256Accumulator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -201,8 +272,8 @@ mod tests {
         assert_eq!(display.len(), 7 + 64);
     }
 
-    /// Verify byte-compatibility with the kernel tree. The canonical form of
-    /// `{"a":1,"b":2}` is the UTF-8 bytes of that string.
+    /// Verify byte-compatibility with the canonical wire format. The
+    /// canonical form of `{"a":1,"b":2}` is the UTF-8 bytes of that string.
     /// SHA-256 of those bytes is a fixed, known value.
     #[test]
     fn known_test_vector() {
@@ -219,7 +290,7 @@ mod tests {
     }
 
     #[test]
-    fn sha256_of_empty_object_matches_kernel_golden() {
+    fn sha256_of_empty_object_matches_canonical_golden() {
         let c = CanonicalBytes::new(&json!({})).unwrap();
         let d = sha256_digest(&c);
         // echo -n '{}' | sha256sum

@@ -1,7 +1,7 @@
 (** * Lex/DeBruijn.v — De Bruijn index shifting and substitution
 
-    Mirrors [mez/crates/mez-lex/src/debruijn.rs] and the shift/subst
-    functions in [mez/crates/mez-lex/src/typecheck.rs].
+    Mirrors [crates/lex-core/src/debruijn.rs] and the shift/subst
+    functions in [crates/lex-core/src/typecheck.rs].
 
     Shifting adjusts free variables when moving a term under a binder.
     Substitution replaces a target De Bruijn index with a replacement term.

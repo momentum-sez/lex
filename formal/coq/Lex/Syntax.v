@@ -1,6 +1,6 @@
 (** * Lex/Syntax.v — Core Lex syntax in Coq
 
-    Mirrors [mez/crates/mez-lex/src/ast.rs].
+    Mirrors [crates/lex-core/src/ast.rs].
 
     This formalization captures the core calculus of the Lex type system:
     a dependently-typed lambda calculus with universe polymorphism, defeasible

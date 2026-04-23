@@ -1,4 +1,4 @@
-//! # mez-diag — Structured Diagnostic Ontology
+//! # lex-diag — Structured Diagnostic Ontology
 //!
 //! Every Lex elaboration failure maps to a finite, named, legally meaningful
 //! error category. Error messages are published in controlled English, not

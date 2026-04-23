@@ -1,6 +1,6 @@
 (** * Lex/Admissibility.v — Admissibility predicate and decidability
 
-    Mirrors [mez/crates/mez-lex/src/typecheck.rs::check_admissibility].
+    Mirrors [crates/lex-core/src/typecheck.rs::check_admissibility].
 
     The Lex type system has a full core calculus (with modals, defeasible
     rules, holes, temporal sorts, etc.) and a conservative _admissible

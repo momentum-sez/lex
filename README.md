@@ -18,60 +18,72 @@ that separates mechanical derivation from discretionary inputs.
 
 ## What is new
 
-Four features appear here as primitives of a single calculus; no prior
-compliance language carries all four. Catala (Merigoux, Chataing, Protzenko,
-*ICFP 2021*) has first-class defeasibility in a default calculus, but its
-types are ML-family without dependence, it does not model multiple
-interpreting authorities, and it offers no language-level construct for the
-machine-vs-judgment boundary — when the law requires judgment, the Catala
-author supplies a value and the distinction vanishes at compile time. Rego
-and Datalog evaluate rules as logic programs over flat relations, without
-dependent types, without a temporal sort distinction, and without a typed
-interface across the discretion boundary. LegalRuleML (OASIS, 2013) is an
-interchange schema with no execution semantics. Isabelle/HOL and Coq encode
-rules in a general higher-order logic and push the encoding burden to the
-user, one priority DAG and one temporal stratification at a time. Lex makes
-all four primitive: **(1)** defeasible rules with a typing rule requiring
-type agreement between base and exceptions — an invariant that untyped
-defeasible logic programs in the Governatori–Prakken–Sartor tradition do not
-enforce; **(2)** temporal sorts `Time_0` (frozen) and `Time_1` (derived) with
-a directional coercion `lift_0 : Time_0 → Time_1` and no inverse, enforced
-syntactically so that retroactive amendment touches derived consequence
-without contaminating historical fact; **(3)** tribunal modals `[T] A` with
-explicit `CanonBridge` witnesses, so divergent authority interpretations
-surface as type obstructions rather than silent selection, and no aggregation
-operator exists over tribunals; **(4)** typed discretion holes
-`? h : T @ authority scope S`, which propagate a `discretion(authority)`
-effect that is discharged only by a `fill(h, e, witness)` carrying a PCAuth
-proof-carrying authorization. The published treatment of the core calculus,
-the admissible fragment, the termination argument, and the position against
-each of these prior systems is in the paper *Lex: A Logic for Jurisdictional
-Rules* (research.momentum.inc).
+Four features appear here as primitives of a single calculus. No prior
+compliance language carries all four.
+
+1. **Defeasibility as a typed primitive.** Defeasible rules with a typing
+   rule requiring type agreement between base and exceptions — an invariant
+   that untyped defeasible logic programs in the Governatori–Prakken–Sartor
+   tradition do not enforce.
+
+2. **Temporal sort separation.** `Time_0` (frozen historical) and `Time_1`
+   (derived legal) are distinct sorts with a directional coercion
+   `lift_0 : Time_0 → Time_1` and no inverse, enforced syntactically so
+   that retroactive amendment touches derived consequence without
+   contaminating historical fact.
+
+3. **Authority-relative interpretation.** Tribunal modals `[T] A` with
+   explicit `CanonBridge` witnesses, so divergent authority interpretations
+   surface as type obstructions rather than silent selection. No aggregation
+   operator exists over tribunals.
+
+4. **Typed discretion holes.** `? h : T @ authority scope S` propagates a
+   `discretion(authority)` effect that is discharged only by a
+   `fill(h, e, witness)` carrying a PCAuth proof-carrying authorization.
+   The judgment boundary becomes a typed object the calculus refuses to
+   discharge mechanically.
+
+**Prior art.** Catala (Merigoux et al., *ICFP 2021*) has first-class
+defeasibility in a default calculus, but its types are ML-family without
+dependence, it does not model multiple interpreting authorities, and it
+offers no language-level construct for the machine-vs-judgment boundary
+(when the law requires judgment, the author supplies a value and the
+distinction vanishes at compile time). Rego and Datalog evaluate rules as
+logic programs over flat relations, without dependent types, without a
+temporal sort distinction, and without a typed interface across the
+discretion boundary. LegalRuleML (OASIS, 2013) is an interchange schema with
+no execution semantics. Isabelle/HOL and Coq encode rules in a general
+higher-order logic and push the encoding burden to the user, one priority
+DAG and one temporal stratification at a time. The published treatment of
+the core calculus, the admissible fragment, the termination argument, and
+the position against each of these systems is in the paper *Lex: A Logic
+for Jurisdictional Rules* at research.momentum.inc.
 
 ## Why it matters
 
 Compliance rules are already programs, executed today in Python, Java, SQL,
-and Solidity. Those substrates collapse three distinctions the law holds open.
-They conflate rule priority with control flow, so *lex specialis* and *lex
-posterior* are indistinguishable from the order of `if` branches. They treat
-time uniformly through mutable state, so the incorporation date of an entity
-and the tolled filing deadline that derives from it share the same sort. They
-have no language-level representation of the authority asserting a verdict,
-so a program that consults an ADGM FSRA rule and a Seychelles FSA rule
-produces a verdict with no traceable provenance. Above all, they have no
-typed construct for the boundary between what the machine computed and what
-a human approximated — "fit and proper person," "material adverse change,"
-"good cause" become hard-coded booleans or inline heuristics, invisible to
-every downstream consumer. An AI agent acting under these substrates either
-oversteps into judgments no statute authorizes or understeps away from
-mechanical evaluation that would have sufficed. Lex provides the
-type-theoretic interface. The machine reduces the rule as far as the calculus
-permits and halts at a typed hole that specifies the type of judgment
-required, the authority that may supply it, and the scope in which the
-judgment applies. The filled term enters the derivation trace with a
-cryptographic authorization witness, and downstream auditors receive a proof
-term that exposes the mechanical fragment and the discretionary fragment as
-independently inspectable.
+and Solidity. Those substrates collapse three distinctions the law holds
+open. They conflate rule priority with control flow, so *lex specialis* and
+*lex posterior* are indistinguishable from the order of `if` branches. They
+treat time uniformly through mutable state, so the incorporation date of an
+entity and the tolled filing deadline that derives from it share the same
+sort. They have no language-level representation of the authority asserting
+a verdict, so a program that consults an ADGM FSRA rule and a Seychelles
+FSA rule produces a verdict with no traceable provenance. Above all, they
+have no typed construct for the boundary between what the machine computed
+and what a human approximated — "fit and proper person," "material adverse
+change," "good cause" become hard-coded booleans or inline heuristics,
+invisible to every downstream consumer. An AI agent acting under these
+substrates either oversteps into judgments no statute authorizes or
+understeps away from mechanical evaluation that would have sufficed.
+
+Lex provides the type-theoretic interface. The machine reduces the rule as
+far as the calculus permits and halts at a typed hole that specifies the
+type of judgment required, the authority that may supply it, and the scope
+in which the judgment applies. The filled term enters the derivation trace
+with a cryptographic authorization witness, and downstream auditors receive
+a proof term that exposes the mechanical fragment and the discretionary
+fragment as independently inspectable.
 
 ## Quickstart
 
@@ -169,14 +181,35 @@ lex/
 
 ## Reading path
 
+The repository is organised in three layers; the boundary between them is
+load-bearing for every claim in the paper.
+
+**Executable — what the type checker accepts and what `cargo run` invokes.**
+
 | Artifact | Purpose |
 | --- | --- |
-| `docs/language-reference.md` | Surface grammar, the admissible fragment, small-step reduction, the pipeline, and the precise frontier boundary the main checker enforces |
-| `docs/frontier-work/08-lex-core-calculus.md` | Frontier design note: level polymorphism, typed discretion holes, oracle totality, proof summaries, derivation certificates |
-| `formal/coq/LexCore.v`, `formal/lean/LexCore.lean` | Mechanised oracle-totality and principle-termination obligations. One certificate-invariant theorem is open pending a formal account of the Rust certificate builder |
-| `formal/README.md` | Mechanisation status, admitted lemmas with declared proof strategies |
+| `docs/language-reference.md` | Surface grammar, the admissible fragment, small-step reduction, the pipeline, and the precise boundary the main checker enforces |
+| `crates/lex-core/` | Parser, elaborator, admissible type checker, obligations, prelude, decision procedures, certificate |
 | `crates/lex-core/tests/` | Integration tests: ADGM rules, Seychelles IBC rules, adversarial attacks (level self-application, cyclic priorities, unauthorised fills), proptest soundness, parse→elaborate→typecheck→obligations→certificate end-to-end |
-| Paper | *Lex: A Logic for Jurisdictional Rules* at research.momentum.inc — full core calculus, admissibility argument, typing rules, worked examples, related work, open problems |
+
+**Proved — soundness mechanisations of the executable layer.**
+
+| Artifact | Purpose |
+| --- | --- |
+| `formal/coq/LexCore.v`, `formal/lean/LexCore.lean` | Mechanised soundness for the nine PLATONIC-IDEAL §5.1 commitments. One certificate-invariant theorem is open pending a formal account of the Rust certificate builder |
+| `formal/README.md` | Mechanisation status; admitted lemmas with declared proof strategies; per-construct mapping from formal to Rust |
+
+**Frontier — typed objects the calculus defines but the admissible checker
+declines to discharge until the surrounding pipeline catches up.**
+
+| Artifact | Purpose |
+| --- | --- |
+| `docs/frontier-work/08-lex-core-calculus.md` | Frontier design note: level polymorphism, typed discretion holes, oracle totality, proof summaries, derivation certificates |
+| `crates/lex-core/src/core_calculus/` | Executable witness for the frontier types; preserved through the surface pipeline, rejected by the admissible checker by design |
+
+**Paper.** *Lex: A Logic for Jurisdictional Rules* at research.momentum.inc —
+full core calculus, admissibility argument, typing rules, worked examples,
+related work, open problems.
 
 ## Build
 
@@ -186,16 +219,10 @@ cargo test --workspace
 cargo clippy --workspace -- -D warnings
 ```
 
-Rust 1.93 or newer. Self-contained build — no external repository checkouts
-required. Foundational types (`CanonicalBytes`, `sha256_digest`,
-`ComplianceDomain`) are provided by `crates/mez-core-min`, a standalone
-vendor of the subset of Momentum's `mez-core` crate that Lex depends on.
-
-Ecosystem builds that have the full `mez-core` checked out at
-`../kernel/mez/crates/mez-core` may opt in with
-`cargo check -p lex-core --features kernel-integration`; byte-for-byte
-identical canonicalization, digests, and `ComplianceDomain` wire-format are
-preserved across both configurations.
+Rust 1.93 or newer. The workspace is self-contained: a cold clone compiles
+without external checkouts. Foundational types (`CanonicalBytes`,
+`sha256_digest`, `ComplianceDomain`) are provided by the in-tree
+`crates/mass-canonical` crate.
 
 ## CLI
 
@@ -228,9 +255,7 @@ See [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) for the exact toolchain pin,
 expected test counts, example outputs, and hardware budgets. The repository
 ships with a pinned Rust toolchain (`rust-toolchain.toml`), GitHub Actions
 CI for Rust and Rocq, and a self-contained workspace that compiles from a
-cold clone without sibling checkouts. CI builds default features only; the
-opt-in `kernel-integration` feature requires a sibling kernel checkout and
-is not enabled in CI.
+cold clone without sibling checkouts.
 
 ## Contributing
 
