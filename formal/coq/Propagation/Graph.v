@@ -1,9 +1,8 @@
-(** * Propagation/Graph.v — F142 causal-propagation graph formalization (minimal mirror)
+(** * Propagation/Graph.v — causal-propagation graph formalization (minimal mirror)
 
-    Mirrors [mez/crates/mez-propagation/src/evaluate.rs] and
-    [formal/lean/Propagation/Propagation/Graph.lean].
+    Mirrors [formal/lean/Propagation/Propagation/Graph.lean].
 
-    This Coq module states — and proves — the two F142 invariants
+    This Coq module states — and proves — the two propagation invariants
     that the Rust evaluator relies on:
 
       1. `apply_rule_monotone` — a single rule application never
