@@ -3,13 +3,12 @@
 //! Rules that require runtime bounded iteration declare a `Fuel n` effect in
 //! the effect row. At evaluation time, a [`FuelTracker`] enforces the budget:
 //! each reduction step consumes fuel, and when the budget is exhausted the
-//! evaluation halts with a structured [`Indeterminate`] verdict rather than
+//! evaluation halts with a structured [`Indeterminate`] status rather than
 //! silently failing or diverging.
 //!
-//! `Indeterminate` is a typed verdict *distinct* from `Compliant`,
-//! `NonCompliant`, and `Pending`. It propagates as a structured error and is
-//! queued for re-query at a higher horizon (more fuel, more evidence, or a
-//! longer wall-clock window).
+//! `Indeterminate` is outside the certified `ComplianceVerdict` lattice. It
+//! propagates as a structured evaluation status and is queued for re-query at
+//! a higher horizon (more fuel, more evidence, or a longer wall-clock window).
 //!
 //! # Usage
 //!
@@ -23,7 +22,7 @@
 //! tracker.consume(10).unwrap();
 //! assert_eq!(tracker.remaining(), 90);
 //!
-//! // Exceeding the budget yields an Indeterminate verdict.
+//! // Exceeding the budget yields an Indeterminate status.
 //! let err = tracker.consume(91).unwrap_err();
 //! let verdict = Indeterminate::from_exhaustion(err, "aml_screening_loop");
 //! assert_eq!(verdict.remaining_fuel_needed, 1);
@@ -33,7 +32,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 // ---------------------------------------------------------------------------
-// Fuel — the budget value
+// Fuel - the budget value
 // ---------------------------------------------------------------------------
 
 /// A fuel budget for bounded evaluation of a Lex rule.
@@ -62,7 +61,7 @@ impl fmt::Display for Fuel {
 }
 
 // ---------------------------------------------------------------------------
-// FuelExhausted — error when fuel runs out
+// FuelExhausted - error when fuel runs out
 // ---------------------------------------------------------------------------
 
 /// Error returned when a [`FuelTracker`] cannot satisfy a `consume` request.
@@ -93,15 +92,15 @@ impl fmt::Display for FuelExhausted {
 impl std::error::Error for FuelExhausted {}
 
 // ---------------------------------------------------------------------------
-// FuelTracker — runtime fuel accounting
+// FuelTracker - runtime fuel accounting
 // ---------------------------------------------------------------------------
 
 /// Tracks fuel consumption during Lex rule evaluation.
 ///
 /// Created from a [`Fuel`] budget. Each call to [`consume`](Self::consume)
 /// deducts from the remaining balance. When the balance is insufficient,
-/// `consume` returns [`FuelExhausted`] without modifying the tracker — the
-/// caller can then construct an [`Indeterminate`] verdict.
+/// `consume` returns [`FuelExhausted`] without modifying the tracker - the
+/// caller can then construct an [`Indeterminate`] status.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FuelTracker {
     /// The initial fuel budget.
@@ -123,7 +122,7 @@ impl FuelTracker {
     ///
     /// Returns `Ok(())` if sufficient fuel remains, or `Err(FuelExhausted)`
     /// if the remaining balance is less than `amount`. On error the tracker
-    /// state is unchanged — no partial deduction occurs.
+    /// state is unchanged - no partial deduction occurs.
     pub fn consume(&mut self, amount: u64) -> Result<(), FuelExhausted> {
         if amount > self.remaining {
             Err(FuelExhausted {
@@ -154,17 +153,17 @@ impl FuelTracker {
 }
 
 // ---------------------------------------------------------------------------
-// Indeterminate — typed verdict for fuel-exhausted evaluation
+// Indeterminate - typed status for fuel-exhausted evaluation
 // ---------------------------------------------------------------------------
 
-/// A typed verdict indicating that evaluation was *indeterminate* due to
+/// A typed status indicating that evaluation was *indeterminate* due to
 /// fuel exhaustion.
 ///
-/// `Indeterminate` is distinct from `Compliant`, `NonCompliant`, `Pending`,
-/// `Exempt`, and `NotApplicable`. It means: "we ran out of computational
-/// budget before reaching a definitive answer." The correct response is to
-/// re-query at a higher horizon — either with more fuel, after more evidence
-/// has arrived, or at a longer wall-clock window.
+/// `Indeterminate` is not a member of the paper's certified
+/// `ComplianceVerdict` lattice. It means: "we ran out of computational budget
+/// before reaching a definitive answer." The correct response is to re-query
+/// at a higher horizon - either with more fuel, after more evidence has
+/// arrived, or at a longer wall-clock window.
 ///
 /// Propagates as a structured error, not as a silent default. The
 /// `remaining_fuel_needed` field tells the caller the *minimum* additional
@@ -183,7 +182,7 @@ pub struct Indeterminate {
 }
 
 impl Indeterminate {
-    /// Construct an `Indeterminate` verdict from a [`FuelExhausted`] error.
+    /// Construct an `Indeterminate` status from a [`FuelExhausted`] error.
     ///
     /// The `rule_id` is an optional identifier for the rule or fiber that
     /// was being evaluated when fuel ran out.
@@ -198,7 +197,7 @@ impl Indeterminate {
         }
     }
 
-    /// Construct an `Indeterminate` verdict with a custom reason.
+    /// Construct an `Indeterminate` status with a custom reason.
     pub fn with_reason(reason: impl Into<String>, remaining_fuel_needed: u64) -> Self {
         Self {
             reason: reason.into(),
@@ -259,7 +258,7 @@ mod tests {
         assert_eq!(tracker.remaining(), 20);
     }
 
-    // ── 3. Indeterminate verdict from exhaustion ───────────────────────
+    // ── 3. Indeterminate status from exhaustion ────────────────────────
 
     #[test]
     fn indeterminate_from_exhaustion() {
@@ -294,7 +293,7 @@ mod tests {
     #[test]
     fn large_fuel_succeeds() {
         let mut tracker = FuelTracker::new(Fuel::new(u64::MAX));
-        // Consume a large amount — should succeed.
+        // Consume a large amount - should succeed.
         tracker.consume(u64::MAX / 2).unwrap();
         assert_eq!(tracker.remaining(), u64::MAX - u64::MAX / 2);
 

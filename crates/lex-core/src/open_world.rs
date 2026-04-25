@@ -50,7 +50,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 // ---------------------------------------------------------------------------
-// WitnessSupplyOracle — oracle declaration for open-world queries
+// WitnessSupplyOracle - oracle declaration for open-world queries
 // ---------------------------------------------------------------------------
 
 /// An oracle declared as the witness supplier for an open-world existential
@@ -84,16 +84,16 @@ impl fmt::Display for WitnessSupplyOracle {
 }
 
 // ---------------------------------------------------------------------------
-// OracleEnvelope — oracle commitment at query time
+// OracleEnvelope - oracle commitment at query time
 // ---------------------------------------------------------------------------
 
 /// An oracle's commitment envelope recording what was searched, excluded,
 /// and the state of the observable universe at query time.
 ///
 /// When the oracle fills the discretionary hole, it produces an
-/// `OracleEnvelope` that the proof kernel binds into the Lex certificate.
+/// `OracleEnvelope` that the proof checker binds into the Lex certificate.
 /// The `exclusion_set_commitment` is a hash over the entities/paths the
-/// oracle determined were not relevant — this makes the oracle's negative
+/// oracle determined were not relevant - this makes the oracle's negative
 /// claim verifiable.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct OracleEnvelope {
@@ -101,7 +101,7 @@ pub struct OracleEnvelope {
     pub horizon_k: u64,
     /// Hash of the query predicate the oracle evaluated.
     pub query_predicate_hash: String,
-    /// Commitment (hash) over the exclusion set — the entities/paths the
+    /// Commitment (hash) over the exclusion set - the entities/paths the
     /// oracle determined were absent or not matching the predicate.
     pub exclusion_set_commitment: String,
     /// Version of the oracle that produced this envelope.
@@ -122,7 +122,7 @@ impl fmt::Display for OracleEnvelope {
 }
 
 // ---------------------------------------------------------------------------
-// OpenWorldQuery — an existential quantification with declared oracle
+// OpenWorldQuery - an existential quantification with declared oracle
 // ---------------------------------------------------------------------------
 
 /// An open-world existential query: "does there exist a witness satisfying
@@ -155,7 +155,7 @@ impl fmt::Display for OpenWorldQuery {
 }
 
 // ---------------------------------------------------------------------------
-// MechanicalPart — bounded-depth traversal that the evaluator handles
+// MechanicalPart - bounded-depth traversal that the evaluator handles
 // ---------------------------------------------------------------------------
 
 /// The mechanical (bounded-depth) part of a decomposed open-world query.
@@ -183,7 +183,7 @@ impl fmt::Display for MechanicalPart {
 }
 
 // ---------------------------------------------------------------------------
-// DiscretionaryHole — the residual beyond the horizon
+// DiscretionaryHole - the residual beyond the horizon
 // ---------------------------------------------------------------------------
 
 /// The discretionary hole: the part of the open-world query that lies
@@ -191,7 +191,7 @@ impl fmt::Display for MechanicalPart {
 ///
 /// `residual_depth` is the number of additional levels beyond the
 /// mechanical horizon (`quantifier_depth - horizon_k`). If `residual_depth`
-/// is zero, no discretionary hole exists — the mechanical traversal covers
+/// is zero, no discretionary hole exists - the mechanical traversal covers
 /// the full query.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct DiscretionaryHole {
@@ -208,7 +208,7 @@ pub struct DiscretionaryHole {
 impl fmt::Display for DiscretionaryHole {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.residual_depth == 0 {
-            write!(f, "DiscretionaryHole(none — fully mechanical)")
+            write!(f, "DiscretionaryHole(none - fully mechanical)")
         } else {
             write!(
                 f,
@@ -220,7 +220,7 @@ impl fmt::Display for DiscretionaryHole {
 }
 
 // ---------------------------------------------------------------------------
-// DecomposeError — errors in query decomposition
+// DecomposeError - errors in query decomposition
 // ---------------------------------------------------------------------------
 
 /// Error returned when an open-world query cannot be decomposed.
@@ -228,7 +228,7 @@ impl fmt::Display for DiscretionaryHole {
 pub enum DecomposeError {
     /// The oracle id is empty.
     EmptyOracleId,
-    /// The horizon exceeds the quantifier depth (nonsensical — the mechanical
+    /// The horizon exceeds the quantifier depth (nonsensical - the mechanical
     /// part would exceed the total query depth).
     HorizonExceedsDepth {
         /// The declared horizon.
@@ -243,7 +243,7 @@ pub enum DecomposeError {
         /// The query's predicate hash.
         query_predicate: String,
     },
-    /// Zero quantifier depth — the query is vacuous.
+    /// Zero quantifier depth - the query is vacuous.
     ZeroQuantifierDepth,
 }
 
@@ -277,7 +277,7 @@ impl fmt::Display for DecomposeError {
 impl std::error::Error for DecomposeError {}
 
 // ---------------------------------------------------------------------------
-// decompose_query — split into mechanical part + discretionary hole
+// decompose_query - split into mechanical part + discretionary hole
 // ---------------------------------------------------------------------------
 
 /// Decompose an open-world query into a bounded-depth mechanical traversal
@@ -334,7 +334,7 @@ pub fn decompose_query(
 }
 
 // ---------------------------------------------------------------------------
-// validate_envelope — check that an oracle envelope is consistent with a query
+// validate_envelope - check that an oracle envelope is consistent with a query
 // ---------------------------------------------------------------------------
 
 /// Validate that an [`OracleEnvelope`] is structurally consistent with an

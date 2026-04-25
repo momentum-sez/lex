@@ -1,10 +1,13 @@
-# Lex Language Reference
+# Lex Language Spec
 
 Lex is a dependently-typed logic for encoding administrative and regulatory
 compliance rules. A Lex rule is a program: it has a type, it accepts
 structured inputs, it produces a verdict, and the verdict carries a
 machine-checkable proof that every intermediate obligation was discharged
 by a named decision procedure.
+
+This file is an explanatory overview. The executable boundary is canonical in
+`docs/language-reference.md`.
 
 Four primitives make Lex distinct. **Defeasibility**: rules override other
 rules by explicit numeric priority on a DAG; *lex specialis* and *lex
@@ -15,15 +18,16 @@ reverse is not expressible. **Authority-relative interpretation**: the same
 rule text can produce different verdicts under different tribunals, and
 crossing between tribunals requires an explicit bridge witness.
 **Typed discretion holes**: a hole `? : T @ Authority` marks the precise
-point where machine derivation halts and human judgment begins; the hole
-has a type, names the authority entitled to fill it, and appears in every
-proof.
+point where machine derivation halts and human judgment begins. In the current
+repository this is a full-calculus/frontier construct: the parser and
+elaborator preserve it, the main checker rejects it, and the frontier
+`core_calculus` module models the typed hole and fill records.
 
 A Lex program is a closed term in the core calculus. The typing judgment
 is `Γ ⊢ e : T ! E`, where `Γ` is the context, `T` is the result type, and
 `E` is the effect row. Effects track `read`, `write(scope)`,
 `attest(authority)`, `oracle(ref)`, `discretion(authority)`, `fuel(level,
-amount)`, and the distinguished `sanctions_query` — a privileged effect
+amount)`, and the distinguished `sanctions_query` - a privileged effect
 whose presence cannot be overridden by any tribunal or exception.
 
 A small but complete rule, the Seychelles International Business Companies
@@ -41,20 +45,23 @@ end
 
 The same program constructed as a Rust AST appears in
 `crates/lex-core/examples/hello-lex.rs`. The example runs the full
-pipeline — De Bruijn indexing, temporal stratification, type checking,
+pipeline - De Bruijn indexing, temporal stratification, type checking,
 obligation extraction, decision-procedure discharge, certificate assembly
-— and prints the intermediate result of each stage.
+- and prints the intermediate result of each stage.
 
 Three design properties structure the calculus beyond the four primitives.
 **Fuel-typed fibers**: every evaluation carries a finite budget, and the
-verdict `Indeterminate` (fuel exhausted) is a proper outcome of the
-calculus rather than a timeout exception. **Principle conflict calculus**:
+meta-result `Indeterminate` (fuel exhausted) is a proper typed evaluation
+status rather than a timeout exception; it is outside the paper's
+five-element `ComplianceVerdict` lattice and must be re-queried at a higher
+horizon before a compliance verdict is certified. **Principle conflict calculus**:
 principles balance on an acyclic priority DAG indexed by
 `(PrincipleId, CaseCategory)`; cycles are detected at load time.
-**Admissible fragment**: a syntactic restriction of the full calculus for
-which type-checking is decidable; recursion, sigma types, and unfilled
-holes are excluded from the admissible fragment and rejected by
-`typecheck::check_admissibility`.
+**Admissible fragment**: a syntactic restriction of the full calculus whose
+executable checker is implemented in Rust; recursion, sigma types, unfilled
+holes, hole fills, modal forms, temporal coercions, principle balancing, and
+unresolved content references are rejected by `typecheck::check_admissibility`
+or the bidirectional checker.
 
 ## Grammar
 
@@ -114,12 +121,19 @@ prelude types (`ComplianceVerdict`, `Bool`, `Nat`, `SanctionsResult`,
 `ComplianceTag`) all satisfy the latter condition, which is why the
 practical rule suites fall inside the admissible fragment.
 
-The admissible-fragment decidability theorem is mechanized in
-`formal/coq/LexCore.v` and `formal/lean/LexCore.lean`. The three theorems
-still declared as admitted — principle-balancing termination
-(Tarjan SCC), certificate well-formedness (WellFormedDC predicate), and
-oracle boundedness (axiomatic declared contract) — have their proof
-strategies recorded in `formal/README.md`.
+The scaffold-level `is_admissible` Boolean is proved decidable in
+`formal/coq/LexCore.v` and `formal/lean/LexCore.lean`. This is not the
+paper-level admissible-fragment theorem. The full paper-level decidability
+claim still depends on the full-calculus metatheory for conversion,
+confluence, preservation, and match exhaustiveness. The administrative WHNF
+kernel `administrative_whnf_bounded_reduction` is Qed-closed in
+`formal/coq/Lex/PaperMechanization.v`. The same file also closes
+`administrative_whnf_sufficient_fuel` and
+`administrative_whnf_canonical_bound_reduction`, which expose the reusable
+fuel-bound form: any fuel at least `whnf_head_steps(t)`, including the
+canonical `term_size(t) + let_depth(t)` bound, reaches a WHNF value for the
+typed administrative weak-head fragment. See `formal/README.md` for the exact
+frontier.
 
 ## Effects and the privilege-creep prevention rule
 
@@ -148,9 +162,11 @@ A hole has three named fields:
 - **Scope.** An optional `ScopeConstraint` restricting the fill to a
   jurisdiction, entity class, time window, or corridor.
 
-A hole is filled by a `HoleFill` whose signer is verified against the
-hole's authority. The filled term is content-addressed; the content
-address appears in the certificate as part of the proof record.
+A hole fill is a full-calculus/frontier object. The shipped checker rejects
+`HoleFill`. The Rust frontier API records a PCAuth-shaped witness and performs
+a structural signer-key precheck; full cryptographic verification, revocation
+checking, delegation-chain checking, and checker-visible effect discharge are
+not wired into the executable admissible checker.
 
 ## Certificate
 
@@ -165,13 +181,56 @@ certificate is `CanonicalBytes`-serializable and Ed25519-signable.
 Lex is the rule and proof layer. Op (`github.com/momentum-sez/op`) is the
 operational effect language that performs the state transitions Lex admits.
 Lex decides whether a transition is permitted; Op executes the transition
-and emits syscalls against a kernel. The two languages share effect rows
+and emits calls against its execution host. The two languages share effect rows
 and the proof-summary layer.
+
+This repository does not currently ship a production Lex-owned `compile_to_op`
+entry point. The public companion Op repository carries the executable
+Lex-to-Op compiler surface and finite Coq verdict-agreement scaffolds for its
+admissible skeleton. Lex's public obligation is to state the source-side
+contract precisely enough that such a compiler can be accepted or rejected
+without reinterpreting Lex semantics.
+
+The intended Lex-to-Op admission envelope must bind, at minimum:
+
+- the elaborated Lex source digest and rule-pack digest;
+- the Lex certificate or proof-summary digest, including open obligations;
+- the compiled Op payload digest;
+- the input context digest and typed payload schema digest;
+- the four-tuple authority for the rule decision;
+- the compiler version digest and Op primitive-registry digest;
+- the effect row and subject-indexed capability row, including freshness
+  requirements;
+- the gas schedule and any cardinality / bounded-search certificate digest;
+- the PCAuth entries for filled discretion holes, each bound to the exact hole,
+  value, scope, pack digest, context digest, and payload digest;
+- the lists of failed, deferred, or host-required predicates.
+
+Admission is fail-closed: any digest mismatch, untyped payload, unbound
+primitive, non-empty failed predicate list, unverifiable receipt, missing
+capability, stale authority, unaccepted hole fill, or exhausted bounded-search
+certificate prevents the Op payload from being treated as Lex-authorized.
+
+The compiler domain is narrower than the surface language. The current target
+domain is the executable admissible core plus only those frontier constructs
+with an explicit lowering and certificate rule. `Rec`, `Sigma`, modal forms,
+temporal coercions, unresolved content references, open holes, and unchecked
+hole fills remain outside the admitted compiler domain. Filled holes become
+admissible only after the checker can verify the PCAuth payload and record the
+effect/capability discharge in the certificate.
+
+The adequate compiler theorem should state: if a Lex term is in the admitted
+domain, the compiler emits a type-checked Op payload, and the admission
+envelope is exact, then Op execution preserves the Lex verdict, does not
+expand the Lex effect or capability rows, preserves extracted obligations, and
+is replay-protected by the bound digests. The reverse direction, full
+abstraction over arbitrary Op contexts, and paper-level adequacy for the full
+calculus remain open obligations.
 
 ## See also
 
-- `README.md` — public entry point with design-property summary.
-- `docs/getting-started.md` — 5-minute cold-clone walk-through.
-- `crates/lex-core/examples/hello-lex.rs` — end-to-end runnable example.
-- `formal/coq/LexCore.v`, `formal/lean/LexCore.lean` — mechanized proofs.
-- `docs/frontier-work/08-lex-core-calculus.md` — in-progress calculus extensions.
+- `README.md` - public entry point with design-property summary.
+- `docs/getting-started.md` - 5-minute cold-clone walk-through.
+- `crates/lex-core/examples/hello-lex.rs` - end-to-end runnable example.
+- `formal/coq/LexCore.v`, `formal/lean/LexCore.lean` - mechanized proofs.
+- `docs/frontier-work/08-lex-core-calculus.md` - in-progress calculus extensions.

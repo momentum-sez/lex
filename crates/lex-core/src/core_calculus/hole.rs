@@ -1,4 +1,4 @@
-//! Commitment 4 — Typed discretion holes (HEADLINE PRIMITIVE).
+//! Commitment 4 - Typed discretion holes (HEADLINE PRIMITIVE).
 //!
 //! A typed discretion hole is a first-class term `? : T @ Authority` marking
 //! the precise point where mechanical computation must halt and human
@@ -6,10 +6,9 @@
 //! discretion hole is NOT a missing implementation. It is the formal
 //! boundary between computable predicates and judgment-requiring standards.
 //!
-//! Lex makes the distinction visible in the type system so that AI agents
-//! can navigate it safely. The agent evaluates everything the type system
-//! permits, then halts at exactly the points where the law demands human
-//! judgment.
+//! Lex makes the distinction visible in the type system. Evaluation proceeds
+//! through the mechanically typed region and suspends exactly where the law
+//! demands human judgment.
 //!
 //! See `docs/frontier-work/08-lex-core-calculus.md` §4 for the three worked
 //! examples:
@@ -23,16 +22,16 @@ use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
 // ---------------------------------------------------------------------------
-// Authority — who may fill a hole
+// Authority - who may fill a hole
 // ---------------------------------------------------------------------------
 
 /// An authority authorized to fill a discretion hole.
 ///
-/// Authorities are opaque identifiers — in production they resolve to
+/// Authorities are opaque identifiers - in production they resolve to
 /// PCAuth-signed keys. The `validate` method runs a STRUCTURAL precheck
-/// only — it verifies the signer-key hash matches and that the signature
+/// only - it verifies the signer-key hash matches and that the signature
 /// bytes are non-empty. Cryptographic verification of the signature
-/// happens at the outer proof-kernel boundary via a [`PCAuthVerifier`];
+/// happens at the outer proof-checker boundary via a [`PCAuthVerifier`];
 /// the typing rule must not embed cryptographic checks directly.
 pub trait Authority {
     /// Stable identifier for this authority (used in certificates).
@@ -48,7 +47,7 @@ pub trait Authority {
 /// Verifier of cryptographic PCAuth signatures.
 ///
 /// Implementations of this trait live at the elaboration-certificate
-/// boundary — OUTSIDE the typing rule. The typing rule only asks each
+/// boundary - OUTSIDE the typing rule. The typing rule only asks each
 /// [`Authority`] for its [`Authority::validate`] structural precheck; the
 /// certificate-issuance code calls [`PCAuthVerifier::verify`] before
 /// admitting a filled hole into the proof.
@@ -68,7 +67,7 @@ pub trait PCAuthVerifier {
 ///
 /// Checks only that the signer public-key hash equals `expected_key_hash`
 /// and that the signature bytes are non-empty. Cryptographic signature
-/// verification happens at the outer proof-kernel boundary — it is
+/// verification happens at the outer proof-checker boundary - it is
 /// performed by a [`PCAuthVerifier`] at the elaboration-certificate
 /// boundary, NOT inside the typing rule.
 pub fn witness_structural_precheck(
@@ -103,14 +102,14 @@ impl Authority for NamedAuthority {
     }
 
     /// Structural precheck only. Cryptographic signature verification
-    /// happens at the outer proof-kernel boundary, not inside the typing
+    /// happens at the outer proof-checker boundary, not inside the typing
     /// rule.
     fn validate(&self, witness: &PCAuthWitness) -> Result<(), AuthorityError> {
         witness_structural_precheck(witness, &self.public_key_hash)
     }
 }
 
-/// A PCAuth witness — a signed assertion from an authorized party.
+/// A PCAuth witness - a signed assertion from an authorized party.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PCAuthWitness {
     /// Signer public key hash.
@@ -136,7 +135,7 @@ pub enum AuthorityError {
 }
 
 // ---------------------------------------------------------------------------
-// ScopeConstraint — narrowing the admissible scope of a hole
+// ScopeConstraint - narrowing the admissible scope of a hole
 // ---------------------------------------------------------------------------
 
 /// A scope constraint on a discretion hole.
@@ -162,7 +161,7 @@ impl ScopeConstraint {
 }
 
 // ---------------------------------------------------------------------------
-// HoleId — content-addressed hole identifier
+// HoleId - content-addressed hole identifier
 // ---------------------------------------------------------------------------
 
 /// A content-addressed identifier for a hole, used in the discretion frontier.
@@ -180,14 +179,14 @@ impl HoleId {
 }
 
 // ---------------------------------------------------------------------------
-// Hole — the headline primitive
+// Hole - the headline primitive
 // ---------------------------------------------------------------------------
 
 /// A typed discretion hole `? : T @ A`.
 ///
 /// `T` is the *type* of judgment demanded. `A` is the *authority* that may
-/// supply it. Both are visible in the type system — an agent statically
-/// knows what kind of filler it needs and from whom.
+/// supply it. Both are visible in the type system, so a verifier knows what
+/// kind of filler is required and from whom.
 ///
 /// Elaboration preserves holes: a term containing `Hole<T, A>` type-checks
 /// as if the hole inhabited `T`, but the verifier carries the hole forward
@@ -262,7 +261,7 @@ impl<T, A: Authority> Hole<T, A> {
 }
 
 // ---------------------------------------------------------------------------
-// HoleFill — a filled hole
+// HoleFill - a filled hole
 // ---------------------------------------------------------------------------
 
 /// A filled discretion hole.
@@ -330,7 +329,7 @@ pub struct FilledHoleRecord {
 }
 
 // ---------------------------------------------------------------------------
-// HoleContext — ambient context for hole elaboration
+// HoleContext - ambient context for hole elaboration
 // ---------------------------------------------------------------------------
 
 /// Ambient context carried by the elaborator and verifier when handling

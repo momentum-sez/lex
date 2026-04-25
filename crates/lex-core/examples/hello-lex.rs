@@ -1,4 +1,4 @@
-//! hello-lex — the smallest self-contained Lex program that exercises every
+//! hello-lex - the smallest self-contained Lex program that exercises every
 //! non-trivial primitive of the calculus.
 //!
 //! Run from the workspace root with:
@@ -8,9 +8,9 @@
 //! ```
 //!
 //! The program walks the full Lex proof pipeline on a real statute
-//! (Seychelles International Business Companies Act 2016, section 66 —
+//! (Seychelles International Business Companies Act 2016, section 66 -
 //! "A company shall have at least one director who is a natural person"),
-//! then illustrates the typed discretion hole — the primitive that makes
+//! then illustrates the typed discretion hole - the primitive that makes
 //! Lex distinct from every other rule engine.
 //!
 //! Output layout:
@@ -20,8 +20,8 @@
 //!   4. Proof-obligation extraction.
 //!   5. Obligation discharge against concrete facts.
 //!   6. Compliance-certificate assembly.
-//!   7. A typed discretion hole — the frontier between machine derivation
-//!      and human judgment — and the obligations it emits.
+//!   7. A typed discretion hole - the frontier between machine derivation
+//!      and human judgment - and the obligations it emits.
 
 use lex_core::ast::{
     AuthorityRef, Branch, Constructor, DefeasibleRule, Hole, Ident, Level, Pattern, QualIdent,
@@ -237,7 +237,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 1. Construct the AST.
     let rule = ibc_s66_rule();
-    println!("[1] AST constructed — Term::Defeasible(min_directors).");
+    println!("[1] AST constructed - Term::Defeasible(min_directors).");
 
     // 2. Assign De Bruijn indices, then run the temporal-stratification check.
     let indexed = debruijn::assign_indices(&rule)?;
@@ -282,7 +282,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match &result {
             DecisionResult::Proved { witness } => {
                 println!(
-                    "      [{:?}] proved — procedure: {}",
+                    "      [{:?}] proved - procedure: {}",
                     o.category, witness.procedure
                 );
             }
@@ -315,12 +315,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("      certificate digest: {}", cert.certificate_digest);
     println!("      issued at         : {}", cert.issued_at);
 
-    // 7. The typed discretion hole — the Lex primitive.
+    // 7. The typed discretion hole - the Lex primitive.
     println!();
     println!("[7] Typed discretion hole.");
     println!(
         "      The \"fit and proper person\" judgment is not computable. Lex\n\
-         \x20     marks it with a hole — a typed value slot that names the\n\
+         \x20     marks it with a hole - a typed value slot that names the\n\
          \x20     authority authorized to fill it and the scope in which the\n\
          \x20     judgment applies."
     );
@@ -340,6 +340,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
     println!("Done. Lex admitted the machine-computable part, flagged the");
     println!("human-judgment part, and emitted a content-addressed");
-    println!("certificate that can be signed and submitted to a kernel.");
+    println!("certificate that can be signed and submitted to an execution host.");
     Ok(())
 }

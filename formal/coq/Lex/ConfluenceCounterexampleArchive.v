@@ -1,4 +1,4 @@
-(** * Lex/ConfluenceCounterexampleArchive.v — Archived B4 refutation content
+(** * Lex/ConfluenceCounterexampleArchive.v - Archived B4 refutation content
  *
  * ARCHIVE STATUS: G1 supplanted this file with a positive parallel-
  * reduction scaffold (Confluence.v in trunk).  This archive preserves
@@ -14,7 +14,7 @@
  * Original file header follows.
  *)
 
-(** * Lex/Confluence.v — Confluence analysis for the Lex step relation
+(** * Lex/Confluence.v - Confluence analysis for the Lex step relation
 
     STATUS SUMMARY (read before any "why wasn't this closed" question):
 
@@ -24,12 +24,12 @@
         forall t u1 u2, steps t u1 -> steps t u2 ->
                         exists v, steps u1 v /\ steps u2 v.
 
-    For the [step] inductive in [Typing.v] this statement is
-    DEMONSTRABLY FALSE.  The calculus has a congruence rule
-    [step_app_arg] that permits argument reduction BEFORE a
-    [step_beta], but it has NO congruence under binders (no
+    For the pre-G1 [step] inductive, this statement was
+    DEMONSTRABLY FALSE.  That historical relation had a congruence
+    rule [step_app_arg] that permitted argument reduction BEFORE a
+    [step_beta], but it had NO congruence under binders (no
     reduction under [Lambda], [Pi], [Let], etc.).  This asymmetry
-    creates genuinely non-joinable divergences inside well-typed
+    created genuinely non-joinable divergences inside well-typed
     terms.
 
     A concrete counterexample is proven below as
@@ -46,16 +46,19 @@
         t → Lambda T' (App (Var 1) (Var 0))
 
       Both results are values (Lambda _ _), so neither steps further,
-      and they are syntactically distinct — no joint reduct exists.
+      and they are syntactically distinct - no joint reduct exists.
 
-    Hence [confluence_property] cannot be closed with [Qed].  Any
-    claim of a full Qed-closed confluence would be a bug.
+    Hence [confluence_property] could not be closed with [Qed] for
+    that historical relation.  The trunk relation has since been
+    repaired with binder congruence and is developed positively in
+    [Confluence.v]; the full diamond/confluence theorem remains an
+    open named obligation there.
 
     STRUCTURE OF THIS FILE:
 
-    Section 1: [confluence_property_refuted] — a Qed-closed proof
+    Section 1: [confluence_property_refuted] - a Qed-closed proof
                that the full Church-Rosser property is false for the
-               current [step] relation.  This forecloses any
+               archived pre-G1 [step] relation.  This forecloses any
                well-intentioned later attempt to mechanically close
                the false statement.
 
@@ -68,28 +71,28 @@
                value constructors).  [~ conv_eq (TSort s) (Pi _ _ _)]
                and friends.
 
-    Section 4: Degenerate [confluence_values_only] corollary —
+    Section 4: Degenerate [confluence_values_only] corollary -
                Qed-trivial, documents the restricted form we can close.
 
     Section 5: Untypability of [Var] / [Constant] in the empty context
                (Qed-closed, copied from the skeleton for a
                self-contained Confluence.v).
 
-    Section 6: The downstream target — [canonical_forms_pi_under_confluence_at_values].
+    Section 6: The downstream target - [canonical_forms_pi_under_confluence_at_values].
                This is the canonical-forms lemma stated under the
                STRICTLY WEAKER hypothesis [confluence_at_values]
                instead of full [confluence_property].  Going from
                full confluence to "confluence-at-values" is a real
                strengthening of the development: the full
                confluence statement is false, but
-               confluence-at-values may still be true for this
-               calculus (we conjecture it holds, though the
-               counterexample above refutes full confluence).
+               confluence-at-values may still be true for that
+               historical calculus (we conjectured it held, though
+               the counterexample above refuted full confluence).
 
                The downstream skeleton can be refactored to thread
                [confluence_at_values] instead of [confluence_property]
                through [canonical_forms_pi] / [progress] / etc.,
-               giving a cleaner (and actually-provable) dependency.
+               giving a cleaner dependency with a direct proof target.
 
     What this file does NOT do:
       - It does NOT close [confluence_property] itself.  That
@@ -112,7 +115,7 @@ Require Import Lex.DeBruijn.
 Require Import Lex.Typing.
 
 (* ================================================================== *)
-(** ** Section 1: The counterexample — why confluence_property fails   *)
+(** ** Section 1: The counterexample - why confluence_property fails   *)
 (* ================================================================== *)
 
 (** We exhibit a concrete term [CE_t] and two step-paths that
@@ -129,13 +132,13 @@ Require Import Lex.Typing.
     and hence deterministic. *)
 
 (** The outer Lambda body, under one binder.  Its body is an inner
-    Lambda that references [Var 1] (the outer binding) — giving a
+    Lambda that references [Var 1] (the outer binding) - giving a
     free occurrence of the outer argument under a binder. *)
 Definition CE_outer_body : Term :=
   Lambda (Var 0) (App (Var 1) (Var 0)).
 
 (** The outer Lambda itself.  The domain is irrelevant for the
-    counterexample — we use [Var 0] as a placeholder. *)
+    counterexample - we use [Var 0] as a placeholder. *)
 Definition CE_outer : Term :=
   Lambda (Var 0) CE_outer_body.
 
@@ -199,7 +202,7 @@ Proof.
   unfold CE_u2, CE_outer_body. simpl. constructor.
 Qed.
 
-(** The two reducts are syntactically distinct — their Lambda
+(** The two reducts are syntactically distinct - their Lambda
     bodies embed different substituted arguments (Annot-wrapped vs
     stripped).  We prove this by exhibiting [CE_u1] and [CE_u2] in
     a form that [simpl] reduces and then discriminating. *)
@@ -375,7 +378,7 @@ Qed.
 
 (** These "pigeon" lemmas rule out two distinct value constructors
     standing in a [conv_eq] relation.  They do NOT require
-    confluence — both sides are already values, so [conv_eq] forces
+    confluence - both sides are already values, so [conv_eq] forces
     equality, and equality rules out cross-constructor cases by
     simple discrimination. *)
 
@@ -438,7 +441,7 @@ Proof.
 Qed.
 
 (* ================================================================== *)
-(** ** Section 4: Confluence for values (degenerate — Qed-trivial)     *)
+(** ** Section 4: Confluence for values (degenerate - Qed-trivial)     *)
 (* ================================================================== *)
 
 (** The "types only" fallback from the task prompt, specialised to
@@ -485,7 +488,7 @@ Proof.
 Qed.
 
 (* ================================================================== *)
-(** ** Section 6: Confluence-at-values — a WEAKER, SEPARATELY TRACKED  *)
+(** ** Section 6: Confluence-at-values - a WEAKER, SEPARATELY TRACKED  *)
 (** **            hypothesis that suffices for canonical_forms_pi      *)
 (* ================================================================== *)
 
@@ -508,7 +511,7 @@ Definition confluence_at_values : Prop :=
 
 (** Is [confluence_at_values] consistent with our counterexample?
 
-    Yes — the counterexample [CE_t] terminates at TWO distinct
+    Yes - the counterexample [CE_t] terminates at TWO distinct
     values [CE_u1] and [CE_u2].  So [confluence_at_values] is ALSO
     FALSE for this [step] relation.  We prove this below, for
     symmetry with [confluence_property_refuted]. *)
@@ -526,7 +529,7 @@ Qed.
 (** Corollary: even the weaker [confluence_at_values] is not
     Qed-closable for this calculus.  Both [confluence_property] and
     [confluence_at_values] can only be recovered by changing the
-    [step] relation — either by adding congruence rules under
+    [step] relation - either by adding congruence rules under
     binders (closing the joinability of the divergent paths) or by
     removing [step_app_arg] (making reduction strictly head-directed
     and hence deterministic). *)
@@ -555,7 +558,7 @@ Qed.
           downstream uses, so the only remaining dependency is the
           confluence-at-values hypothesis itself.
 
-    The Section wrapper makes the hypothesis explicit — anyone
+    The Section wrapper makes the hypothesis explicit - anyone
     importing the theorem must either supply the hypothesis or
     accept that the theorem is conditional. *)
 
@@ -695,9 +698,9 @@ End CanonicalFormsPiUnderConfluenceAtValues.
          [step_app_arg] so reduction is strictly head-directed.)
       2. Re-verify that [confluence_property_refuted] still holds.
          If the counterexample is closed by the new congruence
-         rules, the counterexample proof will fail — that is the
+         rules, the counterexample proof will fail - that is the
          signal to delete it and prove [confluence_property]
-         directly via Tait–Martin-Löf parallel reduction.
+         directly via Tait-Martin-Löf parallel reduction.
       3. Discharge [Hconf_values] from
          [canonical_forms_pi_under_confluence_at_values] and make
          the theorem unconditional.

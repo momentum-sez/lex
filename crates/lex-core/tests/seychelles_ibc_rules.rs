@@ -6,7 +6,7 @@
 //! 2. Temporal stratification (no Time₀/Time₁ mixing)
 //! 3. Pretty printing (human-readable output)
 //!
-//! These are the first real laws to flow through the proof kernel.
+//! These are the first real laws to flow through the proof checker.
 
 use lex_core::ast::*;
 use lex_core::debruijn;
@@ -92,7 +92,7 @@ fn defeasible(name: &str, ty: Term, body: Term, exceptions: Vec<Exception>) -> T
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.66 — Minimum directors
+// IBC Act s.66 - Minimum directors
 // ---------------------------------------------------------------------------
 
 /// IBC Act s.66: Every IBC shall have at least one director.
@@ -131,20 +131,20 @@ fn ibc_s66_minimum_directors() {
 
     // Pipeline: assign indices → temporal check → pretty print
     let indexed = debruijn::assign_indices(&rule).expect("index assignment should succeed");
-    temporal::check_temporal_stratification(&indexed).expect("no temporal terms — should pass");
+    temporal::check_temporal_stratification(&indexed).expect("no temporal terms - should pass");
     // Rule survives the full pipeline: well-scoped + temporally stratified
     let _ = &indexed; // indexed term is ready for type checking
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.92 — Registered agent mandatory
+// IBC Act s.92 - Registered CSP mandatory
 // ---------------------------------------------------------------------------
 
-/// IBC Act s.92: Every IBC must appoint a licensed CSP as registered agent.
+/// IBC Act s.92: Every IBC must appoint a licensed CSP.
 #[test]
-fn ibc_s92_registered_agent() {
+fn ibc_s92_registered_csp() {
     let rule = defeasible(
-        "registered_agent",
+        "registered_csp",
         pi(
             "ctx",
             constant("IncorporationContext"),
@@ -154,15 +154,15 @@ fn ibc_s92_registered_agent() {
             "ctx",
             constant("IncorporationContext"),
             match_expr(
-                app(constant("registered_agent"), var("ctx", 0)),
+                app(constant("registered_csp"), var("ctx", 0)),
                 constant("ComplianceVerdict"),
                 vec![
                     branch("None", &[], constant("NonCompliant")),
                     branch(
                         "Some",
-                        &["agent"],
+                        &["service_provider"],
                         match_expr(
-                            app(constant("csp_license_status"), var("agent", 0)),
+                            app(constant("csp_license_status"), var("service_provider", 0)),
                             constant("ComplianceVerdict"),
                             vec![
                                 branch("Active", &[], constant("Compliant")),
@@ -179,12 +179,12 @@ fn ibc_s92_registered_agent() {
     );
 
     let indexed = debruijn::assign_indices(&rule).expect("index assignment should succeed");
-    temporal::check_temporal_stratification(&indexed).expect("no temporal terms — should pass");
+    temporal::check_temporal_stratification(&indexed).expect("no temporal terms - should pass");
     let _ = &indexed;
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.12(3) — Name ending requirement
+// IBC Act s.12(3) - Name ending requirement
 // ---------------------------------------------------------------------------
 
 /// IBC Act s.12(3): The name of an IBC must end with an approved suffix.
@@ -220,7 +220,7 @@ fn ibc_s12_name_ending() {
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.55 — Registered office location
+// IBC Act s.55 - Registered office location
 // ---------------------------------------------------------------------------
 
 /// IBC Act s.55: Registered office must be at CSP's office in Seychelles.
@@ -289,7 +289,7 @@ fn ibc_s2_entity_type() {
 }
 
 // ---------------------------------------------------------------------------
-// No minimum capital (IBC Act — absence of requirement)
+// No minimum capital (IBC Act - absence of requirement)
 // ---------------------------------------------------------------------------
 
 /// IBCs have no minimum capital requirement. Always Compliant.
@@ -336,7 +336,7 @@ fn aml_kyc_with_de_minimis_exception() {
         ),
         vec![
             // De minimis exception: parent entity KYC satisfies individual requirement.
-            // The exception guard is a standalone lambda — ctx is not in scope from the
+            // The exception guard is a standalone lambda - ctx is not in scope from the
             // base rule. The exception binds its own ctx parameter.
             Exception {
                 guard: Box::new(lam(
@@ -365,7 +365,7 @@ fn aml_kyc_with_de_minimis_exception() {
 // ---------------------------------------------------------------------------
 
 /// Sanctions screening with sanctions_query effect.
-/// This rule carries an effect annotation — it's not a pure computation.
+/// This rule carries an effect annotation - it's not a pure computation.
 #[test]
 fn sanctions_screening_with_effect() {
     let rule = Term::Lambda {
@@ -387,7 +387,7 @@ fn sanctions_screening_with_effect() {
     };
 
     let indexed = debruijn::assign_indices(&rule).expect("should succeed");
-    temporal::check_temporal_stratification(&indexed).expect("should pass — no temporal terms");
+    temporal::check_temporal_stratification(&indexed).expect("should pass - no temporal terms");
     let _ = &indexed;
 }
 
@@ -508,7 +508,7 @@ fn all_rules_serde_roundtrip() {
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.135 — Annual return filing deadline
+// IBC Act s.135 - Annual return filing deadline
 // ---------------------------------------------------------------------------
 
 /// IBC Act s.135: Annual return must be filed within 30 days of anniversary.
@@ -543,14 +543,14 @@ fn ibc_s135_annual_return_deadline() {
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.94 — Change of registered agent notification
+// IBC Act s.94 - Change of registered CSP notification
 // ---------------------------------------------------------------------------
 
-/// IBC Act s.94: Change of registered agent must be notified within 14 days.
+/// IBC Act s.94: Change of registered CSP must be notified within 14 days.
 #[test]
-fn ibc_s94_registered_agent_change_notice() {
+fn ibc_s94_registered_csp_change_notice() {
     let rule = defeasible(
-        "registered_agent_change_notice",
+        "registered_csp_change_notice",
         pi(
             "ctx",
             constant("IncorporationContext"),
@@ -561,7 +561,7 @@ fn ibc_s94_registered_agent_change_notice() {
             constant("IncorporationContext"),
             match_expr(
                 app(
-                    constant("registered_agent_change_notice_status"),
+                    constant("registered_csp_change_notice_status"),
                     var("ctx", 0),
                 ),
                 constant("ComplianceVerdict"),
@@ -581,7 +581,7 @@ fn ibc_s94_registered_agent_change_notice() {
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.30 — Share transfer restrictions
+// IBC Act s.30 - Share transfer restrictions
 // ---------------------------------------------------------------------------
 
 /// IBC Act s.30: Share transfers require board approval unless articles provide otherwise.
@@ -628,7 +628,7 @@ fn ibc_s30_share_transfer_restrictions() {
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.155 — Dissolution by shareholder resolution
+// IBC Act s.155 - Dissolution by shareholder resolution
 // ---------------------------------------------------------------------------
 
 /// IBC Act s.155: Voluntary dissolution requires a 75% special resolution.
@@ -664,7 +664,7 @@ fn ibc_s155_dissolution_special_resolution() {
 }
 
 // ---------------------------------------------------------------------------
-// Economic Substance Act 2018 — Economic substance requirement
+// Economic Substance Act 2018 - Economic substance requirement
 // ---------------------------------------------------------------------------
 
 /// Economic Substance Act 2018: Relevant activity requires satisfied substance.
@@ -710,7 +710,7 @@ fn economic_substance_requirement() {
 }
 
 // ---------------------------------------------------------------------------
-// VASP Act 2024 — VASP licensing requirement
+// VASP Act 2024 - VASP licensing requirement
 // ---------------------------------------------------------------------------
 
 /// VASP Act 2024: Digital asset business requires an active VASP licence.
@@ -756,7 +756,7 @@ fn vasp_licensing_requirement() {
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.131 — Accounting records retention
+// IBC Act s.131 - Accounting records retention
 // ---------------------------------------------------------------------------
 
 /// IBC Act s.131: Accounting records must be retained for at least 7 years.
@@ -794,7 +794,7 @@ fn ibc_s131_accounting_records_retention() {
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.72 — Director disclosure of interest
+// IBC Act s.72 - Director disclosure of interest
 // ---------------------------------------------------------------------------
 
 /// IBC Act s.72: Directors must disclose material interests in transactions.
@@ -839,7 +839,7 @@ fn ibc_s72_director_disclosure_of_interest() {
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.24 — Prohibition on bearer shares
+// IBC Act s.24 - Prohibition on bearer shares
 // ---------------------------------------------------------------------------
 
 /// IBC Act s.24: Bearer shares are prohibited for Seychelles IBCs.
@@ -874,7 +874,7 @@ fn ibc_s24_bearer_shares_prohibited() {
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.178 — Annual licence fee payment
+// IBC Act s.178 - Annual licence fee payment
 // ---------------------------------------------------------------------------
 
 /// IBC Act s.178: Annual licence fee must be paid to the FSA each year.
@@ -909,7 +909,7 @@ fn ibc_s178_annual_license_fee_payment() {
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.11 — Minimum shareholder/member
+// IBC Act s.11 - Minimum shareholder/member
 // ---------------------------------------------------------------------------
 
 /// IBC Act s.11: Every IBC shall have at least one shareholder/member.
@@ -943,7 +943,7 @@ fn ibc_s11_minimum_shareholder() {
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.5 — Restrictions on local business
+// IBC Act s.5 - Restrictions on local business
 // ---------------------------------------------------------------------------
 
 /// IBC Act s.5: IBCs are prohibited from conducting business with persons resident in Seychelles.

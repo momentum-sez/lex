@@ -1,4 +1,4 @@
-(** * Lex/Requirements.v — Requirements index for [progress] and [preservation]
+(** * Lex/Requirements.v - Requirements index for [progress] and [preservation]
 
     This file enumerates the auxiliary lemmas that must be proven
     before [preservation_property] and [progress_property] in
@@ -23,7 +23,7 @@
 
     Previous versions of this file contained P → P tautologies of
     the form [Lemma req_X : P → P. Proof. intros ... H. exact H. Qed.]
-    — these have been removed.  A tautology does not record an
+    - these have been removed.  A tautology does not record an
     obligation any better than a named [Prop] Definition does, and
     gives a false impression of progress by inflating the Qed
     count.  This file now only names the real specifications and
@@ -65,7 +65,7 @@ Qed.
 (** [shift_subst_commute_ws]: substitution commutes with shifting
     under the [well_scoped (S i) t] premise.
 
-    The naive unconditional form is FALSE — refuted by
+    The naive unconditional form is FALSE - refuted by
     [shift_subst_commute_not_unconditional] in [DeBruijn.v]
     (concrete 4-term counterexample).
 
@@ -90,7 +90,7 @@ Qed.
 (** [subst_subst_ws]: substitution composes under the
     [well_scoped (S i) t] premise.
 
-    The naive form with [subst (i - j) s r] is FALSE — refuted by
+    The naive form with [subst (i - j) s r] is FALSE - refuted by
     [subst_subst_not_unconditional] in [DeBruijn.v].  The corrected
     form uses [subst i s r] and is captured as
     [subst_subst_ws_spec] in [DeBruijn.v], now Qed-closed there as
@@ -162,6 +162,28 @@ Proof.
   exact progress.
 Qed.
 
+(** Stronger progress route: a checker-produced
+    [match_coverage_property] certificate implies the older
+    [match_exhaustiveness_property] premise and therefore suffices
+    for progress. *)
+Theorem req_progress_from_match_coverage :
+  confluence_property -> match_coverage_property -> req_progress.
+Proof.
+  unfold req_progress.
+  exact progress_from_match_coverage.
+Qed.
+
+(** Constructive certificate route: a checker-produced
+    [match_coverage_certificate_property] either supplies wildcard coverage
+    or a finite constructor environment for each well-typed match.  This
+    implies [match_coverage_property] and therefore suffices for progress. *)
+Theorem req_progress_from_match_coverage_certificate :
+  confluence_property -> match_coverage_certificate_property -> req_progress.
+Proof.
+  unfold req_progress.
+  exact progress_from_match_coverage_certificate.
+Qed.
+
 (** [has_type_well_scoped]: if [has_type ctx t T] then [t] is
     well-scoped at [length ctx].  Qed-closed in [Typing.v] via
     Gallina [Fixpoint] structural recursion on the [has_type]
@@ -198,20 +220,17 @@ Definition req_weakening : Prop :=
     has_type (ctx_extend ctx A) (shift 0 1 t) (shift 0 1 T).
 
 (* ================================================================== *)
-(** ** Defeasible/Match progress — definitional gap                    *)
+(** ** Defeasible/Match progress - definitional gap                    *)
 (* ================================================================== *)
 
-(** Defeasible and Match currently lack either a [step] rule or a
-    [value] inclusion.  Progress is therefore FALSE for closed
-    well-typed Defeasible/Match terms under the current
-    definitions.  Resolution requires a definitional fix in
-    [Typing.v]: either extend [value] to include them, or add step
-    rules, or restrict progress to the admissible fragment that
-    excludes them.
+(** Defeasible and Match now have operational [step] rules in [Typing.v].
+    The remaining progress frontier is the global premise package needed
+    to rule out stuck matches: confluence and match exhaustiveness for
+    well-typed admissible scrutinees.
 
-    These are captured as [Prop]-level obligations conditional on
-    whichever definitional fix is chosen; the statements are
-    intentionally minimal. *)
+    These are captured as [Prop]-level obligations so the executable
+    checker can name the exact frontier without importing unfinished
+    metatheory as an admitted theorem. *)
 Definition req_defeasible_progress_decision : Prop :=
   forall (base_ty base_body : Term) (exns : list Exception) (T : Term),
     has_type nil (Defeasible base_ty base_body exns) T ->
@@ -238,8 +257,9 @@ Definition req_match_progress_decision : Prop :=
     exists t', step (Match scr ret branches) t'.
 
 (** B3 resolved the Match progress decision via operational step
-    rules ([step_match_scrutinee], [step_match_empty],
-    [step_match_wild], [step_match_ctor_fire], [step_match_ctor_skip]).
+    rules ([step_match_scrutinee], [step_match_wild],
+    [step_match_ctor_fire], [step_match_ctor_skip]); the empty-branch
+    case is excluded by [T_Match]'s nonempty premise.
     Same discharge as [req_defeasible_progress_conditional]. *)
 Theorem req_match_progress_conditional :
   confluence_property -> match_exhaustiveness_property ->
@@ -247,4 +267,12 @@ Theorem req_match_progress_conditional :
 Proof.
   intros Hconf Hexhaust scr ret branches T Hty.
   exact (progress Hconf Hexhaust _ _ Hty).
+Qed.
+
+Theorem req_match_progress_from_match_coverage_certificate :
+  confluence_property -> match_coverage_certificate_property ->
+  req_match_progress_decision.
+Proof.
+  intros Hconf Hcert scr ret branches T Hty.
+  exact (progress_from_match_coverage_certificate Hconf Hcert _ _ Hty).
 Qed.

@@ -132,7 +132,8 @@ $t \to t' \implies |t'| < |t|$, hence the image of $R$ under $|\cdot|$ is
 a subset of the well-founded relation $<$. A standard lifting lemma
 (Nielsen and Plotkin's measure-decreasing well-foundedness, or König's
 lemma applied to the finitely branching reduction graph bounded above by
-$|t|$) yields well-foundedness of $R$. Strong normalization follows.
+$|t|$) yields well-foundedness of $R$. Strong normalization follows. In the
+Coq file this is the theorem `flat_admissible_sn_ext`.
 
 ## Corollary (bounded reduction chain length)
 
@@ -140,7 +141,10 @@ Because every step strictly decreases size and size is a non-negative
 integer, any reduction chain $t_0 \to t_1 \to \cdots \to t_k$ satisfies
 $k \leq |t_0| - 1$. The evaluator's fuel counter in
 `crates/lex-core/src/evaluate.rs` therefore serves as a correct
-operational bound for all FAdm-shaped rules.
+operational bound for all FAdm-shaped rules. The named mechanized corollary
+`nonempty_reduction_chain_strictly_decreases` records the strict decrease for
+every non-empty transitive reduction chain; the length bound is the arithmetic
+iteration of that corollary.
 
 ## Scope and boundary with the full admissible fragment
 
@@ -151,7 +155,7 @@ value substitution (ζ), match on finite constructor tags (μ), defeasible
 rules on a value base with either empty or non-empty exception lists (δ₀
 and δ_k), and affine lambdas under call-by-value β. Pi types, modals,
 recursion, content-addressed references, and typed discretion holes are
-excluded — paper §5 excludes these from admissibility and the exclusion
+excluded - paper §5 excludes these from admissibility and the exclusion
 is the premise of the SN statement above, not a gap in the proof.
 
 **Affineness and its role.** The β rule fires only when the lambda body
@@ -163,8 +167,11 @@ priori which lambda bodies are affine; the affineness restriction is
 therefore a sub-fragment of the paper's full admissible grammar, and it
 captures the compliance-code idiom in which a lambda argument is used
 once. Dropping affineness requires a reducibility-candidates argument
-standard for simply-typed λ-calculus (Girard–Tait) and is scoped to a
-follow-up mechanization.
+standard for simply-typed λ-calculus (Girard-Tait). `formal/coq/NonAffineSN.v`
+now closes the reusable CR3 kernel
+`non_affine_neutral_expansion_kernel`; the remaining obligation is the
+fundamental lemma that connects `Typed` derivations, environments,
+substitution, and the reducibility predicate `Red`.
 
 **What remains excluded:**
 
@@ -174,9 +181,9 @@ follow-up mechanization.
   discretion holes.* Explicitly excluded from admissibility in paper §5;
   their exclusion is a premise of SN, not a gap.
 
-The remaining open metatheory — preservation and progress, confluence,
+The remaining open metatheory - preservation and progress, confluence,
 and SN for the full fragment with recursion admitted under structural
-guards — is the research agenda named in paper §11.
+guards - is the research agenda named in paper §11.
 
 ## Verification
 
@@ -184,5 +191,5 @@ guards — is the research agenda named in paper §11.
 Rocq 9.1+. `Print Assumptions flat_admissible_sn_ext.` reports `Closed
 under the global context`: the proof uses no axioms beyond the stdlib's
 standard inductive/well-foundedness constructions. The same holds for
-`flat_admissible_sn`, `step_decreases_size`, `subst_size`, and
-`subst_size_affine`.
+`flat_admissible_sn`, `step_decreases_size`, `subst_size`,
+`subst_size_affine`, and `nonempty_reduction_chain_strictly_decreases`.

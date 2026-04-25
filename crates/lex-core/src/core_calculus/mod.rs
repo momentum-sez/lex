@@ -3,7 +3,7 @@
 //! Strongly-typed encoding of the nine PLATONIC-IDEAL §5.1 commitments.
 //!
 //! This module is a narrow waist between the Lex surface language (AST,
-//! parser, elaborator, typechecker in the parent crate) and the proof kernel.
+//! parser, elaborator, typechecker in the parent crate) and the proof checker.
 //! Each submodule corresponds to one commitment. See
 //! `docs/frontier-work/08-lex-core-calculus.md` for the design and
 //! `docs/language-reference.md` for the canonical public scope statement.
@@ -21,8 +21,9 @@
 //! | 9 | Formal scaffold (out-of-tree)          | `formal/`       |
 //!
 //! The module is **opt-in**: nothing in the existing Lex pipeline depends on
-//! it yet. Downstream consumers (kernel crates, proof assistants, agents) may
-//! import this module to obtain the strongly-typed narrow waist.
+//! it yet. Downstream consumers (runtime adapters, proof assistants, and
+//! verification runtimes) may import this module to obtain the strongly-typed
+//! narrow waist.
 //!
 //! Important boundary: typed discretion holes are executable here and in the
 //! formal scaffolds, but the shipped admissible checker in `typecheck.rs`

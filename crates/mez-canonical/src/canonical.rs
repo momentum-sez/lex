@@ -1,4 +1,4 @@
-//! # Canonical Serialization — Momentum Canonical Form (MCF)
+//! # Canonical Serialization - Momentum Canonical Form (MCF)
 //!
 //! This module defines [`CanonicalBytes`], the sole construction path for bytes
 //! used in digest computation across the Lex pipeline.
@@ -32,7 +32,7 @@ use crate::error::CanonicalizationError;
 ///
 /// MCF = RFC 8785 JCS + float rejection + datetime normalization to UTC seconds.
 ///
-/// The inner `Vec<u8>` is private — downstream code cannot construct
+/// The inner `Vec<u8>` is private - downstream code cannot construct
 /// `CanonicalBytes` except through [`CanonicalBytes::new`]. This single
 /// construction path ensures every digest in the system is computed from
 /// properly canonicalized data.
@@ -293,12 +293,12 @@ mod tests {
         assert_eq!(
             keys,
             vec!["a", "m", "z"],
-            "serde_json preserve_order is active — Map uses IndexMap not BTreeMap"
+            "serde_json preserve_order is active - Map uses IndexMap not BTreeMap"
         );
     }
 
-    // Golden vectors — must produce bytes and digests identical to the kernel
-    // tree so fibers/certificates remain byte-compatible.
+    // Golden vectors - must produce bytes and digests identical to downstream
+    // runtime trees so fibers/certificates remain byte-compatible.
     #[test]
     fn golden_empty_object() {
         let cb = CanonicalBytes::new(&json!({})).unwrap();

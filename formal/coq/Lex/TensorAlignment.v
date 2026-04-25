@@ -1,4 +1,4 @@
-(** * Lex/TensorAlignment.v — Alignment between Lex's per-coordinate 5-chain
+(** * Lex/TensorAlignment.v - Alignment between Lex's per-coordinate 5-chain
     verdict and the SJN tensor-factor (three-chain compliance grade plus
     orthogonal applicability marker) under F144.
 
@@ -36,15 +36,17 @@
 
     Together with the paper's analytic F144 proof in "The Algebra of
     Institutional Compliance", this file witnesses that the two Coq
-    mechanizations — [VerdictHeyting.v] (per-coordinate, one harbor) and
-    the SJN tensor algebra (cross-jurisdictional aggregation) — are not
+    mechanizations - [VerdictHeyting.v] (per-coordinate, one harbor) and
+    the SJN tensor algebra (cross-jurisdictional aggregation) - are not
     in conflict: they are views at different compositional levels, related
     by a projection that is meet-preserving on exactly the sub-lattice where
     both are applicable. *)
 
 Require Import Coq.Arith.PeanoNat.
+Require Import Coq.Lists.List.
 Require Import Coq.micromega.Lia.
 Require Import Lex.VerdictHeyting.
+Import ListNotations.
 
 (** ** Tensor-factor type (SJN §4.2) *)
 
@@ -238,14 +240,22 @@ Qed.
                              records grade from the Applicable side.
     - [MR_AppVsExempt g]   : one Applicable (grade g) and one IsExempt;
                              records grade from the Applicable side.
-    - [MR_NotAppVsExempt]  : one NotApp and one IsExempt. *)
+    - [MR_NotAppVsExempt]  : one NotApp and one IsExempt.
+    - [MR_AppVsNotAppVsExempt g] : an n-ary production meet saw at least
+                             one Applicable input (with aggregate grade g),
+                             at least one NotApp input, and at least one
+                             IsExempt input.
+    - [MR_Empty]           : the n-ary production meet was asked to compose
+                             an empty harbor set. *)
 Inductive meet_result : Type :=
   | MR_Grade          : compliance_grade -> meet_result
   | MR_NotApp         : meet_result
   | MR_Exempt         : meet_result
   | MR_AppVsNotApp    : compliance_grade -> meet_result
   | MR_AppVsExempt    : compliance_grade -> meet_result
-  | MR_NotAppVsExempt : meet_result.
+  | MR_NotAppVsExempt : meet_result
+  | MR_AppVsNotAppVsExempt : compliance_grade -> meet_result
+  | MR_Empty          : meet_result.
 
 (** The MeetResult-valued tensor meet. *)
 Definition tensor_meet (t1 t2 : tensor_factor) : meet_result :=
@@ -290,7 +300,7 @@ Qed.
 
 (** Pinning the shared Applicable fragment: if all three inputs are
     Applicable, the composed [tensor_meet] yields the grade-meet of
-    all three grades — independent of bracketing. *)
+    all three grades - independent of bracketing. *)
 Theorem tensor_meet_applicable_full_assoc : forall g1 g2 g3,
   tensor_meet (TF_App (grade_meet g1 g2)) (TF_App g3) =
   tensor_meet (TF_App g1) (TF_App (grade_meet g2 g3)).
@@ -326,7 +336,7 @@ Qed.
 
 (** ** Compatibility on the Applicable fragment *)
 
-(** Within the Applicable fragment — where both inputs project to [TF_App] —
+(** Within the Applicable fragment - where both inputs project to [TF_App] -
     the Lex 5-chain meet commutes with the tensor meet via [lex_to_tensor].
     That is, the diagram
 
@@ -449,6 +459,276 @@ Lemma tensor_factor_ctors_distinct :
   (forall g, TF_App g <> TF_NotApp) /\
   (forall g, TF_App g <> TF_Exempt).
 Proof. repeat split; discriminate. Qed.
+
+(** ** Production n-ary MeetResult *)
+
+(** Production cross-harbor composition is direct n-ary reduction over the
+    participating harbors.  Binary [tensor_meet] is the two-harbor case; it
+    is not used as an arbitrary fold over the full mixed-axis state space.
+
+    The summary records the aggregate Applicable grade, whether any NotApp
+    input occurred, and whether any Exempt input occurred. *)
+Definition meet_summary : Type := (option compliance_grade * bool * bool)%type.
+
+Fixpoint grade_meet_list (g : compliance_grade) (gs : list compliance_grade)
+  : compliance_grade :=
+  match gs with
+  | nil => g
+  | h :: rest => grade_meet g (grade_meet_list h rest)
+  end.
+
+Definition combine_app_grade
+  (acc : option compliance_grade) (g : compliance_grade)
+  : option compliance_grade :=
+  match acc with
+  | None => Some g
+  | Some h => Some (grade_meet g h)
+  end.
+
+Fixpoint summarize_factors (xs : list tensor_factor) : meet_summary :=
+  match xs with
+  | nil => (None, false, false)
+  | TF_App g :: rest =>
+      let '(app, saw_notapp, saw_exempt) := summarize_factors rest in
+      (combine_app_grade app g, saw_notapp, saw_exempt)
+  | TF_NotApp :: rest =>
+      let '(app, _saw_notapp, saw_exempt) := summarize_factors rest in
+      (app, true, saw_exempt)
+  | TF_Exempt :: rest =>
+      let '(app, saw_notapp, _saw_exempt) := summarize_factors rest in
+      (app, saw_notapp, true)
+  end.
+
+Definition classify_summary (s : meet_summary) : meet_result :=
+  match s with
+  | (None, false, false) => MR_Empty
+  | (None, true, false) => MR_NotApp
+  | (None, false, true) => MR_Exempt
+  | (None, true, true) => MR_NotAppVsExempt
+  | (Some g, false, false) => MR_Grade g
+  | (Some g, true, false) => MR_AppVsNotApp g
+  | (Some g, false, true) => MR_AppVsExempt g
+  | (Some g, true, true) => MR_AppVsNotAppVsExempt g
+  end.
+
+Definition tensor_meet_all (xs : list tensor_factor) : meet_result :=
+  classify_summary (summarize_factors xs).
+
+Lemma summarize_factors_map_applicable : forall gs,
+  summarize_factors (map TF_App gs) =
+  match gs with
+  | nil => (None, false, false)
+  | g :: rest => (Some (grade_meet_list g rest), false, false)
+  end.
+Proof.
+  induction gs as [|g rest IH]; simpl.
+  - reflexivity.
+  - rewrite IH. destruct rest; reflexivity.
+Qed.
+
+Lemma summarize_factors_all_applicable : forall g gs,
+  summarize_factors (TF_App g :: map TF_App gs) =
+  (Some (grade_meet_list g gs), false, false).
+Proof.
+  intros g gs. simpl.
+  rewrite summarize_factors_map_applicable.
+  destruct gs; reflexivity.
+Qed.
+
+Theorem tensor_meet_all_applicable_fragment : forall g gs,
+  tensor_meet_all (TF_App g :: map TF_App gs) =
+  MR_Grade (grade_meet_list g gs).
+Proof.
+  intros g gs.
+  unfold tensor_meet_all.
+  rewrite summarize_factors_all_applicable.
+  reflexivity.
+Qed.
+
+Theorem tensor_meet_all_binary_agrees : forall a b,
+  tensor_meet_all (a :: b :: nil) = tensor_meet a b.
+Proof.
+  destruct a, b; simpl; reflexivity.
+Qed.
+
+Theorem tensor_meet_all_three_way_provenance : forall g,
+  tensor_meet_all (TF_App g :: TF_NotApp :: TF_Exempt :: nil) =
+  MR_AppVsNotAppVsExempt g.
+Proof. destruct g; reflexivity. Qed.
+
+(** Result-shape predicates used by downstream extraction/diagnostics.  They
+    are intentionally not a compliance order and are not used to define
+    residuals, joins, or admission. *)
+Definition result_mentions_applicable (r : meet_result) : Prop :=
+  match r with
+  | MR_Grade _ | MR_AppVsNotApp _ | MR_AppVsExempt _
+  | MR_AppVsNotAppVsExempt _ => True
+  | _ => False
+  end.
+
+Definition result_mentions_notapp (r : meet_result) : Prop :=
+  match r with
+  | MR_NotApp | MR_AppVsNotApp _ | MR_NotAppVsExempt
+  | MR_AppVsNotAppVsExempt _ => True
+  | _ => False
+  end.
+
+Definition result_mentions_exempt (r : meet_result) : Prop :=
+  match r with
+  | MR_Exempt | MR_AppVsExempt _ | MR_NotAppVsExempt
+  | MR_AppVsNotAppVsExempt _ => True
+  | _ => False
+  end.
+
+Theorem tensor_meet_all_reports_three_axes : forall g,
+  result_mentions_applicable
+    (tensor_meet_all (TF_App g :: TF_NotApp :: TF_Exempt :: nil)) /\
+  result_mentions_notapp
+    (tensor_meet_all (TF_App g :: TF_NotApp :: TF_Exempt :: nil)) /\
+  result_mentions_exempt
+    (tensor_meet_all (TF_App g :: TF_NotApp :: TF_Exempt :: nil)).
+Proof. destruct g; repeat split. Qed.
+
+(** Boolean flag exactness for the production n-ary core.  This is the
+    mechanized core of the audit statement: the result shape records exactly
+    which applicability axes appeared in the composed harbor list. *)
+Definition factor_has_applicable_b (t : tensor_factor) : bool :=
+  match t with
+  | TF_App _ => true
+  | _ => false
+  end.
+
+Definition factor_has_notapp_b (t : tensor_factor) : bool :=
+  match t with
+  | TF_NotApp => true
+  | _ => false
+  end.
+
+Definition factor_has_exempt_b (t : tensor_factor) : bool :=
+  match t with
+  | TF_Exempt => true
+  | _ => false
+  end.
+
+Fixpoint any_applicable_b (xs : list tensor_factor) : bool :=
+  match xs with
+  | nil => false
+  | x :: rest => factor_has_applicable_b x || any_applicable_b rest
+  end.
+
+Fixpoint any_notapp_b (xs : list tensor_factor) : bool :=
+  match xs with
+  | nil => false
+  | x :: rest => factor_has_notapp_b x || any_notapp_b rest
+  end.
+
+Fixpoint any_exempt_b (xs : list tensor_factor) : bool :=
+  match xs with
+  | nil => false
+  | x :: rest => factor_has_exempt_b x || any_exempt_b rest
+  end.
+
+Definition option_grade_present_b (app : option compliance_grade) : bool :=
+  match app with
+  | Some _ => true
+  | None => false
+  end.
+
+Definition result_mentions_applicable_b (r : meet_result) : bool :=
+  match r with
+  | MR_Grade _ | MR_AppVsNotApp _ | MR_AppVsExempt _
+  | MR_AppVsNotAppVsExempt _ => true
+  | _ => false
+  end.
+
+Definition result_mentions_notapp_b (r : meet_result) : bool :=
+  match r with
+  | MR_NotApp | MR_AppVsNotApp _ | MR_NotAppVsExempt
+  | MR_AppVsNotAppVsExempt _ => true
+  | _ => false
+  end.
+
+Definition result_mentions_exempt_b (r : meet_result) : bool :=
+  match r with
+  | MR_Exempt | MR_AppVsExempt _ | MR_NotAppVsExempt
+  | MR_AppVsNotAppVsExempt _ => true
+  | _ => false
+  end.
+
+Lemma summarize_factors_flags_exact : forall xs app saw_notapp saw_exempt,
+  summarize_factors xs = (app, saw_notapp, saw_exempt) ->
+  option_grade_present_b app = any_applicable_b xs /\
+  saw_notapp = any_notapp_b xs /\
+  saw_exempt = any_exempt_b xs.
+Proof.
+  induction xs as [|x rest IH]; simpl; intros app saw_notapp saw_exempt Hsum.
+  - inversion Hsum. repeat split; reflexivity.
+  - destruct x as [g| |];
+      destruct (summarize_factors rest) as [[rest_app rest_notapp] rest_exempt] eqn:Hrest;
+      specialize (IH rest_app rest_notapp rest_exempt eq_refl)
+        as [Happ [Hnotapp Hexempt]];
+      inversion Hsum; subst; simpl in *.
+    + destruct rest_app; simpl; repeat split; try reflexivity; assumption.
+    + repeat split; try reflexivity; assumption.
+    + repeat split; try reflexivity; assumption.
+Qed.
+
+Lemma classify_summary_flags_exact : forall app saw_notapp saw_exempt,
+  result_mentions_applicable_b (classify_summary (app, saw_notapp, saw_exempt)) =
+    option_grade_present_b app /\
+  result_mentions_notapp_b (classify_summary (app, saw_notapp, saw_exempt)) =
+    saw_notapp /\
+  result_mentions_exempt_b (classify_summary (app, saw_notapp, saw_exempt)) =
+    saw_exempt.
+Proof.
+  intros app saw_notapp saw_exempt.
+  destruct app as [g|]; destruct saw_notapp, saw_exempt; simpl; repeat split; reflexivity.
+Qed.
+
+Theorem tensor_meet_all_flags_exact : forall xs,
+  result_mentions_applicable_b (tensor_meet_all xs) = any_applicable_b xs /\
+  result_mentions_notapp_b (tensor_meet_all xs) = any_notapp_b xs /\
+  result_mentions_exempt_b (tensor_meet_all xs) = any_exempt_b xs.
+Proof.
+  intros xs.
+  unfold tensor_meet_all.
+  destruct (summarize_factors xs) as [[app saw_notapp] saw_exempt] eqn:Hsum.
+  destruct (classify_summary_flags_exact app saw_notapp saw_exempt)
+    as [Hclass_app [Hclass_notapp Hclass_exempt]].
+  destruct (summarize_factors_flags_exact xs app saw_notapp saw_exempt Hsum)
+    as [Hsum_app [Hsum_notapp Hsum_exempt]].
+  repeat split.
+  - rewrite Hclass_app. exact Hsum_app.
+  - rewrite Hclass_notapp. exact Hsum_notapp.
+  - rewrite Hclass_exempt. exact Hsum_exempt.
+Qed.
+
+(** ** A formal mixed-axis impossibility core *)
+
+(** A total [tensor_factor]-valued meet would have to choose either an
+    Applicable value or a non-applicability singleton on mixed
+    Applicable-vs-NotApp inputs.  The two desired requirements contradict:
+    preserving the Applicable compliance signal requires an Applicable
+    output, while keeping NotApp orthogonal to Applicable grades forbids one.
+    [MeetResult] is the structured escape hatch. *)
+Definition preserves_app_signal_on_notapp
+  (op : tensor_factor -> tensor_factor -> tensor_factor) : Prop :=
+  forall g, exists h, op (TF_App g) TF_NotApp = TF_App h.
+
+Definition keeps_notapp_orthogonal_to_app
+  (op : tensor_factor -> tensor_factor -> tensor_factor) : Prop :=
+  forall g h, op (TF_App g) TF_NotApp <> TF_App h.
+
+Theorem no_total_tensor_factor_meet_preserves_signal_and_orthogonality :
+  forall op,
+    preserves_app_signal_on_notapp op ->
+    keeps_notapp_orthogonal_to_app op ->
+    False.
+Proof.
+  intros op Hsignal Horth.
+  destruct (Hsignal GCompliant) as [h Heq].
+  exact (Horth GCompliant h Heq).
+Qed.
 
 (** ** Summary
 

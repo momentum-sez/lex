@@ -9,15 +9,22 @@ NonAffineSN.v
 # Propagation lattice (imported by Lex.PropagationAlignment)
 Propagation/Graph.v
 
-# Paper-grade Lex mechanization — ordered to respect cross-file dependencies
+# Paper-grade Lex mechanization - ordered to respect cross-file dependencies
 Lex/Syntax.v
 Lex/DeBruijn.v
 Lex/VerdictHeyting.v
+Lex/TemporalStratification.v
+Lex/PackReevaluation.v
+Lex/ReceiptAlgebra.v
+Lex/PCAuthQuorum.v
+Lex/AdmissionEnvelope.v
+Lex/BridgeSemantics.v
 Lex/BoundedQuantifiers.v
 Lex/DefeasibilityPriority.v
 Lex/Typing.v
 Lex/Confluence.v
 Lex/Admissibility.v
+Lex/BoundedQuantifierAdmissibility.v
 Lex/Requirements.v
 Lex/Typing_progress_skeleton.v
 Lex/TypingStructural.v

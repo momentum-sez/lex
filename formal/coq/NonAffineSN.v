@@ -1,5 +1,5 @@
 (* ========================================================================= *)
-(*  NonAffineSN.v — Strong normalization for the simply-typed                *)
+(*  NonAffineSN.v - Strong normalization for the simply-typed                *)
 (*  lambda-calculus with NON-AFFINE beta reduction, via Tait-Girard         *)
 (*  reducibility candidates.                                                 *)
 (*                                                                           *)
@@ -10,9 +10,14 @@
 (*  Companion to paper §5 / §11 in *Lex: A Logic for Jurisdictional Rules*  *)
 (*  (research.momentum.inc).                                                 *)
 (*                                                                           *)
-(*  THEOREM (sn_stlc):                                                       *)
+(*  TARGET THEOREM (sn_stlc):                                                *)
 (*    Well-typed STLC terms are strongly normalizing under call-by-name      *)
 (*    beta reduction and the standard xi-rules.                              *)
+(*                                                                           *)
+(*  CLOSED KERNEL IN THIS FILE:                                              *)
+(*    non_affine_neutral_expansion_kernel closes CR3 for head-neutral terms  *)
+(*    over the non-affine calculus. The remaining proof obligation is the    *)
+(*    fundamental lemma connecting Typed derivations, environments, and Red. *)
 (*                                                                           *)
 (*  PROOF STRATEGY (Tait-Girard):                                            *)
 (*    1. Define a reducibility predicate Red : Ty -> Tm -> Prop by           *)
@@ -146,12 +151,18 @@ Qed.
 (*  §5.  Neutral terms                                                        *)
 (* ------------------------------------------------------------------------- *)
 
-(** Neutral = not a lambda; equivalently, a Var or an application. Neutrals
-    never form the head of a beta redex by themselves — a redex needs a
-    Lambda on the left. *)
+(** Neutral terms are variable-headed spines.  This is the standard
+    reducibility-candidate notion: a neutral may reduce in its subterms, but
+    it never is a beta redex at the head. *)
 Inductive neutral : Tm -> Prop :=
   | neu_var : forall n, neutral (TmVar n)
-  | neu_app : forall f a, neutral (TmApp f a).
+  | neu_app : forall f a, neutral f -> neutral (TmApp f a).
+
+Lemma neutral_not_lam : forall t A e,
+  neutral t -> t <> TmLam A e.
+Proof.
+  intros t A e Hneu Heq. destruct Hneu; discriminate Heq.
+Qed.
 
 (** Variables have no reducts. *)
 Lemma no_step_var : forall n t, ~ step (TmVar n) t.
@@ -223,8 +234,8 @@ Qed.
       (SN u, SN t) to analyze any reduct of App t u. A reduct is either
       in t (then in reducts of t, hence Red A -> App (reduct) u Red B by
       the outer hypothesis and Arr destruction) or in u (then by IH on
-      smaller u) or it's a beta redex — but t is neutral, so t is NOT a
-      lambda, hence no beta redex. *)
+      smaller u) or a beta redex.  Neutrality excludes the lambda head,
+      hence no beta redex exists. *)
 
 (** A neutral term's one-step reducts can only be in its subterms. *)
 Lemma step_neutral_inversion : forall t t',
@@ -235,17 +246,21 @@ Lemma step_neutral_inversion : forall t t',
   exists n f a a',
     t = TmApp (TmApp n f) a /\ t' = TmApp (TmApp n f) a' /\ step a a'.
 Proof.
-  (* This formulation is superseded by the head_neutral lemmas below.
-     We retain the statement for the proof-sketch narrative but admit all
-     three subcases. *)
   intros t t' Hneu Hstep. inversion Hneu; subst.
   - (* Var *) inversion Hstep.
   - (* App f a *)
     inversion Hstep; subst.
-    + admit. (* step_beta — unreachable under the intended strengthening *)
-    + admit. (* step_app_l *)
-    + admit. (* step_app_r *)
-Admitted.
+    + (* step_beta: the function position would have to be a lambda. *)
+      match goal with
+      | Hlam : neutral (TmLam _ _) |- _ => inversion Hlam
+      end.
+    + (* step_app_l *)
+      exists f, f', a. left. split; [reflexivity|].
+      split; [assumption|]. left. split; [reflexivity|assumption].
+    + (* step_app_r *)
+      exists f, f, a. left. split; [reflexivity|].
+      split; [assumption|]. right. exists a'. split; [reflexivity|assumption].
+Qed.
 
 (* The inversion lemma above is unwieldy. A cleaner formulation: *)
 
@@ -304,21 +319,33 @@ Proof.
     (* Need: Red B (App t u). We'll show App t u is head-neutral and every
        reduct is Red B. *)
     assert (HuSN : SN u) by (eapply Red_SN; eauto).
-    (* Induction on SN-structure of u, nested inside SN-structure of t. *)
-    revert u Hu HuSN.
-    induction Hsn as [t _ IHt].
-    intros u Hu HuSN.
+    (* Induction on the SN-structure of the argument handles reductions on
+       the right; reductions on the head are discharged by [HallR]. *)
+    revert Hu.
     induction HuSN as [u _ IHu].
+    intros Hu.
     apply (IHB (TmApp t u)).
     + simpl. exact Hhn.
     + intros t'' Hstep''. inversion Hstep''; subst.
       * (* beta: t = Lam ..., contradicts head_neutral. *)
         simpl in Hhn. exfalso. exact Hhn.
       * (* step_app_l: t --> f', need Red B (App f' u).
-           The argument requires re-specialising HallR via step_app_l
-           composition, plus an SN-preservation chain. Left to a later
-           pass; see SN-PROOF-SKETCH.md §3. *)
-        admit.
+           Re-specialise the hypothesis that all reducts of the neutral head
+           are reducible at the arrow type. *)
+        match goal with
+        | Hhead : step t ?t1 |- _ =>
+            specialize (HallR t1 Hhead); simpl in HallR;
+            destruct HallR as [_ Happ]; apply Happ; exact Hu
+        end.
       * (* step_app_r: u --> a', apply IHu. *)
         apply IHu; auto. eapply Red_step; eauto.
-Admitted.
+Qed.
+
+Theorem non_affine_neutral_expansion_kernel :
+  forall A t,
+    head_neutral t ->
+    (forall t', step t t' -> Red A t') ->
+    Red A t.
+Proof.
+  exact Red_neutral.
+Qed.

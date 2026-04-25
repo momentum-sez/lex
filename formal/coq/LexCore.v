@@ -1,10 +1,10 @@
 (* ========================================================================= *)
-(*  LexCore.v — Coq scaffold for the Lex core calculus (Frontier 08).        *)
+(*  LexCore.v - Coq scaffold for the Lex core calculus (Frontier 08).        *)
 (*                                                                            *)
-(*  This file is a SCAFFOLD — the proof obligations enumerated in             *)
+(*  This file is a SCAFFOLD - the proof obligations enumerated in             *)
 (*  docs/frontier-work/08-lex-core-calculus.md §5 are declared here but       *)
-(*  one theorem still carries an `Admitted` witness. The forward direction of *)
-(*  the admissible-fragment decidability lemma is proved constructively.      *)
+(*  no theorem in this file carries an `Admitted` witness. The               *)
+(*  admissible-fragment decidability lemma is proved in both directions.      *)
 (*                                                                            *)
 (*  Companion to the Rust reference implementation at                         *)
 (*    crates/lex-core/src/core_calculus/                                      *)
@@ -84,7 +84,7 @@ Definition TribunalCoercion := Proof -> option Proof.
 (** The identity coercion is total. *)
 Definition id_coercion : TribunalCoercion := fun p => Some p.
 
-(** The "no bridge" coercion is total-None — an honest refusal to fabricate
+(** The "no bridge" coercion is total-None - an honest refusal to fabricate
     a proof that no tribunal would recognize. *)
 Definition no_bridge_coercion : TribunalCoercion := fun _ => None.
 
@@ -98,26 +98,23 @@ Proof. reflexivity. Qed.
 (* §3.  Temporal stratification                                              *)
 (* ------------------------------------------------------------------------- *)
 
-(** [Asof n t] is a time literal at stratum [n]. Stratum 0 is frozen at
-    commit; stratum 1 is derived via tolling or savings rewrites; higher
-    strata correspond to nested lifts. *)
-Inductive Asof : nat -> Type :=
-  | asof0  : string -> Asof 0
-  | asof_lift : forall n, Asof n -> Asof (S n).
+(** [Asof n] is an abstract time literal at stratum [n]. Stratum 0 is frozen
+    at commit; higher strata are produced by explicit lift operations. The
+    type is abstract in this scaffold so the proof assistant does not expose
+    a constructor eliminator that would define a metatheoretic inverse. *)
+Parameter Asof : nat -> Type.
+Parameter asof0 : string -> Asof 0.
 
 (** Lift from stratum 0 to any higher stratum is total. *)
-Fixpoint lift_to (n : nat) (t : Asof 0) : Asof n :=
-  match n with
-  | 0    => t
-  | S n' => asof_lift (lift_to n' t)
-  end.
+Parameter lift_to : forall (n : nat), Asof 0 -> Asof n.
 
-(** Demotion is impossible by construction: there is no function
-    [Asof (S n) -> Asof n]; the inductive family's indices prevent it. *)
-Lemma lift_preserves_source :
-  forall (t : Asof 0),
-    exists (s : Asof 1), s = asof_lift t.
-Proof. intro t. exists (asof_lift t). reflexivity. Qed.
+(** Lift totality is the scaffold commitment. Absence of demotion is an API
+    discipline of the object language and Rust frontier, not a theorem about
+    all possible Coq functions over an exposed inductive family. *)
+Lemma lift_total :
+  forall (n : nat) (t : Asof 0),
+    exists (s : Asof n), s = lift_to n t.
+Proof. intros n t. exists (lift_to n t). reflexivity. Qed.
 
 (* ------------------------------------------------------------------------- *)
 (* §4.  Typed discretion holes (HEADLINE)                                    *)
@@ -238,7 +235,9 @@ Inductive Reaches (g : PriorityGraph) : ProductNode -> ProductNode -> Prop :=
 Definition acyclic (g : PriorityGraph) : Prop :=
   forall n a, In (n, a) (pg_edges g) -> ~ Reaches g a n.
 
-(** Tarjan's algorithm terminates; we admit the classical complexity bound. *)
+(** Classical decidability witness for acyclicity.  This is not an executable
+    Tarjan/Kosaraju procedure; a constructive graph algorithm would remove the
+    use of excluded middle without changing the statement below. *)
 Theorem principle_balancing_terminates :
   forall g, { b : bool | (b = true <-> acyclic g) }.
 Proof.
@@ -365,8 +364,6 @@ Qed.
 (* §10.  Summary of admits                                                   *)
 (* ------------------------------------------------------------------------- *)
 
-(* The following theorem remains admitted pending full mechanization:         *)
-(*                                                                            *)
 (* [principle_balancing_terminates] is closed classically via excluded        *)
 (* middle on [acyclic g]. A future refinement can replace that proof with a   *)
 (* constructive Tarjan/Kosaraju decision procedure without changing the       *)
@@ -374,5 +371,5 @@ Qed.
 (*                                                                            *)
 (* The scaffold is complete for the DECIDABILITY lemma of the admissible     *)
 (* fragment (forward and reverse directions both proved). Every other        *)
-(* commitment is declared, and the critical soundness lemmas for holes,      *)
-(* levels, temporal lifts, and summary are proved.                           *)
+(* commitment is declared, and the scaffold lemmas for holes, levels,        *)
+(* temporal lift totality, and summary are proved.                           *)

@@ -1,4 +1,4 @@
-(** * Lex/Typing.v — Bidirectional typing rules as inductive relations
+(** * Lex/Typing.v - Bidirectional typing rules as inductive relations
 
     Mirrors [crates/lex-core/src/typecheck.rs].
 
@@ -93,7 +93,7 @@ Proof.
 Qed.
 
 (* ================================================================== *)
-(** ** Insert-at-depth — the generalized ctx_extend used in weakening  *)
+(** ** Insert-at-depth - the generalized ctx_extend used in weakening  *)
 (* ================================================================== *)
 
 (** [insert_at k A ctx] inserts the type [A] at position [k] of
@@ -108,7 +108,7 @@ Qed.
     - The inserted [A] gets [shift 0 (S k)]: [A] is typed in the
       sub-context [skipn k ctx] of size [length ctx - k]; its free
       vars [0 .. length ctx - k - 1] lift to [S k .. length ctx] of
-      the new context — the positions of the (shifted) tail.
+      the new context - the positions of the (shifted) tail.
     - The "bottom" portion [skipn k ctx] gets [shift_ctx 0 1]:
       every entry's free vars bump uniformly by [1] at cutoff [0].
 
@@ -119,7 +119,7 @@ Definition insert_at (k : nat) (A : Term) (ctx : Context) : Context :=
   ++ shift 0 (S k) A
      :: shift_ctx k 1 (skipn k ctx).
 
-(** [ctx_lookup] matches [nth_error] pointwise — the definitions
+(** [ctx_lookup] matches [nth_error] pointwise - the definitions
     compute identically on all inputs. *)
 Lemma ctx_lookup_nth_error : forall (ctx : Context) (i : nat),
   ctx_lookup ctx i = nth_error ctx i.
@@ -131,7 +131,7 @@ Proof.
     + apply IH.
 Qed.
 
-(** [insert_at 0 A ctx = ctx_extend ctx A] — the [k=0] specialization
+(** [insert_at 0 A ctx = ctx_extend ctx A] - the [k=0] specialization
     collapses to the ordinary extension. *)
 Lemma insert_at_0 : forall (A : Term) (ctx : Context),
   insert_at 0 A ctx = ctx_extend ctx A.
@@ -205,7 +205,7 @@ Qed.
     the old stored type (at offset-by-one index) shifted by [shift k 1].
     The uniform [shift k 1] on both "top" and "bottom" portions
     closes the T_Var case of weakening without any ctx-well-formedness
-    precondition — stored types in [ctx] may be arbitrary terms, but
+    precondition - stored types in [ctx] may be arbitrary terms, but
     the weakening statement's conclusion is [shift k 1 T] everywhere. *)
 Lemma insert_at_lookup_gt : forall (k : nat) (A : Term) (ctx : Context)
                                    (i : nat) (T : Term),
@@ -327,7 +327,7 @@ Definition sort_eq (s1 s2 : Sort) : bool :=
     (IntLit, RatLit, StringLit, AxiomUse) plus fully-evaluated
     data introductions [InductiveIntro c args] where every argument
     is itself a value.  This is the set of canonical forms required
-    to make progress hold for the full [Term] AST — in particular it
+    to make progress hold for the full [Term] AST - in particular it
     is what allows [step_match_ctor_fire] to dispatch on a
     fully-evaluated constructor application. *)
 Inductive value : Term -> Prop :=
@@ -411,7 +411,7 @@ Definition branch_head_matches (scrut : Term) (c : string) (n : nat) : bool :=
   end.
 
 (* ================================================================== *)
-(** ** head_step — the pre-repair step relation (no binder congruence) *)
+(** ** head_step - the pre-repair step relation (no binder congruence) *)
 (* ================================================================== *)
 
 (** [head_step] is the sub-relation of [step] that omits all binder
@@ -473,7 +473,7 @@ Inductive head_step : Term -> Term -> Prop :=
                 (Match scrut ret rest).
 
 (* ================================================================== *)
-(** ** step — full congruence under every binder                      *)
+(** ** step - full congruence under every binder                      *)
 (* ================================================================== *)
 
 (** Full single-step reduction: [head_step] plus congruence under
@@ -800,7 +800,7 @@ Qed.
     in [step_match_ctor_fire]'s reduct.  The rule's reduct is
     [subst_args args body], but under outer [shift c d], the correct
     reduct must be [subst_args (shift_args_at c d args) (shift (c+n) d body)]
-    — with cutoffs INCREASING per nested subst.  The step rule
+    - with cutoffs INCREASING per nested subst.  The step rule
     reduces to [subst_args (map (shift c d) args) ...] instead, using
     a UNIFORM cutoff on all args.  These two are equal only when
     args have free vars bounded below [c] (a typing-level invariant
@@ -810,11 +810,11 @@ Qed.
     go through unconditionally at [step_match_ctor_fire].  Resolution
     options:
       (a) Refactor [step_match_ctor_fire]'s reduct to use
-          [shift_args_at 0 (length args) args] — preserving
+          [shift_args_at 0 (length args) args] - preserving
           semantics but canonicalizing the shift form.
       (b) State step-shift-equivariance under a typing hypothesis on
-          [args] / [body] (the ones we'd actually have in context
-          when reducing a well-typed term).
+          [args] / [body] (the witnesses present in context when
+          reducing a well-typed term).
       (c) Thread step-shift-equivariance as an explicit [Prop]-level
           premise and discharge in a follow-up.
 
@@ -841,7 +841,7 @@ Qed.
     De Bruijn index after [arity-1] subsequent ctx_extend lifts), and
     [binder_tys[arity-1]] at the INNERMOST binding (De Bruijn 0).
     This is the same rightmost-is-innermost convention as the prior
-    [rev binder_tys ++ ctx] formulation — the change is purely the
+    [rev binder_tys ++ ctx] formulation - the change is purely the
     eager-shift bookkeeping that makes [insert_at] commute cleanly
     via repeated [insert_at_ctx_extend_commute].
 
@@ -874,7 +874,7 @@ Qed.
 (** Projection functions let us state the list-of-subterm premises of
     [T_Defeasible] and [T_Match] via [Forall] over a pointwise
     [has_type] predicate, without nesting a [match] inside the
-    predicate — which strict positivity rejects. *)
+    predicate - which strict positivity rejects. *)
 Definition exn_guard (e : Exception) : Term :=
   match e with MkException g _ _ => g end.
 
@@ -1071,7 +1071,7 @@ Definition weakening_at_property : Prop :=
 (** [weakening_at_property -> weakening_property]: specializing the
     depth-[k] theorem to [k = 0] recovers the ordinary "insert at the
     front" form.  Proved Qed unconditionally given the [weakening_at]
-    premise — this is the "any weakening-at implies weakening-0"
+    premise - this is the "any weakening-at implies weakening-0"
     bridge, parametric in the unstated proof of the [at]-form. *)
 Theorem weakening_at_implies_weakening :
   weakening_at_property -> weakening_property.
@@ -1231,7 +1231,7 @@ Qed.
 (* ================================================================== *)
 
 (** [shift_at_growing_cutoff k xs] shifts each element [xs[i]] by 1
-    at cutoff [k + i] — the cutoff GROWS by 1 per element.  This is
+    at cutoff [k + i] - the cutoff GROWS by 1 per element.  This is
     the per-bt rebookkeeping that makes [insert_at] commute with
     [fold_left ctx_extend bt ctx] (the new [ctx_extend_pattern] for
     PCtor).  Each successive ctx_extend in the fold introduces a new
@@ -1357,7 +1357,7 @@ Proof.
       * rewrite shift_at_growing_cutoff_length.
         rewrite branch_pat_shift_branch. exact Hahd.
       * apply IH. exact Hatl.
-  - (* Forall2 of body typings — already in shifted form *)
+  - (* Forall2 of body typings - already in shifted form *)
     exact Hbody.
 Qed.
 
@@ -1369,7 +1369,7 @@ Qed.
     and [c = k] with [k > 0] allowed, so the commutation must
     increment the cutoff on the substituend from [c] to [S c].
 
-    Verified unconditional — the proof is [shift_subst_commute_above]
+    Verified unconditional - the proof is [shift_subst_commute_above]
     in [Lex.DeBruijn], by mutual structural induction on Term /
     Branch / Exception. *)
 Definition shift_subst_commute_above_spec : Prop :=
@@ -1493,7 +1493,7 @@ Definition weakening_at_defeasible_spec : Prop :=
              (shift k 1 base_ty).
 
 (* ================================================================== *)
-(** ** weakening_at_conditional — the main theorem under 3 premises   *)
+(** ** weakening_at_conditional - the main theorem under 3 premises   *)
 (* ================================================================== *)
 
 (** Generalized weakening theorem, conditional on three DeBruijn-
@@ -1549,11 +1549,11 @@ Proof.
     + apply IHHty2. exact Hk.
     + rewrite <- insert_at_ctx_extend_commute.
       apply IHHty3. rewrite ctx_extend_length. lia.
-  - (* T_Defeasible — dispatch to Hdef *)
+  - (* T_Defeasible - dispatch to Hdef *)
     apply Hdef.
     + eapply T_Defeasible; eassumption.
     + exact Hk.
-  - (* T_Match — dispatch to Hmatch *)
+  - (* T_Match - dispatch to Hmatch *)
     apply Hmatch.
     + eapply T_Match; eassumption.
     + exact Hk.
@@ -1579,14 +1579,14 @@ Proof.
 Qed.
 
 (* ================================================================== *)
-(** ** weakening_at_fix — Fixpoint form, discharges T_Defeasible spec *)
+(** ** weakening_at_fix - Fixpoint form, discharges T_Defeasible spec *)
 (* ================================================================== *)
 
 (** The same weakening theorem, written as a [Fixpoint] with a
     structurally-recursive inner fix on the [Forall] premises of
     T_Defeasible AND a parallel inner fix on the [Forall2] premises
     of T_Match.  This directly discharges [weakening_at_defeasible_spec]
-    AND [weakening_at_match_spec] — no longer needing them as
+    AND [weakening_at_match_spec] - no longer needing them as
     premises.  T_Match's per-branch typing premise carries the
     pattern-arity shift on [return_ty] (Defect-2 fix, 2026-04-21),
     so the inner fix on [Forall2] can lift each body via the IH at
@@ -1662,7 +1662,7 @@ Proof.
       rewrite <- insert_at_ctx_extend_commute.
       exact (weakening_at_fix conv_spec
                (S k) (ctx_extend ctx' A) A' _ _ Hbody Hk2).
-  - (* T_Defeasible — inner fixes on Hguards / Hbodies *)
+  - (* T_Defeasible - inner fixes on Hguards / Hbodies *)
     apply weakening_at_defeasible with (i := i).
     + exact (weakening_at_fix conv_spec k ctx' A' _ _ Hbt Hk).
     + exact (weakening_at_fix conv_spec k ctx' A' _ _ Hbb Hk).
@@ -1695,7 +1695,7 @@ Proof.
         -- destruct exn as [g b p]. simpl in Hb_hd |- *.
            exact (weakening_at_fix conv_spec k ctx' A' _ _ Hb_hd Hk).
         -- exact (inner_b exns'' Hb_tl).
-  - (* T_Match — Qed-discharged via [weakening_at_match] +
+  - (* T_Match - Qed-discharged via [weakening_at_match] +
        parallel inner fix on Harity / Htyping. *)
     apply weakening_at_match with
       (i := i) (scrut_ty := scrut_ty)
@@ -1709,7 +1709,7 @@ Proof.
     + exact Hbrs_ne.
     + exact Hlen.
     + exact Harity.
-    + (* Forall2 over body typings — inner fix in lockstep on Harity,
+    + (* Forall2 over body typings - inner fix in lockstep on Harity,
          pat-case-splitting on each branch to lift IH at depth k+arity
          and apply [insert_at_ctx_extend_pattern_commute] to align
          contexts. *)
@@ -1902,8 +1902,8 @@ Qed.
 
 (** Context lookup at position [0] of an extended context yields the
     extension, shifted by [1].  The shift reflects that the inserted
-    type's free variables — originally pointing into the unextended
-    context — must be lifted to point at the corresponding new
+    type's free variables - originally pointing into the unextended
+    context - must be lifted to point at the corresponding new
     positions after the insertion. *)
 Lemma ctx_lookup_extend_zero : forall (ctx : Context) (A : Term),
   ctx_lookup (ctx_extend ctx A) 0 = Some (shift 0 1 A).
@@ -1915,8 +1915,9 @@ Qed.
     This is a key interaction lemma between the DeBruijn operations.
     It is an instance of shift_subst_commute from DeBruijn.v with
     c=0, d=1, i=0: shift 0 1 (subst 0 s t) = subst 0 (shift 0 1 s) (shift 0 1 t).
-    Since 0 <=? 0 = true, the target becomes 0 + 1 = 1... but we want target 0.
-    Actually this is the "parallel" form, not a direct instance.
+    Since 0 <=? 0 = true, the target becomes 0 + 1 = 1, while the
+    desired target is 0.  This is the parallel form rather than a direct
+    instance.
     The correct derivation requires the stronger shift_subst_commute
     with appropriate index adjustments. *)
 Lemma shift_subst_distribute : forall (t s : Term) (n : nat),
@@ -2059,7 +2060,8 @@ Qed.
 (** Confluence (Church-Rosser): if t ->* u1 and t ->* u2, then there
     exists v such that u1 ->* v and u2 ->* v.  This is needed for
     transitivity of conv_eq but is a substantial result on its own.
-    We state it as a lemma and admit it. *)
+    The current development keeps it as a named [Prop] specification in
+    [Confluence.v], not as an admitted theorem. *)
 (** Confluence (Church-Rosser property).
 
     Standard proof technique (Tait-Martin-Lof):
@@ -2110,7 +2112,7 @@ Inductive head_steps : Term -> Term -> Prop :=
 
 (** Values do not head-step: no single-step head reduction from a
     value.  This is immediate by case analysis on the head_step
-    relation — none of the head_step constructors have a value as
+    relation - none of the head_step constructors have a value as
     the redex and the pre-binder congruences (App head/arg, Match
     scrutinee) do not open binders. *)
 Lemma value_no_head_step : forall (v t : Term),
@@ -2132,8 +2134,8 @@ Qed.
 
 (** With the full [step] relation (binder congruence), a value can
     step via congruence on its subterms.  The CLASSICAL [value v ->
-    ~ step v t] is therefore false.  What survives — and is
-    sufficient for conv_eq-inversion reasoning — is that the
+    ~ step v t] is therefore false.  What survives - and is
+    sufficient for conv_eq-inversion reasoning - is that the
     OUTER CONSTRUCTOR of a value is preserved through
     [step] / [steps].
 
@@ -2216,7 +2218,7 @@ Qed.
     lemmas), and for Lambda / Pi / InductiveIntro the new term
     has the same outer constructor hence is still a value.
     Additionally for InductiveIntro, we must propagate
-    Forall value to the reduced args list — values step to
+    Forall value to the reduced args list - values step to
     values, handled by a nested induction on the list
     decomposition [pre ++ a :: post]. *)
 
@@ -2735,8 +2737,8 @@ Qed.
 (** The classical [subst_subst_ws] (in [Lex.DeBruijn]) requires
     [well_scoped (S i) t] on the term being twice-substituted.  For
     the [step_beta] case of substitution-commutes-with-step, the body
-    under [Lambda] lives one binder deeper — at [well_scoped (S (S i))]
-    — so the classical lemma does not apply directly at lemma-index [i].
+    under [Lambda] lives one binder deeper - at [well_scoped (S (S i))]
+    - so the classical lemma does not apply directly at lemma-index [i].
 
     We prove the variant suitable for binder descent: the identity
     holds for body at [well_scoped (S (S i))] in the specialized case
@@ -2908,7 +2910,7 @@ Proof.
     + apply subst_preserves_ws; assumption.
 Qed.
 
-(** *** [subst_subst_ws_relaxed] — full generalization
+(** *** [subst_subst_ws_relaxed] - full generalization
 
     The relaxed version of [subst_subst_ws] with the body's
     well-scoped premise dropped down to [well_scoped (S (S i))]
@@ -3059,7 +3061,7 @@ Proof.
 Qed.
 
 (** Fold-free equivalence: a [well_scoped k (InductiveIntro c args)]
-    reduces to a [Forall] over [args] — useful when we have IH-style
+    reduces to a [Forall] over [args] - useful when we have IH-style
     [Forall] evidence to close it. *)
 Lemma well_scoped_inductive_from_Forall :
   forall (k : nat) (c : string) (args : list Term),
@@ -3126,7 +3128,7 @@ Qed.
     The proof is structurally recursive on the [has_type] derivation.
     We use a Gallina [Fixpoint] so that sub-derivations embedded inside
     [Forall] premises of [T_Defeasible] and [Forall2] premises of
-    [T_Match] count as structurally smaller — this is how we recurse
+    [T_Match] count as structurally smaller - this is how we recurse
     through list-of-typing premises without an accompanying auxiliary
     induction hypothesis from [induction Hty]. *)
 Fixpoint has_type_well_scoped
@@ -3300,7 +3302,7 @@ Qed.
       (shift_sort), so the shifted type_level is the same.
     - T_Pi: IH on domain (cutoff 0) and codomain (cutoff 0, but the
       codomain is already under one binder, so the extended context
-      has two bindings — need shift at cutoff 0 in extended ctx).
+      has two bindings - need shift at cutoff 0 in extended ctx).
     - T_Lambda: IH on body in (A :: dom :: ctx).
     - T_App: IH on function and argument. The result type subst 0 a B
       must be shown equal to subst 0 (shift 0 1 a) (shift 0 1 B),
@@ -3410,7 +3412,7 @@ Qed.
 
     - step_app_func/step_app_arg (congruence): by IH on the sub-derivation.
       For step_app_func, need: if has_type ctx f (Pi A eff B) and step f f',
-      then has_type ctx f' (Pi A eff B) — direct IH. Similarly for arg.
+      then has_type ctx f' (Pi A eff B) - direct IH. Similarly for arg.
 
     - T_Conv: if has_type ctx t A via T_Conv from has_type ctx t A' with
       conv_eq A' A, and step t t', then by IH has_type ctx t' A', and
@@ -3455,7 +3457,7 @@ Qed.
     Canonical forms lemma: if has_type nil v (Pi A eff B) and value v,
     then v = Lambda _ _. Proof by inversion on value and typing:
     only T_Lambda gives type Pi, and T_Conv can change the type but
-    only to a convertible type — Pi is canonical so the value must
+    only to a convertible type - Pi is canonical so the value must
     still be a Lambda.
 
     Depends on: canonical forms (which depends on confluence for the
@@ -3489,9 +3491,9 @@ Qed.
 
     The generalized proof goes by induction on the typing derivation:
     - T_Var: case split on i vs n. If i = n, the variable is being
-      substituted — result is s with weakened type A. If i < n, the
-      variable is in ctx1 — unaffected. If i > n, the variable is
-      in ctx2 — index decremented.
+      substituted - result is s with weakened type A. If i < n, the
+      variable is in ctx1 - unaffected. If i > n, the variable is
+      in ctx2 - index decremented.
     - T_Lambda: IH with ctx1 extended by dom. Requires showing that
       subst (S n) (shift 0 1 s) body has the right type, using
       shift/subst interaction and weakening.
@@ -3527,7 +3529,7 @@ Qed.
     [AxiomUse], or [InductiveIntro].  In the empty context, therefore,
     none of these constructors is typeable: the only typing judgement
     whose term side could yield, say, [Constant c] is [T_Conv], which
-    reduces to another [has_type] judgement on the same term — never
+    reduces to another [has_type] judgement on the same term - never
     producing a [Constant] out of thin air.  The following inversion
     lemmas pull the contradiction out for use in [canonical_forms_pi]
     and in the value-case discharges of [progress].  Each lemma closes
@@ -3711,34 +3713,196 @@ Qed.
     The Match case first case-splits on whether the scrutinee can step
     (congruence via [step_match_scrutinee]).  If the scrutinee is a
     value, we case-split on the branch list: [nil] triggers
-    [step_match_empty]; [MkBranch PWild _ :: _] triggers
-    [step_match_wild]; [MkBranch (PCtor c' n) _ :: _] triggers either
+    contradiction from [T_Match]'s nonempty-branch premise; [MkBranch
+    PWild _ :: _] triggers [step_match_wild]; [MkBranch (PCtor c' n)
+    _ :: _] triggers either
     [step_match_ctor_fire] (if the scrutinee is an appropriately-
-    shaped [InductiveIntro]) or [step_match_ctor_skip] (otherwise —
+    shaped [InductiveIntro]) or [step_match_ctor_skip] (otherwise -
     [branch_head_matches] is decidable by direct evaluation).
 
     The T_App case uses [canonical_forms_pi] to conclude that a value
     at a Pi type is a [Lambda], enabling [step_beta].
 
     Dependency: [confluence_property], exactly where
-    [canonical_forms_pi] needs it (for the T_Conv chain through
-    sort/Pi conv_eq).  Closing confluence is the work of the B4
-    agent; when that lands, this theorem becomes unconditional.
+    [canonical_forms_pi] needs it for the T_Conv chain through
+    sort/Pi conv_eq.  Once confluence is proved, this theorem becomes
+    unconditional.
 
-    Every [Term] constructor is covered — progress is over the full
+    Every [Term] constructor is covered - progress is over the full
     AST, not a restricted fragment. *)
+(** Coverage of a value by a branch list.  Wildcard covers
+    immediately; a constructor branch covers only when the value's
+    outer constructor tag and arity match, otherwise coverage must
+    come from the tail. *)
+Fixpoint branches_cover_value (scrut : Term) (branches : list Branch) : Prop :=
+  match branches with
+  | nil => False
+  | MkBranch PWild _ :: _ => True
+  | MkBranch (PCtor c n) _ :: rest =>
+      branch_head_matches scrut c n = true \/
+      branches_cover_value scrut rest
+  end.
+
+(** Syntactic wildcard coverage.  A wildcard anywhere in the remaining branch
+    list covers every value that reaches it, independent of any constructor
+    environment. *)
+Fixpoint branches_have_wildcard (branches : list Branch) : Prop :=
+  match branches with
+  | nil => False
+  | MkBranch PWild _ :: _ => True
+  | MkBranch (PCtor _ _) _ :: rest => branches_have_wildcard rest
+  end.
+
+Lemma branches_have_wildcard_cover_value :
+  forall (v : Term) (branches : list Branch),
+    branches_have_wildcard branches ->
+    branches_cover_value v branches.
+Proof.
+  intros v branches.
+  induction branches as [| [pat body] rest IH]; simpl; intros Hwild.
+  - exact Hwild.
+  - destruct pat as [c n | ].
+    + right. apply IH. exact Hwild.
+    + exact I.
+Qed.
+
+(** Constructor-domain coverage.  This is the finite branch-domain side of
+    the checker certificate: a constructor tag/arity pair is covered when a
+    matching branch appears before any proof obligation reaches the end of the
+    branch list, or when a wildcard is reached. *)
+Fixpoint branches_cover_constructor
+    (c : string) (n : nat) (branches : list Branch) : Prop :=
+  match branches with
+  | nil => False
+  | MkBranch PWild _ :: _ => True
+  | MkBranch (PCtor c' n') _ :: rest =>
+      (c' = c /\ n' = n) \/ branches_cover_constructor c n rest
+  end.
+
+Lemma branches_cover_constructor_sound :
+  forall (c : string) (args : list Term) (branches : list Branch),
+    branches_cover_constructor c (List.length args) branches ->
+    branches_cover_value (InductiveIntro c args) branches.
+Proof.
+  intros c args branches.
+  induction branches as [| [pat body] rest IH]; simpl; intros Hcover.
+  - exact Hcover.
+  - destruct pat as [c' n' | ].
+    + destruct Hcover as [[Hc Hn] | Htail].
+      * subst c' n'. left.
+        simpl. rewrite String.eqb_refl, Nat.eqb_refl. reflexivity.
+      * right. apply IH. exact Htail.
+    + exact I.
+Qed.
+
+(** Positive finite constructor environment for a particular match
+    scrutinee.  This is the exact missing environment: every value reduct of
+    the scrutinee must be an [InductiveIntro] whose tag/arity appears in the
+    finite domain.  No global constructor universe is assumed. *)
+Definition finite_constructor_environment_for
+    (scrut : Term) (domain : list (string * nat)) : Prop :=
+  forall v,
+    steps scrut v ->
+    value v ->
+    exists (c : string) (args : list Term),
+      v = InductiveIntro c args /\
+      Forall value args /\
+      In (c, List.length args) domain.
+
+Definition branches_cover_constructor_domain
+    (domain : list (string * nat)) (branches : list Branch) : Prop :=
+  forall (c : string) (n : nat),
+    In (c, n) domain ->
+    branches_cover_constructor c n branches.
+
+Inductive match_coverage_certificate
+    (scrut : Term) (branches : list Branch) : Prop :=
+  | MatchCoverageWildcard :
+      branches_have_wildcard branches ->
+      match_coverage_certificate scrut branches
+  | MatchCoverageFiniteConstructors :
+      forall domain : list (string * nat),
+        finite_constructor_environment_for scrut domain ->
+        branches_cover_constructor_domain domain branches ->
+        match_coverage_certificate scrut branches.
+
+Theorem match_coverage_certificate_sound :
+  forall (scrut : Term) (branches : list Branch),
+    match_coverage_certificate scrut branches ->
+    forall v, steps scrut v -> value v -> branches_cover_value v branches.
+Proof.
+  intros scrut branches Hcert v Hsteps Hval.
+  destruct Hcert as [Hwild | domain Henv Hdomain].
+  - apply branches_have_wildcard_cover_value. exact Hwild.
+  - destruct (Henv v Hsteps Hval) as
+      [c [args [Hv [Hargs Hin_domain]]]].
+    subst v.
+    apply branches_cover_constructor_sound.
+    apply Hdomain. exact Hin_domain.
+Qed.
+
+(** Match coverage certificate: every value reduct of the scrutinee
+    is covered by the branch list.  This is the proof-relevant
+    frontier a checker or elaborator should construct for [T_Match].
+    It is stronger and more usable than merely postulating that the
+    singleton stuck case cannot occur. *)
+Definition match_coverage_property : Prop :=
+  forall (scrut ret : Term) (branches : list Branch) (T : Term),
+    has_type nil (Match scrut ret branches) T ->
+    forall v, steps scrut v -> value v -> branches_cover_value v branches.
+
+Definition match_coverage_certificate_property : Prop :=
+  forall (scrut ret : Term) (branches : list Branch) (T : Term),
+    has_type nil (Match scrut ret branches) T ->
+    match_coverage_certificate scrut branches.
+
+Theorem match_coverage_certificate_implies_coverage :
+  match_coverage_certificate_property -> match_coverage_property.
+Proof.
+  unfold match_coverage_certificate_property, match_coverage_property.
+  intros Hcert scrut ret branches T Hty v Hsteps Hval.
+  eapply match_coverage_certificate_sound.
+  - apply Hcert with (ret := ret) (T := T). exact Hty.
+  - exact Hsteps.
+  - exact Hval.
+Qed.
+
+(** A singleton constructor branch cannot cover a value whose head
+    does not match that constructor. *)
+Lemma branches_cover_value_singleton_ctor_false :
+  forall (scrut body : Term) (c : string) (n : nat),
+    branch_head_matches scrut c n = false ->
+    ~ branches_cover_value scrut (MkBranch (PCtor c n) body :: nil).
+Proof.
+  intros scrut body c n Hmiss Hcover.
+  simpl in Hcover. rewrite Hmiss in Hcover.
+  destruct Hcover as [Htrue | Hfalse].
+  - discriminate.
+  - exact Hfalse.
+Qed.
+
 (** Match exhaustiveness: the stuck-match case (a value scrutinee
     whose head doesn't match the only remaining PCtor branch) is
-    semantically unreachable for well-typed closed terms.  In a
-    total CC / PTS with enforced match exhaustiveness this premise
-    discharges via the typing rule's coverage analysis.  Here we
-    expose it as an explicit honest obligation. *)
+    semantically unreachable for well-typed closed terms.  In the
+    intended checker this follows from [match_coverage_property],
+    which is the formal target above. *)
 Definition match_exhaustiveness_property : Prop :=
   forall (scrut ret : Term) (c' : string) (n : nat) (body : Term) (T : Term),
     value scrut ->
     branch_head_matches scrut c' n = false ->
     has_type nil (Match scrut ret (MkBranch (PCtor c' n) body :: nil)) T ->
     False.
+
+(** The coverage certificate discharges the older progress premise. *)
+Theorem match_coverage_implies_exhaustiveness :
+  match_coverage_property -> match_exhaustiveness_property.
+Proof.
+  unfold match_coverage_property, match_exhaustiveness_property.
+  intros Hcov scrut ret c n body T Hval Hmiss Hty.
+  specialize (Hcov scrut ret (MkBranch (PCtor c n) body :: nil) T
+                    Hty scrut (steps_refl scrut) Hval).
+  eapply branches_cover_value_singleton_ctor_false; eassumption.
+Qed.
 
 Theorem progress :
   confluence_property ->
@@ -3765,16 +3929,16 @@ Proof.
     left. constructor.
   - (* T_Lambda: Lambda A body is a value *)
     left. constructor.
-  - (* T_App: the core case — uses canonical_forms_pi *)
+  - (* T_App: the core case - uses canonical_forms_pi *)
     right.
     specialize (IHHty1 eq_refl) as [Hvalf | [f' Hstepf]].
-    + (* f is a value — canonical_forms_pi says f = Lambda dom body *)
+    + (* f is a value - canonical_forms_pi says f = Lambda dom body *)
       destruct (canonical_forms_pi Hconf f A B eff Hvalf Hty1)
         as [dom [body Heq]].
       subst f.
       exists (subst 0 a body).
       apply step_beta.
-    + (* f steps to f' — congruence via step_app_func *)
+    + (* f steps to f' - congruence via step_app_func *)
       exists (App f' a).
       apply step_app_func. exact Hstepf.
   - (* T_Annot: Annot e T steps to e via step_annot *)
@@ -3792,7 +3956,7 @@ Proof.
     specialize (IHHty1 eq_refl) as [Hvscrut | [scrut' Hstep_scrut]].
     + (* scrutinee is a value: case-split on branches *)
       destruct branches as [| br rest].
-      * (* empty branches: impossible — T_Match requires branches <> nil *)
+      * (* empty branches: impossible - T_Match requires branches <> nil *)
         exfalso. apply H. reflexivity.
       * (* non-empty branches: case on head pattern *)
         destruct br as [pat body].
@@ -3802,7 +3966,7 @@ Proof.
            ++ (* matches: branch_head_matches = true forces scrutinee to
                  be [InductiveIntro scrut_c scrut_args] with the right
                  constructor name and arity.  Extract via case analysis
-                 on Hvscrut — InductiveIntro is the only value whose
+                 on Hvscrut - InductiveIntro is the only value whose
                  head-shape can match a PCtor. *)
               destruct Hvscrut as [s0 | dom0 body0 | dom0 eff0 cod0 | i0
                                     | c0 | n0 | p0 q0 | s0 | a0
@@ -3853,6 +4017,34 @@ Proof.
     + right. exists t'. exact Hstep.
 Qed.
 
+(** Progress can be stated against the stronger, constructive
+    coverage certificate. *)
+Theorem progress_from_match_coverage :
+  confluence_property ->
+  match_coverage_property ->
+  progress_property.
+Proof.
+  intros Hconf Hcoverage.
+  apply progress.
+  - exact Hconf.
+  - apply match_coverage_implies_exhaustiveness. exact Hcoverage.
+Qed.
+
+(** Progress can also be reached from the constructive checker certificate:
+    either a wildcard branch covers every value reduct, or an explicit finite
+    constructor environment covers the scrutinee's value reducts and the
+    branch list covers that finite domain. *)
+Theorem progress_from_match_coverage_certificate :
+  confluence_property ->
+  match_coverage_certificate_property ->
+  progress_property.
+Proof.
+  intros Hconf Hcert.
+  apply progress_from_match_coverage.
+  - exact Hconf.
+  - apply match_coverage_certificate_implies_coverage. exact Hcert.
+Qed.
+
 (* ================================================================== *)
 (** ** Preservation scaffolding for the new step rules                 *)
 (* ================================================================== *)
@@ -3864,8 +4056,8 @@ Qed.
     inductive typing rules alone (i.e., without depending on the
     not-yet-Qed'd DeBruijn lemmas from A1/A2 or the confluence from
     B4).  Cases whose preservation requires strengthening the
-    [T_Match] rule (namely [step_match_empty], [step_match_wild], and
-    [step_match_ctor_fire]) are left as open B2 obligations: T_Match
+    [T_Match] rule (namely [step_match_ctor_fire]) is left as an
+    open B2 obligation: T_Match
     as written in this file does not constrain branch body types, so
     no type-preserving reduction can be synthesized without either an
     exhaustiveness premise on [T_Match] or a per-branch typing
@@ -3891,7 +4083,7 @@ Proof.
 Qed.
 
 (** Defeasible peel: [Defeasible bt bb (e :: rest) --> Defeasible bt bb rest].
-    Closes directly by inversion — T_Defeasible is parametric in the
+    Closes directly by inversion - T_Defeasible is parametric in the
     exception list.  Qed. *)
 Lemma preservation_case_step_defeasible_peel :
   forall (ctx : Context) (base_ty base_body : Term)
@@ -3913,7 +4105,7 @@ Qed.
 
 (** Match scrutinee congruence: IF scrutinee preservation holds on
     [step scrut scrut'], THEN the Match preserves type.  This is
-    purely mechanical — the T_Match rule is parametric in the
+    purely mechanical - the T_Match rule is parametric in the
     scrutinee type [scrut_ty], which [preservation] on [scrut] keeps
     fixed.  Qed. *)
 Lemma preservation_case_step_match_scrutinee :
@@ -3972,8 +4164,8 @@ Proof.
   - eapply T_Conv; [eapply IHHty; [exact Hrest | reflexivity] | exact H].
 Qed.
 
-(** NOTE: preservation for the remaining three Match cases
-    ([step_match_empty], [step_match_wild], [step_match_ctor_fire])
+(** NOTE: preservation for the remaining constructor-fire Match case
+    ([step_match_ctor_fire])
     requires the [T_Match] rule to carry a per-branch typing
     premise that the current Coq formalization has elided (it is
     noted as "list condition elided due to strict positivity
@@ -3982,8 +4174,8 @@ Qed.
     hypothesis to T_Match, or replace the Forall-of-has_type with
     an explicit [list (Term * Term)] witness parameter similar to
     T_Defeasible's [exns_ok].  Once T_Match carries that premise,
-    the three remaining cases close in ~5 lines each via standard
-    inversion + substitution.  No new confluence, shift, or subst
+    the remaining constructor-fire case closes via standard inversion
+    plus substitution.  No new confluence, shift, or subst
     commutation lemma is required. *)
 
 (* ================================================================== *)
@@ -4006,13 +4198,13 @@ Qed.
         untypability lemmas that B3 proved
         ([var_nil_untypable] / [constant_nil_untypable] / ...);
         in a general context, each typing goal is reachable only
-        through T_Conv, which routes through conversion —
+        through T_Conv, which routes through conversion -
         preservation follows from IH on the typing derivation.
 
     (b) Rules on constructors that DO have a matching [has_type]
         rule (Lambda / Pi / Annot / Let / Match / Defeasible).
-        For [step_annot_*] and [step_let_*] — non-binder
-        subterms — preservation closes directly from inversion +
+        For [step_annot_*] and [step_let_*] - non-binder
+        subterms - preservation closes directly from inversion +
         IH.  For binder-subterm rules (step_lambda_body /
         step_pi_cod / step_let_body / etc.) preservation requires
         CONTEXT CONVERSION: has_type is invariant under conv_eq

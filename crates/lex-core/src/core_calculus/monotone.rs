@@ -70,6 +70,9 @@ pub struct Proof<T, J, V, Tr, W = ()> {
     _scope: PhantomData<(T, J, V, Tr)>,
 }
 
+/// Result type for a successful tribunal bridge.
+pub type TribunalBridgeResult<T, J, V, To, W, E> = Option<Proof<T, J, V, To, (W, E)>>;
+
 impl<T, J, V, Tr, W> Proof<T, J, V, Tr, W> {
     /// Introduce a proof by axiom (e.g., a signed PCAuth attestation).
     pub fn axiom(witness: W) -> Self {
@@ -133,7 +136,7 @@ pub trait TribunalCoercion<From, To> {
     fn coerce<T, J, V, W>(
         &self,
         proof: Proof<T, J, V, From, W>,
-    ) -> Option<Proof<T, J, V, To, (W, Self::BridgeEvidence)>>;
+    ) -> TribunalBridgeResult<T, J, V, To, W, Self::BridgeEvidence>;
 }
 
 /// A trivial self-coercion (every tribunal recognizes its own output).
@@ -145,7 +148,7 @@ impl<Tr> TribunalCoercion<Tr, Tr> for IdentityCoercion {
     fn coerce<T, J, V, W>(
         &self,
         proof: Proof<T, J, V, Tr, W>,
-    ) -> Option<Proof<T, J, V, Tr, (W, ())>> {
+    ) -> TribunalBridgeResult<T, J, V, Tr, W, ()> {
         Some(proof.map(|w| (w, ())))
     }
 }
@@ -163,7 +166,7 @@ impl<From, To> TribunalCoercion<From, To> for NoBridge {
     fn coerce<T, J, V, W>(
         &self,
         _proof: Proof<T, J, V, From, W>,
-    ) -> Option<Proof<T, J, V, To, (W, Self::BridgeEvidence)>> {
+    ) -> TribunalBridgeResult<T, J, V, To, W, Self::BridgeEvidence> {
         None
     }
 }
@@ -173,7 +176,6 @@ mod tests {
     use super::*;
 
     struct ADGM;
-    struct SCHL;
     struct V1;
     struct T2026;
     struct FSRA;

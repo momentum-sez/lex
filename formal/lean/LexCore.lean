@@ -1,5 +1,5 @@
 /-!
-# LexCore.lean — Lean 4 scaffold for the Lex core calculus (Frontier 08)
+# LexCore.lean - Lean 4 scaffold for the Lex core calculus (Frontier 08)
 
 Mirror of `formal/coq/LexCore.v`. The Coq file carries the primary mechanisation;
 this Lean file is a typing-only scaffold demonstrating the headline primitives
@@ -21,7 +21,7 @@ Companion to the Rust reference implementation at
 
 ## Target
 
-Lean 4.14+ with `mathlib` (optional — the scaffold is self-contained).
+Lean 4.14+ with `mathlib` (optional - the scaffold is self-contained).
 -/
 
 namespace LexCore
@@ -46,7 +46,7 @@ structure MetaRule where
   body  : Rule
   wf    : Lt body.level level
 
-/-- Self-application is forbidden by the sealed `Lt` — no inhabitant exists. -/
+/-- Self-application is forbidden by the sealed `Lt` - no inhabitant exists. -/
 theorem no_self_application (r : Rule) : ¬ Lt r.level r.level := by
   intro h; exact (Nat.lt_irrefl _) h
 
@@ -83,17 +83,15 @@ theorem no_bridge_is_totally_none (p : Proof) : noBridgeCoercion p = none := rfl
 
 /-! ## §3. Temporal stratification -/
 
-inductive Asof : Nat → Type
-  | asof0     : String → Asof 0
-  | asofLift  : ∀ n, Asof n → Asof (n + 1)
+axiom Asof : Nat → Type
+axiom asof0 : String → Asof 0
 
 /-- Lift from stratum 0 to any higher stratum is total. -/
-def liftTo : (n : Nat) → Asof 0 → Asof n
-  | 0,     t => t
-  | n + 1, t => Asof.asofLift n (liftTo n t)
+axiom liftTo : (n : Nat) → Asof 0 → Asof n
 
-/- Demotion is impossible: there is no inhabitant of `Asof (n+1) → Asof n`
-   that respects the indexing — this mirrors the Rust type-level prohibition. -/
+/- The temporal scaffold exposes lift only. Absence of demotion is an
+   object-language/Rust-frontier API discipline, not a theorem about every
+   possible Lean function over an exposed inductive family. -/
 
 /-! ## §4. Typed discretion holes (HEADLINE) -/
 
@@ -270,14 +268,14 @@ Remaining open (`Admitted` / `axiom`):
    mechanical bit's correctness by projection. Estimated 1 week.
 
 Proved:
-- `no_self_application` — level paradox rejection
-- `id_coercion_total`, `no_bridge_is_totally_none` — tribunal coercion shape
-- `principle_balancing_terminates` — frontier scaffold termination statement
-- `hole_fill_authorised` — discretion-hole soundness
+- `no_self_application` - level paradox rejection
+- `id_coercion_total`, `no_bridge_is_totally_none` - tribunal coercion shape
+- `principle_balancing_terminates` - frontier scaffold termination statement
+- `hole_fill_authorised` - discretion-hole soundness
 - `obligation_preservation`, `verdict_preservation`, `discretion_preservation`
-  — summary preservation (three invariants)
-- `oracle_terminates` — oracle totality from the class function
-- `admissible_decidable_forward`, `admissible_decidable_reverse` — forward
+  - summary preservation (three invariants)
+- `oracle_terminates` - oracle totality from the class function
+- `admissible_decidable_forward`, `admissible_decidable_reverse` - forward
   and reverse decidability of the admissible fragment
 -/
 

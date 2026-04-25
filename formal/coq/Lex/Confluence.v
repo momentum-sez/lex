@@ -1,4 +1,4 @@
-(** * Lex/Confluence.v — Parallel reduction scaffolding for Tait-Martin-Löf confluence
+(** * Lex/Confluence.v - Parallel reduction scaffolding for Tait-Martin-Löf confluence
 
     STATUS: Qed-closed scaffolding.  No [Admitted].  No top-level
     [Axiom].
@@ -27,13 +27,13 @@
       - [par_branch_refl],
         [par_exception_refl]: companion reflexives.
       - [step_implies_par]  : step ⊆ par (single-step embedding).
+      - [par_implies_steps] : par ⊆ steps (parallel-step collapse).
 
     SCOPE NOT CLOSED HERE:
 
     The full Tait-Martin-Löf program further demands
 
       - par_subst (par respects substitution)
-      - par_implies_steps (par ⊆ steps)
       - par_diamond (the core)
       - confluence_theorem
 
@@ -42,7 +42,8 @@
     threading the well_scoped-guarded DeBruijn commutation lemmas
     through each par case.  The G1 charter forbids [Admitted], so
     we DO NOT stage partial/unfinished proofs; rather, we deliver
-    the Qed-closed embeddings ([par_refl], [step_implies_par]) and
+    the Qed-closed embeddings ([par_refl], [step_implies_par],
+    [par_implies_steps]) and
     leave the diamond as a named open problem in [Requirements.v]
     under [req_confluence].
 
@@ -50,16 +51,15 @@
 
     The diamond lemma decomposes into:
 
-      (a) par_subst: forall t t' s s' i,
-            well_scoped (S i) t ->
-            par t t' -> par s s' ->
-            par (subst i s t) (subst i s' t').
-          Proof: structural induction on [par t t'], using
-          [shift_subst_commute_ws] and [subst_subst_ws] from
-          DeBruijn.v.  Each redex case (par_beta, par_zeta, etc.)
-          uses the _ws commutation to re-associate the composed
-          substitutions.  Each congruence case commutes par
-          through the constructor.  Approx. 400 lines.
+      (a) par_subst_at_depth: the unary substitution lemma needed
+          under an ambient scope depth [k], not just the shallow
+          [well_scoped (S i) t] form.  The [step_match_ctor_fire] /
+          [subst_args] frontier needs this stronger shape because
+          after substituting the first constructor argument, the
+          body may still contain the remaining pattern binders.
+          The Qed bridge [par_subst_at_depth_implies_par_subst_args]
+          below reduces the multi-substitution case to this exact
+          unary obligation.
 
       (b) par_implies_steps: forall t t', par t t' -> steps t t'.
           Proof: induction on par; each congruence case lifts
@@ -1215,9 +1215,36 @@ Qed.
     None of the code below introduces a [Hypothesis] or [Axiom]; a
     caller citing [par_subst_spec] must bring their own proof. *)
 
+(** [subst_args_preserves_ws]: substituting [n] closed constructor
+    arguments into a body scoped by those [n] binders preserves the
+    ambient scope [k].  This is the scoping invariant used by the
+    multi-substitution bridge below. *)
+Lemma subst_args_preserves_ws : forall args body k,
+  well_scoped (k + List.length args) body ->
+  Forall (fun t => well_scoped k t) args ->
+  well_scoped k (subst_args args body).
+Proof.
+  induction args as [|a rest IH]; intros body k Hbody Hargs; simpl in *.
+  - replace (k + 0) with k in Hbody by lia. exact Hbody.
+  - inversion Hargs as [|? ? Ha Hrest]; subst.
+    apply IH.
+    + eapply subst_preserves_ws.
+      * replace (k + S (List.length rest))
+          with (S (k + List.length rest)) in Hbody by lia.
+        exact Hbody.
+      * eapply well_scoped_mono; [| exact Ha]. lia.
+      * lia.
+    + exact Hrest.
+Qed.
+
 (** [par_subst_spec]: par respects substitution.  Structural
     induction on [par t t'] with [shift_subst_commute_ws] at every
-    binder case and [subst_subst_ws] at every redex case. *)
+    binder case and [subst_subst_ws] at every redex case.
+
+    This shallow form is not by itself enough for [subst_args]: a
+    constructor branch body scoped by [n] pattern binders satisfies
+    [well_scoped n body], not [well_scoped 1 body].  The at-depth
+    form below is the exact frontier needed for constructor firing. *)
 Definition par_subst_spec : Prop :=
   forall (t t' s s' : Term) (i : nat),
     well_scoped (S i) t ->
@@ -1225,8 +1252,66 @@ Definition par_subst_spec : Prop :=
     par s s' ->
     par (subst i s t) (subst i s' t').
 
+(** [par_subst_at_depth_spec]: par respects substitution at target
+    [i] inside an ambient well-scoped depth [k].  The replacement
+    terms are also scoped at [k] so the binder cases can shift them
+    without leaving the ambient scope invariant. *)
+Definition par_subst_at_depth_spec : Prop :=
+  forall (t t' s s' : Term) (i k : nat),
+    i < k ->
+    well_scoped k t ->
+    well_scoped k s ->
+    well_scoped k s' ->
+    par t t' ->
+    par s s' ->
+    par (subst i s t) (subst i s' t').
+
+(** [par_subst_args_spec]: the multi-substitution case needed by
+    [par_match_ctor_fire_p].  The body is scoped by exactly the
+    constructor-argument binders, and both argument vectors are
+    closed at ambient depth 0. *)
+Definition par_subst_args_spec : Prop :=
+  forall args args' body body',
+    well_scoped (List.length args) body ->
+    Forall (fun t => well_scoped 0 t) args ->
+    Forall (fun t => well_scoped 0 t) args' ->
+    Forall2 par args args' ->
+    par body body' ->
+    par (subst_args args body) (subst_args args' body').
+
+(** The constructor-fire multi-substitution obligation reduces to the
+    at-depth unary substitution theorem.  This closes the list/fold
+    bookkeeping around [subst_args]; the remaining mathematical
+    obligation is now precisely [par_subst_at_depth_spec]. *)
+Theorem par_subst_at_depth_implies_par_subst_args :
+  par_subst_at_depth_spec -> par_subst_args_spec.
+Proof.
+  unfold par_subst_at_depth_spec, par_subst_args_spec.
+  intros Hsubst args args' body body' Hws Hargs Hargs' Hpars Hbody.
+  revert body body' Hws Hargs Hargs' Hbody.
+  induction Hpars as [|a a' rest rest' Ha _ IH];
+    intros body body' Hws Hargs Hargs' Hbody; simpl in *.
+  - exact Hbody.
+  - inversion Hargs as [|? ? Hwa Hwrest]; subst.
+    inversion Hargs' as [|? ? Hwa' Hwrest']; subst.
+    apply IH.
+    + eapply subst_preserves_ws.
+      * exact Hws.
+      * eapply well_scoped_mono; [| exact Hwa]. lia.
+      * lia.
+    + exact Hwrest.
+    + exact Hwrest'.
+    + eapply (Hsubst body body' a a' 0 (S (List.length rest))).
+      * lia.
+      * exact Hws.
+      * eapply well_scoped_mono; [| exact Hwa]. lia.
+      * eapply well_scoped_mono; [| exact Hwa']. lia.
+      * exact Hbody.
+      * exact Ha.
+Qed.
+
 (** [par_shift_spec]: par is closed under shift.  Structural
-    induction on [par t t'] — each congruence case commutes par
+    induction on [par t t'] - each congruence case commutes par
     through shift, each redex case uses [shift_subst_commute_ws]
     from DeBruijn.v.  The well_scoped-guarded form in DeBruijn.v
     is what's needed (shift doesn't produce nested subst's without
@@ -1261,7 +1346,51 @@ Definition par_star_diamond_spec : Prop :=
     par_star t u1 -> par_star t u2 ->
     exists v, par_star u1 v /\ par_star u2 v.
 
-(** [confluence_spec] — matches [confluence_property] in Typing.v.
+(** [confluence_spec] - matches [confluence_property] in Typing.v.
     Follows from [par_star_diamond_spec] +
     [par_implies_steps_spec] + [step_implies_par]. *)
 Definition confluence_spec : Prop := confluence_property.
+
+(** The parallel-reduction closure route needs one small bridge that is
+    easy to lose in prose: once [par_star_diamond_spec] is proved, the
+    single-step confluence property follows from the already-Qed
+    embeddings [step_implies_par] and [par_implies_steps]. *)
+
+Theorem par_implies_steps_spec_closed : par_implies_steps_spec.
+Proof.
+  exact par_implies_steps.
+Qed.
+
+Lemma steps_implies_par_star : forall t t',
+  steps t t' -> par_star t t'.
+Proof.
+  intros t t' Hsteps.
+  induction Hsteps as [t | t1 t2 t3 Hstep _ IH].
+  - apply par_star_refl.
+  - eapply par_star_step.
+    + apply step_implies_par. exact Hstep.
+    + exact IH.
+Qed.
+
+Lemma par_star_implies_steps : forall t t',
+  par_star t t' -> steps t t'.
+Proof.
+  intros t t' Hstar.
+  induction Hstar as [t | t1 t2 t3 Hpar _ IH].
+  - apply steps_refl.
+  - eapply steps_append.
+    + apply par_implies_steps. exact Hpar.
+    + exact IH.
+Qed.
+
+Theorem confluence_from_par_star_diamond :
+  par_star_diamond_spec -> confluence_spec.
+Proof.
+  unfold par_star_diamond_spec, confluence_spec, confluence_property.
+  intros Hdiamond t u1 u2 Htu1 Htu2.
+  destruct (Hdiamond t u1 u2
+              (steps_implies_par_star t u1 Htu1)
+              (steps_implies_par_star t u2 Htu2))
+    as [v [Hu1v Hu2v]].
+  exists v. split; apply par_star_implies_steps; assumption.
+Qed.

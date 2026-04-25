@@ -1,4 +1,4 @@
-(** * Lex/DeBruijn.v — De Bruijn index shifting and substitution
+(** * Lex/DeBruijn.v - De Bruijn index shifting and substitution
 
     Mirrors [crates/lex-core/src/debruijn.rs] and the shift/subst
     functions in [crates/lex-core/src/typecheck.rs].
@@ -10,9 +10,10 @@
     - shift 0 is identity                    [PROVED: shift_zero]
     - shift composes additively              [PROVED: shift_shift]
     - subst above free vars is identity      [PROVED: subst_above_free]
-    - substitution commutes with shifting    [Admitted: shift_subst_commute — proof sketch provided]
-    - substitution composes                  [Admitted: subst_subst — depends on shift_subst_commute]
-    - subst var identity                     [Admitted: subst_var_identity — statement needs strengthening]
+    - unconditional shift/subst commutation  [REFUTED: naive theorem false]
+    - well-scoped shift/subst commutation    [PROVED: shift_subst_commute_ws_at_depth]
+    - well-scoped substitution composition   [PROVED: subst_subst_ws_at_depth]
+    - subst var identity                     [PROVED: subst_var_identity]
 *)
 
 Require Import Coq.Arith.Arith.
@@ -33,7 +34,7 @@ Require Import Lex.Syntax.
 
     We model [amount] as a natural number (upward shift only).  The Rust
     implementation uses i64, but the Coq formalization restricts to
-    non-negative shifts — downward shifts are modeled via substitution. *)
+    non-negative shifts - downward shifts are modeled via substitution. *)
 
 Fixpoint shift (cutoff : nat) (amount : nat) (t : Term) : Term :=
   match t with
@@ -259,7 +260,7 @@ Lemma shift_zero_branch : forall (c : nat) (b : Branch),
 Proof.
   intros c b. destruct b as [pat body].
   simpl.
-  (* We need shift_zero for body — proved mutually below. *)
+  (* We need shift_zero for body - proved mutually below. *)
 Abort.
 
 (** We prove all three simultaneously using the mutual scheme. *)
@@ -678,7 +679,7 @@ Qed.
 
     The proof requires careful case analysis on the relative ordering
     of the variable index, the substitution target, and the shift
-    cutoff — and must handle binder cases where both target and cutoff
+    cutoff - and must handle binder cases where both target and cutoff
     increment.  The list sub-term cases additionally require induction
     on the list with the mutual lemma for branches/exceptions.
 
@@ -701,10 +702,9 @@ Qed.
     The binder cases follow by the mutual IH, using the fact that under a binder
     both the cutoff and target increment by 1, and shift 0 1 commutes through.
 
-    This proof is mechanically straightforward but extremely long (~200 lines)
-    due to the 30+ constructors in Term. We leave it Admitted with the proof
-    sketch above; completing it requires no mathematical insight, only patience
-    with the AST size. *)
+    The unconditional theorem is false; the refutation below records the
+    counterexample.  The corrected well-scoped and ambient-depth forms are
+    proved later in this file and exported as the usable specifications. *)
 (** *** NEGATIVE RESULT: the unconditional naive form is FALSE.
 
     Concrete witness: t = Var 1, s = Var 42, i = 0, c = 1, d = 1.
@@ -713,9 +713,8 @@ Qed.
     - LHS = Var 0 ≠ Var 1 = RHS.
 
     The correct conditional form (under well_scoped premises)
-    remains standard in the literature.  We mechanize the
-    refutation to convert the Admitted to a Qed-closed negative
-    theorem. *)
+    remains standard in the literature.  We mechanize the refutation, then
+    prove the corrected well-scoped theorem below. *)
 Theorem shift_subst_commute_not_unconditional :
   ~ (forall (t s : Term) (i c : nat) (d : nat),
        shift c d (subst i s t) =
@@ -771,7 +770,7 @@ Proof.
 Qed.
 
 (* =================================================================== *)
-(** ** Well-scoped-guarded shift-subst commutation — specification     *)
+(** ** Well-scoped-guarded shift-subst commutation - specification     *)
 (* =================================================================== *)
 
 (** The corrected-form lemmas under well_scoped premises are captured
@@ -1035,7 +1034,7 @@ Proof.
   apply shift_shift_swap. lia.
 Qed.
 
-(** *** shift_subst_commute_ws — concrete Qed-closed mutual proof *)
+(** *** shift_subst_commute_ws - concrete Qed-closed mutual proof *)
 
 (** The corrected-form lemma under the [well_scoped (S i) t] premise,
     proved by mutual structural induction on Term / Branch /
@@ -1432,10 +1431,10 @@ Proof.
   apply well_scoped_shift. exact Hws.
 Qed.
 
-(** *** subst_subst_ws — concrete Qed-closed mutual proof
+(** *** subst_subst_ws - concrete Qed-closed mutual proof
 
     Substitution composes under [well_scoped] premises.  The naive
-    unconditional form is FALSE — refuted by
+    unconditional form is FALSE - refuted by
     [subst_subst_not_unconditional] above.  The corrected form,
     requiring [well_scoped (S i) t], [well_scoped (S i) r], and
     [well_scoped (S i) s], is the standard de Bruijn composition
@@ -1443,7 +1442,7 @@ Qed.
 
     Proved by mutual structural induction on Term / Branch /
     Exception.  The [Var] case enumerates the orderings of [n],
-    [i], [j], [S i] — cases that would require [n > i] are ruled
+    [i], [j], [S i] - cases that would require [n > i] are ruled
     out by the [well_scoped] premise and closed by [lia].
     Non-binder constructors reduce to [f_equal] + IH on each
     subterm.  Binder constructors (Lambda / Pi / Sigma / Rec / Let)
@@ -1931,7 +1930,7 @@ Qed.
     thereby supporting the [substitution_preserves_typing] lemma
     where the typing context supplies [k] independent of [i].
 
-    The generalization is NOT free — the Var case imposes
+    The generalization is NOT free - the Var case imposes
     conditions on [c] and [i] that were automatically satisfied
     by the tighter [well_scoped (S i) t] premise.  We mechanize
     both the negative results (naive relaxations that fail)
@@ -2206,9 +2205,9 @@ Proof.
                    t2 (shift 0 1 s) (S i) (S c) d (S k) H2 HSik HSci).
         (* Goal: subst (S i + d) (shift (S c) d (shift 0 1 s)) (shift (S c) d t2)
                 = subst (i + d + 1) (shift 0 1 (shift c d s)) (shift (S c) d t2).
-           Hmm actually RHS is from the outer lemma: its subst is at
-             (i+d) with shift 0 1 on top (binder), but the simplification of
-             subst on Lambda gives S (i+d).  Check. *)
+           The right side comes from the outer lemma: its substitution
+           index is [i+d] under one binder, and simplification under
+           [Lambda] gives [S (i+d)]. *)
         rewrite shift_shift_swap_0_1.
         simpl. reflexivity.
     + (* Pi *)
@@ -2339,14 +2338,14 @@ Qed.
     [j = 1 <= i = 1].
 
     - LHS: [subst 1 (Var 0) (subst 1 (Var 2) (Var 2))]
-         = [subst 1 (Var 0) (Var 2)]  (subst: 1 = 2? no; 1 < 2 → Var 1)
-         wait: subst 1 (Var 2) (Var 2) = Var 2 (2 = 1? no; 1 < 2 → Var (pred 2) = Var 1)
-         = [subst 1 (Var 0) (Var 1)] = [Var 0]   (1 = 1 → replacement)
+         = [subst 1 (Var 0) (Var 2)]  (subst: 1 = 2? no; 1 < 2 gives Var 1)
+         with [subst 1 (Var 2) (Var 2) = Var 1]
+         = [subst 1 (Var 0) (Var 1)] = [Var 0]   (1 = 1 gives replacement)
     - RHS: [subst 1 (subst 1 (Var 0) (Var 2)) (subst 2 (shift 0 1 (Var 0)) (Var 2))]
          = [subst 1 (Var 1) (subst 2 (Var 1) (Var 2))]
                (subst 1 (Var 0) (Var 2) = Var 1; shift 0 1 (Var 0) = Var 1)
          = [subst 1 (Var 1) (shift 0 1 (Var 0))]
-               wait: subst 2 (Var 1) (Var 2) = Var 1 (replacement, since 2 = 2)
+               where [subst 2 (Var 1) (Var 2) = Var 1]
          = [subst 1 (Var 1) (Var 1)] = [Var 1]
 
     LHS = [Var 0] ≠ [Var 1] = RHS.
@@ -2769,9 +2768,9 @@ Qed.
     [Lex.Typing]) to keep stored types self-consistent when the
     ambient scope grows by one binding.
 
-    Under the option-(a) storage invariant — "position [i] stores a
+    Under the option-(a) storage invariant - "position [i] stores a
     type whose free variables already refer to positions of the
-    current context" — extending with a new binding at position [0]
+    current context" - extending with a new binding at position [0]
     requires every existing entry to be shifted by [1] at cutoff [0]
     so its old references to [0 .. n-1] shift to [1 .. n] in the new
     context. *)
@@ -2824,7 +2823,7 @@ Proof.
   - f_equal. exact IH.
 Qed.
 
-(** [firstn] commutes with [shift_ctx] — truncation is pointwise. *)
+(** [firstn] commutes with [shift_ctx] - truncation is pointwise. *)
 Lemma shift_ctx_firstn : forall (c d n : nat) (ctx : list Term),
   firstn n (shift_ctx c d ctx) = shift_ctx c d (firstn n ctx).
 Proof.
@@ -2836,7 +2835,7 @@ Proof.
     + f_equal. apply IH.
 Qed.
 
-(** [skipn] commutes with [shift_ctx] — the suffix shifts pointwise. *)
+(** [skipn] commutes with [shift_ctx] - the suffix shifts pointwise. *)
 Lemma shift_ctx_skipn : forall (c d n : nat) (ctx : list Term),
   skipn n (shift_ctx c d ctx) = shift_ctx c d (skipn n ctx).
 Proof.
@@ -2848,7 +2847,7 @@ Proof.
     + apply IH.
 Qed.
 
-(** Shift composition on [shift_ctx] at the same cutoff — the amounts
+(** Shift composition on [shift_ctx] at the same cutoff - the amounts
     add.  Analogue of [shift_shift] at the context level. *)
 Lemma shift_ctx_shift_ctx : forall (c m n : nat) (ctx : list Term),
   shift_ctx c m (shift_ctx c n ctx) = shift_ctx c (n + m) ctx.
@@ -3157,4 +3156,3 @@ Proof.
   unfold shift_subst_commute_above_spec_de_bruijn.
   exact shift_subst_commute_above.
 Qed.
-

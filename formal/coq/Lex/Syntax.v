@@ -1,4 +1,4 @@
-(** * Lex/Syntax.v — Core Lex syntax in Coq
+(** * Lex/Syntax.v - Core Lex syntax in Coq
 
     Mirrors [crates/lex-core/src/ast.rs].
 
@@ -8,7 +8,7 @@
     mechanized type checking.
 
     Variables use De Bruijn indices (nat).  All binders carry explicit domain
-    annotations — there are no implicit arguments in core form.
+    annotations - there are no implicit arguments in core form.
 *)
 
 Require Import Coq.Strings.String.
@@ -37,25 +37,25 @@ Inductive Level : Type :=
     and [Time0]/[Time1] are the temporal sorts. *)
 Inductive Sort : Type :=
   | SType : Level -> Sort   (* Type_l *)
-  | SLProp : Sort             (* Prop — proof-irrelevant sort *)
+  | SLProp : Sort             (* Prop - proof-irrelevant sort *)
   | SRule : Level -> Sort    (* Rule_l *)
-  | STime0 : Sort            (* Time_0 — frozen at transition commit *)
-  | STime1 : Sort.           (* Time_1 — derived via rewrite *)
+  | STime0 : Sort            (* Time_0 - frozen at transition commit *)
+  | STime1 : Sort.           (* Time_1 - derived via rewrite *)
 
 (* ================================================================== *)
 (** ** Effect rows (grammar §3.1) *)
 (* ================================================================== *)
 
-(** Individual effects.  This is a simplified representation — the full
+(** Individual effects.  This is a simplified representation - the full
     AST carries scoping terms and authority references inside effects. *)
 Inductive Effect : Type :=
   | ERead : Effect
-  | EWrite : Effect           (* write(scope) — scope elided *)
+  | EWrite : Effect           (* write(scope) - scope elided *)
   | EAttest : Effect          (* attest(authority) *)
   | EAuthority : Effect       (* authority(ref) *)
   | EOracle : Effect          (* oracle(ref) *)
   | EFuel : Level -> nat -> Effect  (* fuel(level, amount) *)
-  | ESanctionsQuery : Effect  (* sanctions_query — distinguished *)
+  | ESanctionsQuery : Effect  (* sanctions_query - distinguished *)
   | EDiscretion : Effect.     (* discretion(authority) *)
 
 (** Effect rows: empty, concrete list, row variable, join, or
@@ -81,7 +81,7 @@ Inductive Pattern : Type :=
 (** ** Exceptions (§6) *)
 (* ================================================================== *)
 
-(** Forward declaration — Exception references Term, which references
+(** Forward declaration - Exception references Term, which references
     Exception via DefeasibleRule.  We use a mutual inductive. *)
 
 (* ================================================================== *)
@@ -170,24 +170,7 @@ Definition prop : Term := TSort SLProp.
 Definition arrow (A B : Term) : Term :=
   Pi A None B.
 
-(* ================================================================== *)
 (** ** Decidable equality *)
-(* ================================================================== *)
-
-(** We defer decidable equality to a future development.  For now we
-    simply assert it as an axiom so downstream modules can use [eq_dec]. *)
-Axiom term_eq_dec : forall (t1 t2 : Term), {t1 = t2} + {t1 <> t2}.
-Axiom branch_eq_dec : forall (b1 b2 : Branch), {b1 = b2} + {b1 <> b2}.
-Axiom exception_eq_dec : forall (e1 e2 : Exception), {e1 = e2} + {e1 <> e2}.
-
-(** ** Qed-closed decidable equality for non-mutually-recursive types
-       (2026-04-20)
-
-    The three axioms above remain because Term/Branch/Exception are
-    mutually recursive; their Qed-closed derivation requires a
-    manually-constructed mutual-induction helper (~500 lines).  The
-    non-mutually-recursive types below admit Qed-closed eq_dec directly,
-    and are used as building blocks in the mutual-induction proof. *)
 
 Lemma level_eq_dec : forall (l1 l2 : Level), {l1 = l2} + {l1 <> l2}.
 Proof. decide equality; apply Nat.eq_dec. Qed.
@@ -228,3 +211,29 @@ Proof.
     + left. reflexivity.
     + right. intro H. inversion H. contradiction.
 Qed.
+
+(** The mutually recursive syntax admits structural decidable equality.
+    Keeping this proof closed removes the former equality axioms from the
+    trusted base of the paper-level development. *)
+Fixpoint term_eq_dec (t1 t2 : Term) {struct t1}
+  : {t1 = t2} + {t1 <> t2}
+with branch_eq_dec (b1 b2 : Branch) {struct b1}
+  : {b1 = b2} + {b1 <> b2}
+with exception_eq_dec (e1 e2 : Exception) {struct e1}
+  : {e1 = e2} + {e1 <> e2}.
+Proof.
+  - decide equality;
+      try apply string_dec;
+      try apply Nat.eq_dec;
+      try apply bool_dec;
+      try apply sort_eq_dec;
+      try apply effect_row_eq_dec;
+      try (apply list_eq_dec; apply term_eq_dec);
+      try (apply list_eq_dec; apply branch_eq_dec);
+      try (decide equality; try apply effect_row_eq_dec; try apply Nat.eq_dec).
+  - decide equality; try apply pattern_eq_dec; try apply term_eq_dec.
+  - decide equality;
+      try apply term_eq_dec;
+      try apply Nat.eq_dec;
+      try (decide equality; apply Nat.eq_dec).
+Defined.

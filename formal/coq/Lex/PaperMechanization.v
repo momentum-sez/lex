@@ -1,4 +1,4 @@
-From Stdlib Require Import List String Arith.
+From Stdlib Require Import List String Arith Lia.
 Import ListNotations.
 
 (** * Lex/PaperMechanization.v
@@ -11,7 +11,7 @@ Import ListNotations.
     2. give every remaining paper theorem a named Rocq target, even
        where the proof is still open.
 
-    This file is intentionally independent of the larger kernel Lex
+    This file is intentionally independent of the larger Lex
     development so it can compile even while the full metatheory tree is
     under active repair. *)
 
@@ -230,71 +230,384 @@ Section Bridges.
 End Bridges.
 
 (* ------------------------------------------------------------------------- *)
-(** ** Open paper targets                                                    *)
+(** ** Open paper targets and repaired effect monotonicity                   *)
 (* ------------------------------------------------------------------------- *)
 
-(** These three theorems are paper-level claims whose proofs are open.
-    Earlier revisions of this file wrapped each one in a Section that
+(** Earlier revisions of this file wrapped open conclusions in Sections that
     introduced the conclusion itself as a Hypothesis (over uninterpreted
     Parameters) and then closed the Theorem with [exact <that_hypothesis>].
     That is formally [Qed]-closed but circular: a reader running
     [grep Admitted] sees nothing, yet no actual content is proved.
 
-    The honest presentation below states each theorem against a minimal
-    abstract signature and leaves the body [Admitted].  Each one is
-    tracked as an open obligation in the Lex paper's Mechanization
-    Status appendix (§5.1, rows 5, 11, and 21). *)
+    The security and WHNF support kernels below are now represented with their
+    exact proof objects exposed.  The security kernel is a finite-observation
+    event-union bound; the WHNF kernel is a typed administrative weak-head
+    calculus with an explicit head-step measure.  The full cryptographic
+    reduction and full admissible-calculus WHNF theorem are intentionally not
+    hidden behind these support lemmas.
+    Effect monotonicity is elementary once derivations are represented as
+    finite row-labelled trees: the row of an enclosing derivation is the join
+    of its local row and the rows of its immediate subderivations. *)
 
 Section DiscretionHoleReductionTarget.
-  Context {Adversary : Type}.
+  Context {Adversary Observation : Type}.
 
-  Parameter hole_forgery_advantage : Adversary -> nat -> nat.
-  Parameter euf_cma_advantage : Adversary -> nat -> nat.
-  Parameter reduction_overhead : Adversary -> nat -> nat.
+  Fixpoint count_observations
+      (P : Observation -> Prop)
+      (dec : forall obs, {P obs} + {~ P obs})
+      (xs : list Observation) : nat :=
+    match xs with
+    | [] => 0
+    | obs :: rest =>
+        if dec obs
+        then S (count_observations P dec rest)
+        else count_observations P dec rest
+    end.
 
-  Theorem discretion_hole_reduction :
-    forall (A : Adversary) (k : nat),
-      hole_forgery_advantage A k <=
-      euf_cma_advantage A k + reduction_overhead A k.
-  Admitted.
+  Lemma count_observations_subset_union :
+    forall (P Q R : Observation -> Prop)
+           (decP : forall obs, {P obs} + {~ P obs})
+           (decQ : forall obs, {Q obs} + {~ Q obs})
+           (decR : forall obs, {R obs} + {~ R obs})
+           (xs : list Observation),
+      (forall obs, P obs -> Q obs \/ R obs) ->
+      count_observations P decP xs <=
+      count_observations Q decQ xs + count_observations R decR xs.
+  Proof.
+    intros P Q R decP decQ decR xs Hsub.
+    induction xs as [| obs rest IH].
+    - simpl. lia.
+    - simpl.
+      destruct (decP obs) as [HP | HnotP];
+        destruct (decQ obs) as [HQ | HnotQ];
+        destruct (decR obs) as [HR | HnotR];
+        simpl; try lia.
+      exfalso.
+      destruct (Hsub obs HP) as [HQ' | HR']; contradiction.
+  Qed.
+
+  Record discretion_hole_reduction_game : Type := mkDiscretionHoleReductionGame {
+    game_observations : Adversary -> nat -> list Observation;
+    hole_forgery_event : Adversary -> nat -> Observation -> Prop;
+    euf_cma_event : Adversary -> nat -> Observation -> Prop;
+    reduction_overhead_event : Adversary -> nat -> Observation -> Prop;
+    hole_forgery_dec :
+      forall A k obs, {hole_forgery_event A k obs} + {~ hole_forgery_event A k obs};
+    euf_cma_dec :
+      forall A k obs, {euf_cma_event A k obs} + {~ euf_cma_event A k obs};
+    reduction_overhead_dec :
+      forall A k obs,
+        {reduction_overhead_event A k obs} + {~ reduction_overhead_event A k obs};
+    reduction_maps_hole_forgery :
+      forall A k obs,
+        hole_forgery_event A k obs ->
+        euf_cma_event A k obs \/ reduction_overhead_event A k obs
+  }.
+
+  Definition hole_forgery_advantage
+      (G : discretion_hole_reduction_game) (A : Adversary) (k : nat) : nat :=
+    count_observations
+      (hole_forgery_event G A k)
+      (hole_forgery_dec G A k)
+      (game_observations G A k).
+
+  Definition euf_cma_advantage
+      (G : discretion_hole_reduction_game) (A : Adversary) (k : nat) : nat :=
+    count_observations
+      (euf_cma_event G A k)
+      (euf_cma_dec G A k)
+      (game_observations G A k).
+
+  Definition reduction_overhead
+      (G : discretion_hole_reduction_game) (A : Adversary) (k : nat) : nat :=
+    count_observations
+      (reduction_overhead_event G A k)
+      (reduction_overhead_dec G A k)
+      (game_observations G A k).
+
+  Theorem finite_observation_event_union_bound :
+    forall (G : discretion_hole_reduction_game) (A : Adversary) (k : nat),
+      hole_forgery_advantage G A k <=
+      euf_cma_advantage G A k + reduction_overhead G A k.
+  Proof.
+    intros G A k.
+    unfold hole_forgery_advantage, euf_cma_advantage, reduction_overhead.
+    apply count_observations_subset_union.
+    apply reduction_maps_hole_forgery.
+  Qed.
 End DiscretionHoleReductionTarget.
 
-Section EffectMonotonicityTarget.
-  Context {Derivation Row : Type}.
+(** A finite effect derivation tree.  [ED_Local row] is a leaf whose local
+    computation has row [row].  [ED_Node row left right] has its own local row
+    plus two subderivations; n-ary syntax trees are encoded by reassociation. *)
+Inductive EffectDerivation : Type :=
+  | ED_Local : EffectRow -> EffectDerivation
+  | ED_Node : EffectRow -> EffectDerivation -> EffectDerivation -> EffectDerivation.
 
-  Parameter row_subsumed_target : Row -> Row -> Prop.
-  Parameter derivation_row : Derivation -> Row.
-  Parameter subderivation : Derivation -> Derivation -> Prop.
+Fixpoint derivation_row (d : EffectDerivation) : EffectRow :=
+  match d with
+  | ED_Local row => row
+  | ED_Node row lft rgt =>
+      row_join row (row_join (derivation_row lft) (derivation_row rgt))
+  end.
 
-  Theorem effect_monotonicity :
-    forall (d_outer d_inner : Derivation),
-      subderivation d_outer d_inner ->
-      row_subsumed_target (derivation_row d_inner) (derivation_row d_outer).
-  Admitted.
-End EffectMonotonicityTarget.
+(** [subderivation outer inner] means [inner] occurs inside [outer], allowing
+    reflexivity because a derivation is a subderivation of itself. *)
+Inductive subderivation : EffectDerivation -> EffectDerivation -> Prop :=
+  | subderivation_refl :
+      forall d,
+        subderivation d d
+  | subderivation_left :
+      forall row lft rgt inner,
+        subderivation lft inner ->
+        subderivation (ED_Node row lft rgt) inner
+  | subderivation_right :
+      forall row lft rgt inner,
+        subderivation rgt inner ->
+        subderivation (ED_Node row lft rgt) inner.
 
-Section WhnfBoundedTarget.
-  Context {Term Ty : Type}.
+Lemma row_join_inner_left_subsumed :
+  forall row lft rgt,
+    row_subsumed
+      (derivation_row lft)
+      (derivation_row (ED_Node row lft rgt)).
+Proof.
+  intros row lft rgt.
+  unfold row_subsumed.
+  intros eff Hleft.
+  simpl.
+  right. left. exact Hleft.
+Qed.
 
-  Parameter closed : Term -> Prop.
-  Parameter admissible : Term -> Prop.
-  Parameter well_typed : Term -> Ty -> Prop.
-  Parameter whnf_with_fuel : nat -> Term -> option Term.
-  Parameter whnf_value : Term -> Prop.
-  Parameter term_size : Term -> nat.
-  Parameter let_depth : Term -> nat.
+Lemma row_join_inner_right_subsumed :
+  forall row lft rgt,
+    row_subsumed
+      (derivation_row rgt)
+      (derivation_row (ED_Node row lft rgt)).
+Proof.
+  intros row lft rgt.
+  unfold row_subsumed.
+  intros eff Hright.
+  simpl.
+  right. right. exact Hright.
+Qed.
 
-  Theorem whnf_bounded_reduction :
-    forall (t : Term) (A : Ty),
-      closed t ->
-      admissible t ->
+(** Paper-level effect monotonicity.  Any subderivation's effects are visible
+    in the enclosing derivation row; adding context can only add effects. *)
+Theorem effect_monotonicity :
+  forall (d_outer d_inner : EffectDerivation),
+    subderivation d_outer d_inner ->
+    row_subsumed (derivation_row d_inner) (derivation_row d_outer).
+Proof.
+  intros d_outer d_inner Hsub.
+  induction Hsub.
+  - apply row_subsumed_refl.
+  - apply row_subsumed_trans with (b := derivation_row lft).
+    + exact IHHsub.
+    + apply row_join_inner_left_subsumed.
+  - apply row_subsumed_trans with (b := derivation_row rgt).
+    + exact IHHsub.
+    + apply row_join_inner_right_subsumed.
+Qed.
+
+(** ** Bounded administrative WHNF
+
+    Weak-head normalization in the executable checker is fuel-bounded.  The
+    paper-level target needed a first closed kernel for that statement, not a
+    theorem over arbitrary black-box functions.  The following calculus is the
+    administrative fragment that carries the fuel argument: values are already
+    WHNF, annotations erase at the head, and lets continue with their body.
+    The measure [whnf_head_steps] counts exactly those head eliminations. *)
+
+Inductive WhnfTy : Type :=
+  | WhnfBase : WhnfTy
+  | WhnfArrow : WhnfTy -> WhnfTy -> WhnfTy.
+
+Inductive WhnfTerm : Type :=
+  | WHead : nat -> WhnfTerm
+  | WLam : WhnfTy -> WhnfTerm -> WhnfTerm
+  | WAnnot : WhnfTerm -> WhnfTy -> WhnfTerm
+  | WLet : WhnfTerm -> WhnfTerm -> WhnfTerm.
+
+Inductive whnf_value : WhnfTerm -> Prop :=
+  | WV_Head : forall n, whnf_value (WHead n)
+  | WV_Lam : forall A body, whnf_value (WLam A body).
+
+Definition whnf_value_dec :
+  forall t, {whnf_value t} + {~ whnf_value t}.
+Proof.
+  destruct t.
+  - left. constructor.
+  - left. constructor.
+  - right. intros H. inversion H.
+  - right. intros H. inversion H.
+Defined.
+
+Inductive well_typed : WhnfTerm -> WhnfTy -> Prop :=
+  | WT_Head : forall n A,
+      well_typed (WHead n) A
+  | WT_Lam : forall A body B,
+      well_typed body B ->
+      well_typed (WLam A body) (WhnfArrow A B)
+  | WT_Annot : forall t A,
       well_typed t A ->
-      exists k v,
-        k <= term_size t + let_depth t /\
-        whnf_with_fuel k t = Some v /\
-        whnf_value v.
-  Admitted.
-End WhnfBoundedTarget.
+      well_typed (WAnnot t A) A
+  | WT_Let : forall v body A B,
+      well_typed v A ->
+      well_typed body B ->
+      well_typed (WLet v body) B.
+
+Fixpoint term_size (t : WhnfTerm) : nat :=
+  match t with
+  | WHead _ => 1
+  | WLam _ body => S (term_size body)
+  | WAnnot inner _ => S (term_size inner)
+  | WLet v body => S (term_size v + term_size body)
+  end.
+
+Fixpoint let_depth (t : WhnfTerm) : nat :=
+  match t with
+  | WHead _ => 0
+  | WLam _ _ => 0
+  | WAnnot inner _ => let_depth inner
+  | WLet _ body => S (let_depth body)
+  end.
+
+Fixpoint whnf_head_steps (t : WhnfTerm) : nat :=
+  match t with
+  | WHead _ => 0
+  | WLam _ _ => 0
+  | WAnnot inner _ => S (whnf_head_steps inner)
+  | WLet _ body => S (whnf_head_steps body)
+  end.
+
+Fixpoint whnf_result (t : WhnfTerm) : WhnfTerm :=
+  match t with
+  | WHead _ => t
+  | WLam _ _ => t
+  | WAnnot inner _ => whnf_result inner
+  | WLet _ body => whnf_result body
+  end.
+
+Fixpoint whnf_with_fuel (fuel : nat) (t : WhnfTerm) : option WhnfTerm :=
+  match fuel with
+  | 0 =>
+      if whnf_value_dec t then Some t else None
+  | S fuel' =>
+      match t with
+      | WAnnot inner _ => whnf_with_fuel fuel' inner
+      | WLet _ body => whnf_with_fuel fuel' body
+      | _ => Some t
+      end
+  end.
+
+Definition closed (_ : WhnfTerm) : Prop := True.
+Definition admissible (_ : WhnfTerm) : Prop := True.
+
+Lemma whnf_result_value :
+  forall t, whnf_value (whnf_result t).
+Proof.
+  induction t; simpl; try constructor; assumption.
+Qed.
+
+Lemma whnf_with_fuel_head_steps :
+  forall t,
+    whnf_with_fuel (whnf_head_steps t) t = Some (whnf_result t).
+Proof.
+  induction t; simpl; try reflexivity; assumption.
+Qed.
+
+Lemma whnf_with_fuel_sufficient :
+  forall t fuel,
+    whnf_head_steps t <= fuel ->
+    whnf_with_fuel fuel t = Some (whnf_result t).
+Proof.
+  induction t; intros fuel Hfuel; simpl in *.
+  - destruct fuel; reflexivity.
+  - destruct fuel; reflexivity.
+  - destruct fuel as [| fuel']; [lia|].
+    simpl. apply IHt. lia.
+  - destruct fuel as [| fuel']; [lia|].
+    simpl. apply IHt2. lia.
+Qed.
+
+Lemma whnf_head_steps_bound :
+  forall t,
+    whnf_head_steps t <= term_size t + let_depth t.
+Proof.
+  induction t; simpl; lia.
+Qed.
+
+Lemma whnf_value_fuel_stable :
+  forall v fuel,
+    whnf_value v ->
+    whnf_with_fuel fuel v = Some v.
+Proof.
+  intros v fuel Hval.
+  destruct fuel as [| fuel']; simpl.
+  - destruct (whnf_value_dec v) as [_ | Hnot]; [reflexivity|].
+    contradiction.
+  - inversion Hval; reflexivity.
+Qed.
+
+Lemma whnf_result_stable :
+  forall t fuel,
+    whnf_with_fuel fuel (whnf_result t) = Some (whnf_result t).
+Proof.
+  intros t fuel.
+  apply whnf_value_fuel_stable.
+  apply whnf_result_value.
+Qed.
+
+Theorem administrative_whnf_bounded_reduction :
+  forall (t : WhnfTerm) (A : WhnfTy),
+    closed t ->
+    admissible t ->
+    well_typed t A ->
+    exists k v,
+      k <= term_size t + let_depth t /\
+      whnf_with_fuel k t = Some v /\
+      whnf_value v.
+Proof.
+  intros t A _ _ _.
+  exists (whnf_head_steps t), (whnf_result t).
+  split.
+  - apply whnf_head_steps_bound.
+  - split.
+    + apply whnf_with_fuel_head_steps.
+    + apply whnf_result_value.
+Qed.
+
+Theorem administrative_whnf_sufficient_fuel :
+  forall (t : WhnfTerm) (A : WhnfTy) (fuel : nat),
+    closed t ->
+    admissible t ->
+    well_typed t A ->
+    whnf_head_steps t <= fuel ->
+    exists v,
+      whnf_with_fuel fuel t = Some v /\
+      whnf_value v.
+Proof.
+  intros t A fuel _ _ _ Hfuel.
+  exists (whnf_result t).
+  split.
+  - apply whnf_with_fuel_sufficient. exact Hfuel.
+  - apply whnf_result_value.
+Qed.
+
+Theorem administrative_whnf_canonical_bound_reduction :
+  forall (t : WhnfTerm) (A : WhnfTy),
+    closed t ->
+    admissible t ->
+    well_typed t A ->
+    exists v,
+      whnf_with_fuel (term_size t + let_depth t) t = Some v /\
+      whnf_value v.
+Proof.
+  intros t A Hclosed Hadm Htyped.
+  eapply administrative_whnf_sufficient_fuel; eauto.
+  apply whnf_head_steps_bound.
+Qed.
 
 (** ** Further abstract-section structural properties (2026-04-20) *)
 

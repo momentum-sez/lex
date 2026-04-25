@@ -1,14 +1,14 @@
-//! lex-cli — Command-line Lex fiber authoring for air-gapped environments.
+//! lex-cli - Command-line Lex fiber authoring for air-gapped environments.
 //!
 //! Supports:
-//! - `lex check <file.lex>` — type-check a fiber
-//! - `lex parse <file.lex>` — parse and pretty-print the AST
-//! - `lex elaborate <file.lex>` — surface → core elaboration
-//! - `lex sign <file.lex> --key <key>` — sign a fiber for air-gapped submission
-//! - `lex verify <file.lex.signed>` — verify a signed fiber
+//! - `lex check <file.lex>` - type-check a fiber
+//! - `lex parse <file.lex>` - parse and pretty-print the AST
+//! - `lex elaborate <file.lex>` - surface → core elaboration
+//! - `lex sign <file.lex> --key <key>` - sign a fiber for air-gapped submission
+//! - `lex verify <file.lex.signed>` - verify a signed fiber
 //!
 //! Air-gapped workflow: author on offline machine, `lex sign` with hardware key,
-//! transfer signed fiber via USB, submit to kernel.
+//! transfer signed fiber via USB, submit to the target execution host.
 //!
 //! Run with no arguments to see a brief orientation and a pointer to the
 //! end-to-end `hello-lex` example.
@@ -16,7 +16,7 @@
 use clap::{Parser, Subcommand};
 
 const ORIENTATION: &str = concat!(
-    "lex — a logic for jurisdictional rules.\n",
+    "lex - a logic for jurisdictional rules.\n",
     "\n",
     "Lex expresses legal rules as typed programs. Defeasibility, temporal\n",
     "stratification, authority-relative interpretation, and typed discretion\n",
@@ -44,7 +44,7 @@ const ORIENTATION: &str = concat!(
 
 #[derive(Parser)]
 #[command(name = "lex")]
-#[command(about = "Lex: A Logic for Jurisdictional Rules — CLI")]
+#[command(about = "Lex: A Logic for Jurisdictional Rules - CLI")]
 #[command(version)]
 #[command(long_about = ORIENTATION)]
 struct Cli {
@@ -119,7 +119,7 @@ fn main() {
                 println!("  (verbose mode)");
             }
             // TODO: Read file, parse, type-check using lex-core
-            println!("  [not yet implemented — lex-core integration pending]");
+            println!("  [not yet implemented - lex-core integration pending]");
         }
         Commands::Parse { file, format } => {
             println!("Parsing: {file} (format: {format})");
@@ -140,7 +140,7 @@ fn main() {
                 println!("  Output: {out}");
             }
             // TODO: Read file, compute content hash, sign with Ed25519
-            println!("  [not yet implemented — air-gapped signing pending]");
+            println!("  [not yet implemented - air-gapped signing pending]");
         }
         Commands::Verify { file } => {
             println!("Verifying: {file}");

@@ -1,4 +1,4 @@
-# Frontier Work 08 — Lex Core Calculus
+# Frontier Work 08 - Lex Core Calculus
 
 Status: frontier design note
 Scope: typed frontier model for the nine PLATONIC-IDEAL §5.1 commitments
@@ -14,8 +14,8 @@ public claim set for those boundaries lives in `docs/language-reference.md`.
 
 ## 0. Motivation
 
-Lex is the logic that tells an AI agent whether a transition is admissible —
-and where it must stop and ask a human. PLATONIC-IDEAL §5.1 specifies nine
+Lex is the logic that decides whether a transition is admissible and marks
+where evaluation must stop for human judgment. PLATONIC-IDEAL §5.1 specifies nine
 design commitments that Lex must discharge before it is honest to call any
 downstream runtime "proof-producing." Until this frontier, Lex-core's surface
 was a rich term language (AST, parser, elaborator, typechecker, obligations)
@@ -24,7 +24,7 @@ frontier lifts them to the type system.
 
 The headline primitive inside the frontier core calculus is the **typed
 discretion hole** `Hole<T, A>`. Every other commitment exists to make the
-discretion hole tractable — levels so
+discretion hole tractable - levels so
 that meta-holes can be distinguished from object holes, temporal stratification
 so that "fit and proper person as of 2026-01-01" is a different hole from
 "fit and proper person as of 2026-04-15", tribunal modality so that an ADGM
@@ -50,8 +50,8 @@ downstream consumers can distinguish mechanical derivation from discretion.
 Pre-existing Lex modules (`ast.rs`, `typecheck.rs`, `obligations.rs`, etc.)
 remain the runtime authority for the full surface language. The frontier
 `core_calculus` module exposes the *nine commitments* as a narrow, strongly-typed
-API that downstream consumers — proof assistants, compliance agents, AI
-runtimes — can use without descending into the surface AST. It is still opt-in
+API that downstream consumers - proof assistants, compliance verifiers, and
+runtimes - can use without descending into the surface AST. It is still opt-in
 rather than the production execution path.
 
 ## 2. Type-system encodings
@@ -67,7 +67,7 @@ meta-rule at level ℓ may only quantify over rules at levels strictly < ℓ
 ```
 
 is enforced by the constructor `MetaRule::<L>::quantify_over::<B>(body)`
-which has a `where` clause `B: Lt<L>` — `Lt<L>` is a sealed trait
+which has a `where` clause `B: Lt<L>` - `Lt<L>` is a sealed trait
 implemented for exactly the levels `0..L`. Self-application produces a
 compile-time error of the form
 
@@ -91,18 +91,19 @@ impl<T, J, V, Tr> Proof<T, J, V, Tr> {
 
 Cross-tribunal composition requires a `TribunalCoercion<From, To>` witness
 returning `Option<Proof<..., To>>`. `None` is the honest answer when canons
-diverge — we refuse to fabricate a proof that no tribunal would recognize.
+diverge - we refuse to fabricate a proof that no tribunal would recognize.
 
 ### 2.3 Temporal stratification (commitment 3)
 
 `Asof<const STRATUM: u8>` wraps a time literal. `Asof<0>` is frozen at
-commit and is `const`-like — the inner value is behind a private field
-accessible only via `into_frozen()` which returns the raw `TimeLiteral` but
-produces a `FrozenToken` witness the caller must consume to mutate. `Asof<1>`
-is derived via tolling or savings rewrites and carries a `RewriteWitness`.
-Lift is `Asof<0> -> Asof<1>` total; demotion is impossible by construction.
+commit and is `const`-like: the inner value is behind a private field
+accessible only via `into_frozen()`, which returns the raw `TimeLiteral` and
+produces a `FrozenToken` witness. `Asof<1>` is derived via tolling or savings
+rewrites and carries a `RewriteWitness`. Lift is `Asof<0> -> Asof<1>` total;
+the Rust frontier API exposes no demotion operation from `Asof<1>` to
+`Asof<0>`.
 
-### 2.4 Typed discretion holes (commitment 4) — HEADLINE
+### 2.4 Typed discretion holes (commitment 4) - HEADLINE
 
 ```rust
 pub struct Hole<T, A: Authority> {
@@ -125,15 +126,17 @@ pub struct DerivationCertificate {
     pub discretion_steps: Vec<DiscretionStep>,
     pub discretion_frontier: BTreeSet<HoleId>,  // unfilled holes
     pub four_tuple: FourTuple,
-    pub summary_digest: Blake3Digest,
+    pub summary_digest: Sha256Digest,
 }
 ```
 
-`mechanical_check = true` iff the discretion frontier is empty AND every
-`HoleFill` carries a valid PCAuth. The verifier **never** silently fills
-holes. A hole is blocked until a signed filler arrives, and the certificate
-records the filler's identity, the stratum-0 time at which it was supplied,
-and the content-addressed digest of the filled term.
+In the current Rust frontier, `mechanical_check = true` is derived from an
+empty discretion frontier. Filled-hole records carry PCAuth-shaped witnesses,
+but full cryptographic PCAuth verification is performed outside the typing
+rule and is not yet modeled by the certificate builder. The verifier **never**
+silently fills holes. A hole is blocked until a filler record arrives, and the
+certificate records the filler's identity, the stratum-0 time at which it was
+supplied, and the content-addressed digest of the filled term.
 
 Three worked examples below (§4).
 
@@ -142,11 +145,11 @@ Three worked examples below (§4).
 `ProofSummary` is derived by verified compilation from a `DerivationCertificate`
 and preserves three invariants (`summary_preservation` tests):
 
-1. **Obligation preservation** — every obligation in the proof appears in the
+1. **Obligation preservation** - every obligation in the proof appears in the
    summary's obligation set (possibly aggregated but never elided).
-2. **Verdict preservation** — the summary-level verdict equals the proof-level
+2. **Verdict preservation** - the summary-level verdict equals the proof-level
    verdict.
-3. **Discretion preservation** — every unfilled hole in the proof appears
+3. **Discretion preservation** - every unfilled hole in the proof appears
    in the summary's discretion frontier (names and authorities preserved,
    bodies may be abstracted).
 
@@ -177,7 +180,7 @@ pub trait WitnessSupplyOracle {
 
 pub struct OracleResponse<W> {
     pub witnesses: Vec<W>,
-    pub exclusion_commitment: Blake3Digest,  // commits to the excluded set
+    pub exclusion_commitment: Sha256Digest,  // commits to the excluded set
     pub horizon_reached: Horizon,
     pub beyond_horizon: Option<DiscretionHoleId>,
 }
@@ -186,16 +189,18 @@ pub struct OracleResponse<W> {
 Bounded-depth traversal + discretionary hole fallback: if the query's natural
 depth exceeds the horizon, the oracle returns witnesses up to the horizon and
 a discretion-hole handle for the residual. The exclusion commitment is a
-Merkle digest of the set of elements the oracle searched and rejected — a
+Merkle digest of the set of elements the oracle searched and rejected - a
 downstream verifier can check that no claimed-excluded element was later
 supplied as a witness.
 
 ### 2.8 Derivation certificate (commitment 8)
 
-Already sketched above. The certificate is content-addressed (Blake3) and
-serializable via the existing `LexCertificate` route in `certificate.rs`.
-`DerivationCertificate::into_lex_certificate(self)` converts to the legacy
-record; `LexCertificate::to_derivation_certificate(&self)` is the inverse.
+Already sketched above. The current Rust frontier uses SHA-256 over stable
+JSON serialization for frontier digests. It does not yet implement inverse
+conversion between `DerivationCertificate` and the legacy `LexCertificate`
+record; that bridge requires a `WellFormedDC` predicate and an explicit
+mapping between the frontier verdict carrier and the public certificate
+verdict carrier.
 
 ### 2.9 Formal scaffold (commitment 9)
 
@@ -240,8 +245,8 @@ def license_grant(app : Application) : Decision :=
 ```
 
 The hole `?fit_check` has type `FitAndProperJudgment` and is authorized
-only by the ADGM FSRA. An AI agent evaluating `license_grant` computes
-`has_capital_adequacy` and `has_risk_framework` mechanically, then halts at
+only by the ADGM FSRA. Evaluation of `license_grant` computes
+`has_capital_adequacy` and `has_risk_framework` mechanically, then suspends at
 `?fit_check` and emits a structured request. The FSRA officer files a
 judgment (via PCAuth-signed `fill`), and the certificate records the officer's
 identity, the stratum-0 time, and the digest of the filled term.
@@ -258,8 +263,8 @@ def covenant_breach(loan : Loan, asof : Asof<0>) : Prop :=
 
 The MAC hole is scoped to a 90-day window ending at `asof`. Only the
 contractually-named adjudicator (e.g., an independent credit committee) may
-fill it. Any AI agent evaluating the covenant either finds a hard covenant
-breach (mechanical) or routes the MAC question to the adjudicator.
+fill it. Evaluation of the covenant either finds a hard covenant breach
+mechanically or routes the MAC question to the adjudicator.
 
 ### 4.3 "Adequate systems and controls" (Basel III operational risk)
 
@@ -282,32 +287,33 @@ from being treated as final.
 
 ### Mechanically stated in Coq/Lean, not yet proven:
 
-1. **Level-strict subject reduction** — reduction at level ℓ preserves typing
+1. **Level-strict subject reduction** - reduction at level ℓ preserves typing
    at level ≤ ℓ. (Straightforward; no impredicativity.)
-2. **Discretion-hole soundness** — if a proof type-checks with holes
+2. **Discretion-hole soundness** - if a proof type-checks with holes
    `H₁, …, Hₙ` and each is filled by a PCAuth-valid filler of the declared
    type, the resulting closed proof is sound in the underlying type theory.
    (Requires a closing-substitution lemma; ≈ 1 week of Lean.)
-3. **Temporal coherence** — any reduction sequence preserves the stratum-0
+3. **Temporal coherence** - any reduction sequence preserves the stratum-0
    `asof` of the original transition. (Direct by case analysis on the
    reduction rules.)
-4. **Tribunal-coercion partiality** — the `TribunalCoercion<From, To>`
-   trait admits `None` for canonical disagreements. (Honest statement —
+4. **Tribunal-coercion partiality** - the `TribunalCoercion<From, To>`
+   trait admits `None` for canonical disagreements. (Honest statement -
    there is no totality theorem here; this is an honesty statement, not a
    theorem.)
-5. **Summary-obligation preservation** — `summary(proof).obligations ⊇
+5. **Summary-obligation preservation** - `summary(proof).obligations ⊇
    proof.obligations` as a semantic containment. Property-based in Rust;
    formal proof requires ≈ 2 weeks of Lean.
-6. **Principle-balancing termination** — acyclic DAG check on the product
+6. **Principle-balancing termination** - acyclic DAG check on the product
    graph terminates in `O(|V| + |E|)`. Classic Tarjan; a full proof is a
    textbook exercise.
-7. **Witness-supply oracle boundedness** — every oracle returns in finite
-   time given a finite horizon. (Axiomatic — the oracle is assumed to
+7. **Witness-supply oracle boundedness** - every oracle returns in finite
+   time given a finite horizon. (Axiomatic - the oracle is assumed to
    respect its declared horizon; we cannot prove this in the logic.)
-8. **Certificate content-addressing** — `derive(p₁) = derive(p₂) ⇒ p₁ ≡ p₂`
-   up to α-equivalence. (Direct from Blake3 preimage resistance as an
-   assumed cryptographic property.)
-9. **Admissible-fragment decidability** — the admissible fragment (no
+8. **Certificate content-addressing** - `derive(p₁) = derive(p₂) ⇒ p₁ ≡ p₂`
+   up to α-equivalence. (Requires the chosen hash function's collision
+   resistance and a canonical serialization theorem; the Rust frontier
+   currently uses SHA-256.)
+9. **Admissible-fragment decidability** - the admissible fragment (no
    unbounded quantification, no unfilled holes, no unresolved principle
    collisions) has decidable type-checking in polynomial time. Forward
    direction: constructive type-checker in Rust witnesses termination.
@@ -315,15 +321,16 @@ from being treated as final.
 
 ### Scaffolded but not stated:
 
-10. Meta-refinement-as-spans (links to §5.7 refinement work — separate frontier).
+10. Meta-refinement-as-spans (links to §5.7 refinement work - separate frontier).
 
 ## 6. What this does NOT do
 
 - The full Lex decidability theorem is NOT proved. Scaffold only.
-- The Coq/Lean scaffolds contain `admit` and `sorry` where proofs are
-  outstanding. Every `admit`/`sorry` is annotated with the expected proof
-  strategy.
-- The surface Lex parser and elaborator are NOT replaced — the frontier
+- The Lean scaffold contains an explicit axiom for certificate
+  well-formedness. The Coq scaffold keeps the same obligation as a record
+  field. The paper-level Coq/Rocq development has additional admitted
+  obligations listed in `formal/README.md`.
+- The surface Lex parser and elaborator are NOT replaced - the frontier
   module is a strongly-typed *narrow waist* sitting between them and the
   downstream proof-consuming runtime. Existing tests continue to pass.
 - Any out-of-tree adapter that binds this frontier into a production runtime
@@ -334,21 +341,20 @@ from being treated as final.
 ## 7. Files delivered
 
 ```
-~/lex/crates/lex-core/src/core_calculus/
+crates/lex-core/src/core_calculus/
 ├── mod.rs
-├── level.rs           — Rule<const LEVEL: u64>, Lt<L>, MetaRule
-├── monotone.rs        — FourTuple, Proof, TribunalCoercion
-├── temporal.rs        — Asof<const STRATUM: u8>, FrozenToken, lift0, derive1
-├── hole.rs            — Hole<T, A>, HoleFill, Authority, ScopeConstraint
-├── cert.rs            — DerivationCertificate, DiscretionStep
-├── summary.rs         — ProofSummary, compile_summary
-├── principle.rs       — PrincipleBalancing, acyclic_check, PrincipleDeadlock
-├── oracle.rs          — WitnessSupplyOracle trait, OracleResponse, Horizon
-└── tests.rs           — 40+ integration tests
-~/lex/formal/coq/LexCore.v      — Coq scaffold
-~/lex/formal/lean/LexCore.lean  — Lean 4 scaffold
-~/lex/docs/frontier-work/08-lex-core-calculus.md  — this file
-~/lex/REMAINING-WORK.md         — ledger
+├── level.rs           - Rule<const LEVEL: u64>, Lt<L>, MetaRule
+├── monotone.rs        - FourTuple, Proof, TribunalCoercion
+├── temporal.rs        - Asof<const STRATUM: u8>, FrozenToken, lift0, derive1
+├── hole.rs            - Hole<T, A>, HoleFill, Authority, ScopeConstraint
+├── cert.rs            - DerivationCertificate, DiscretionStep
+├── summary.rs         - ProofSummary, compile_summary
+├── principle.rs       - PrincipleBalancing, acyclic_check, PrincipleDeadlock
+├── oracle.rs          - WitnessSupplyOracle trait, OracleResponse, Horizon
+└── tests.rs           - 40+ integration tests
+formal/coq/LexCore.v      - Coq scaffold
+formal/lean/LexCore.lean  - Lean 4 scaffold
+docs/frontier-work/08-lex-core-calculus.md  - this file
 ```
 
 Embedder-side wire adapters that bind the frontier core calculus into a
@@ -357,7 +363,5 @@ exposed by `crates/lex-core/src/core_calculus/`.
 
 ## 8. Acknowledgements
 
-The Lex logic commitments are authored by Raeez Lorgat. This frontier
-delivers the first-cut mechanization. Any formal-methods errors are the
-implementer's; any lacunae in the design predate this frontier and should
-be fed back to the Lex paper draft at `research.momentum.inc`.
+The Lex logic commitments are authored by Raeez Lorgat. This frontier is a
+typed witness for the commitment surface, not the production execution path.

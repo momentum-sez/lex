@@ -1,5 +1,5 @@
 (* ========================================================================= *)
-(*  FlatAdmissibleSN.v — Strong normalization for the flat admissible        *)
+(*  FlatAdmissibleSN.v - Strong normalization for the flat admissible        *)
 (*  fragment of Lex's admissible sublanguage, extended with affine lambdas   *)
 (*  under call-by-value β and defeasible rules with non-empty exceptions.    *)
 (*                                                                            *)
@@ -41,10 +41,10 @@
 (*        size (subst body 0 v) <= size body + size v - 1                       *)
 (*     which makes β strictly decrease the size measure. This restriction    *)
 (*     is satisfied by every admissible Lex rule that does not duplicate     *)
-(*     its lambda argument — the common case in compliance code.              *)
+(*     its lambda argument - the common case in compliance code.              *)
 (*                                                                            *)
 (*  Pi types, modals, recursion, content-addressed references, and typed     *)
-(*  discretion holes are EXCLUDED by construction — paper §5 / §11 treats    *)
+(*  discretion holes are EXCLUDED by construction - paper §5 / §11 treats    *)
 (*  these as open and the exclusion is the premise of SN, not a gap.         *)
 (*                                                                            *)
 (*  PROOF STRATEGY:                                                            *)
@@ -54,7 +54,7 @@
 (*     The new ingredient for Extension A is the affine-substitution lemma,   *)
 (*     which gives                                                             *)
 (*        size (subst t k u) + occ t k = size t + occ t k * size u             *)
-(*     for every t, k, u — a clean equality that lets the affine corollary   *)
+(*     for every t, k, u - a clean equality that lets the affine corollary   *)
 (*     bound the β-reduct size.                                                *)
 (* ========================================================================= *)
 
@@ -474,6 +474,14 @@ Proof.
   - lia.
 Qed.
 
+Corollary nonempty_reduction_chain_strictly_decreases :
+  forall t t', clos_trans _ step t t' -> size t' < size t.
+Proof.
+  intros t t' H. induction H.
+  - apply step_decreases_size in H. exact H.
+  - lia.
+Qed.
+
 (* ------------------------------------------------------------------------- *)
 (*  §9.  Discussion of coverage                                               *)
 (* ------------------------------------------------------------------------- *)
@@ -489,7 +497,7 @@ Qed.
 (*                                                                            *)
 (*  The extensions relative to the earlier narrow theorem:                    *)
 (*                                                                            *)
-(*    Extension A — Affine lambdas with β-reduction.                          *)
+(*    Extension A - Affine lambdas with β-reduction.                          *)
 (*        Lam : FAdm -> FAdm  (body takes the bound index 0)                   *)
 (*        App : FAdm -> FAdm -> FAdm                                           *)
 (*        subst : FAdm -> nat -> FAdm -> FAdm  (de Bruijn)                     *)
@@ -497,13 +505,13 @@ Qed.
 (*          fires only when [value v] AND [occ body 0 <= 1] (affine body).     *)
 (*        The affineness restriction prevents duplication: at most one Var 0  *)
 (*        is replaced, so size(subst body 0 v) <= size body + size v - 1,      *)
-(*        while size(App (Lam body) v) = 2 + size body + size v — strict       *)
+(*        while size(App (Lam body) v) = 2 + size body + size v - strict       *)
 (*        decrease. Compliance rules rarely duplicate arguments, so the       *)
 (*        affine restriction captures the intended admissible fragment. The  *)
 (*        stronger SN for non-affine λ-calculus requires a reducibility-      *)
 (*        candidates argument and is outside the scope of this file.          *)
 (*                                                                            *)
-(*    Extension B — Defeasible rules with non-empty exception lists.          *)
+(*    Extension B - Defeasible rules with non-empty exception lists.          *)
 (*        Def : FAdm -> list (FAdm * FAdm) -> FAdm                             *)
 (*        step_def_exc: Def (Const c) es --> b  when b is the body of some    *)
 (*                                               (g, b) pair in es            *)
@@ -516,7 +524,7 @@ Qed.
 (*        sub-position, also strictly decreasing size by the same measure.   *)
 (*                                                                            *)
 (*    What remains excluded:                                                  *)
-(*      - Non-affine lambdas (duplication) — requires reducibility candidates *)
+(*      - Non-affine lambdas (duplication) - requires reducibility candidates *)
 (*      - Pi types, modals, recursion, content-addressed references, typed   *)
 (*        discretion holes. All explicitly excluded from admissibility in    *)
 (*        paper §5; their exclusion is the *premise* of SN, not a gap.        *)
@@ -534,4 +542,5 @@ Check step_decreases_size.
 Check subst_size.
 Check subst_size_affine.
 Check reduction_chain_bounded.
+Check nonempty_reduction_chain_strictly_decreases.
 Print Assumptions flat_admissible_sn_ext.

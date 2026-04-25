@@ -1,8 +1,8 @@
-(** * Lex/PropagationAlignment.v — Isomorphism between Lex's five-element
+(** * Lex/PropagationAlignment.v - Isomorphism between Lex's five-element
     verdict chain [VerdictHeyting.verdict] and the Propagation graph's
     [Propagation.Graph.ComplianceState].
 
-    The kernel mechanisation carries two independent but structurally
+    The propagation mechanization carries two independent but structurally
     identical five-element compliance-state carriers:
 
     - [Lex/VerdictHeyting.verdict] ({NonCompliant, Pending, NotApplicable,

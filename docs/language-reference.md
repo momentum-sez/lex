@@ -32,6 +32,7 @@ scaffolds, not in the shipped admissible checker.
 | Main type checker | `typecheck::{infer, check}` | Rejected | `Hole` and `HoleFill` are outside the executable admissible fragment |
 | Frontier core calculus | `core_calculus::*` | Supported | Typed hole model, certificates, summaries |
 | Fiber composition | `compose::evaluate_all_fibers` | Not wired | Current implementation is a `Pending` stub |
+| Lex-to-Op compile | Not shipped in this repository | Boundary only | Companion Op compiler covers its own admitted skeleton |
 
 The public claim set for this repository is:
 
@@ -41,6 +42,8 @@ The public claim set for this repository is:
 - The main admissible checker rejects `Hole` and `HoleFill`.
 - `compose::evaluate_all_fibers` is not the production semantics of the
   frontier core calculus.
+- Lex states the source-side compile contract for Op, but this repository does
+  not currently expose a production compiler entry point.
 
 ## 3. Lexical Conventions
 
@@ -84,7 +87,8 @@ atom        ::= ident
               | "defeasible" ident ":" term "with" exception* "end"
               | "?" hole_name ":" term "@" authority scope_opt
               | "fill(" hole_name "," term "," term ")"
-              | "coerce" tribunal "->" tribunal term "with" term
+              | "coerce" "[" tribunal "=>" tribunal "]" "(" term "," term ")"
+              | "coerce" "[" tribunal "=>" tribunal "]" term "with" "witness" atom
               | "axiom" qualident
               | "balance" "{" balance_fields "}"
               | "unlock" term "in" term
@@ -154,11 +158,11 @@ Notes:
 
 Lex uses terms as types. The important sort forms are:
 
-- `Type_l` — ordinary type universe at level `l`
-- `Prop` — proof-irrelevant propositions
-- `Rule_l` — rule universe at level `l`
-- `Time0` — frozen time terms
-- `Time1` — derived time terms
+- `Type_l` - ordinary type universe at level `l`
+- `Prop` - proof-irrelevant propositions
+- `Rule_l` - rule universe at level `l`
+- `Time0` - frozen time terms
+- `Time1` - derived time terms
 
 The executable checker supports:
 
@@ -243,8 +247,13 @@ Those pieces do not ship in the admissible checker today.
 
 ## 7. Small-Step Operational Semantics
 
-The executable checker uses weak-head reduction for definitional equality. The
-core reduction rules are:
+The executable checker uses fuel-bounded weak-head reduction for definitional
+equality. The administrative Coq kernel closes this shape as
+`administrative_whnf_bounded_reduction`,
+`administrative_whnf_sufficient_fuel`, and
+`administrative_whnf_canonical_bound_reduction`; the full admissible-calculus
+WHNF theorem remains part of the paper-level metatheory frontier. The core
+reduction rules are:
 
 ```text
 (beta)  ((lambda x : A => b) a)          -> b[a/x]
@@ -300,6 +309,35 @@ boundary.
 `Pending` results. It is not the production semantics of the frontier core
 calculus.
 
+### Lex-to-Op boundary
+
+Lex authorization of an Op payload requires an admission envelope, not merely a
+successful source parse. The envelope must bind:
+
+- the elaborated Lex source digest, rule-pack digest, and certificate or
+  proof-summary digest;
+- the compiled Op payload digest;
+- the typed input-context and payload-schema digests;
+- the four-tuple authority, compiler digest, Op primitive-registry digest, and
+  gas-schedule digest;
+- the effect row and subject-indexed capability row;
+- PCAuth-filled hole entries, when any frontier hole-fill lowering is admitted;
+- failed, deferred, receipt-required, and host-required predicate lists.
+
+Admission fails closed when any bound digest differs, the Op payload does not
+typecheck, a primitive is absent from the bound registry, a capability or
+freshness premise is missing, a required receipt is not accepted, a filled hole
+does not verify against its exact payload, or a failed/deferred predicate
+remains.
+
+The public companion Op compiler covers its own finite admitted skeleton:
+constants, prelude-scoped variables and calls, pattern matches with a
+materialized fail-closed fallback, defeasible priority lowering, sanctions
+dominance lowering, and filled-hole attestation append lowering. That coverage
+is not a claim that every `lex-core::ast::Term` compiles to Op. The Lex-side
+frontier is to align the executable admissible checker, certificate builder,
+and formal envelope so the compiler domain is a checked source property.
+
 ## 9. Examples
 
 ### 9.1 Executable admissible fragment
@@ -346,6 +384,9 @@ The frontier design note and formal scaffolds track the same typed-hole story:
 - `docs/frontier-work/08-lex-core-calculus.md`
 - `formal/coq/LexCore.v`
 - `formal/lean/LexCore.lean`
+- `formal/coq/Lex/AdmissionEnvelope.v`
+- `formal/coq/Lex/PCAuthQuorum.v`
 
 Those artifacts describe the typed discretion-hole model that the executable
-admissible checker has not yet integrated.
+admissible checker has not yet integrated, and the structural payload-binding
+conditions needed before a compiled Op payload can be treated as Lex-authorized.

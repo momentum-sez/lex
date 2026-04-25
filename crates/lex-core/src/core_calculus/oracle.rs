@@ -1,8 +1,8 @@
-//! Commitment 7 — Open-world closure with witness-supply oracle.
+//! Commitment 7 - Open-world closure with witness-supply oracle.
 //!
 //! Rules whose proof obligations involve existential quantification over
 //! entities (UBO, transitive control chains) must declare a witness-supply
-//! oracle — a typed interface the proof kernel queries to materialize the
+//! oracle - a typed interface the proof checker queries to materialize the
 //! bounded-horizon subgraph at proof time. The oracle's response, including
 //! a commitment to the exclusion set at the horizon boundary, becomes part
 //! of the proof witness.
@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
 // ---------------------------------------------------------------------------
-// Horizon — depth bound
+// Horizon - depth bound
 // ---------------------------------------------------------------------------
 
 /// A depth bound for a bounded-horizon oracle query.
@@ -34,7 +34,7 @@ impl Horizon {
 }
 
 // ---------------------------------------------------------------------------
-// OracleResponse — what an oracle returns
+// OracleResponse - what an oracle returns
 // ---------------------------------------------------------------------------
 
 /// Response from a witness-supply oracle.
@@ -46,7 +46,7 @@ pub struct OracleResponse<W> {
     /// searched and excluded. Downstream verifiers can check that no
     /// claimed-excluded element was later supplied as a witness.
     pub exclusion_commitment: String,
-    /// The horizon actually reached (may be less than requested if the
+    /// The reached horizon (may be less than requested if the
     /// observable universe is smaller).
     pub horizon_reached: Horizon,
     /// The oracle's identity.
@@ -71,12 +71,12 @@ pub fn compute_exclusion_commitment(excluded: &BTreeSet<String>) -> String {
 }
 
 // ---------------------------------------------------------------------------
-// WitnessSupplyOracle — the trait
+// WitnessSupplyOracle - the trait
 // ---------------------------------------------------------------------------
 
 /// An oracle supplying witnesses to bounded-horizon existential quantifiers.
 ///
-/// Implementations must respect the declared horizon — if the query's natural
+/// Implementations must respect the declared horizon - if the query's natural
 /// depth exceeds the horizon, the oracle must emit a discretionary hole
 /// rather than silently truncate.
 pub trait WitnessSupplyOracle {
@@ -99,7 +99,7 @@ pub trait WitnessSupplyOracle {
 }
 
 // ---------------------------------------------------------------------------
-// Reference implementation — UBO chain oracle
+// Reference implementation - UBO chain oracle
 // ---------------------------------------------------------------------------
 
 /// A reference oracle for ultimate beneficial ownership (UBO) chain

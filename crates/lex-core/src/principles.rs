@@ -1,4 +1,4 @@
-//! Principle Conflict Calculus for the Lex proof kernel.
+//! Principle Conflict Calculus for the Lex proof checker.
 //!
 //! Legal principles (protect life, protect property, fulfill contract, preserve
 //! public order, maqasid al-shariah) conflict in hard cases. When two cited
@@ -7,11 +7,11 @@
 //! precedents.
 //!
 //! This module implements:
-//! - `PrincipleId` — enumeration of legal principles
-//! - `CaseCategory` — the categories of transitions where conflicts arise
-//! - `BalancingStep` — a first-class balancing step with precedent citations
-//! - `PrincipleDeadlock` — the fail-closed error when conflicts are unresolved
-//! - `check_acyclicity` — verifies the priority DAG is acyclic on the full
+//! - `PrincipleId` - enumeration of legal principles
+//! - `CaseCategory` - the categories of transitions where conflicts arise
+//! - `BalancingStep` - a first-class balancing step with precedent citations
+//! - `PrincipleDeadlock` - the fail-closed error when conflicts are unresolved
+//! - `check_acyclicity` - verifies the priority DAG is acyclic on the full
 //!   product graph `PrincipleId x CaseCategory`
 //!
 //! The principle conflict DAG per jurisdiction must be acyclic at fiber-compile
@@ -24,7 +24,7 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------------------
-// PrincipleId — legal principles
+// PrincipleId - legal principles
 // ---------------------------------------------------------------------------
 
 /// A legal principle that may participate in balancing.
@@ -38,11 +38,11 @@ pub enum PrincipleId {
     ProtectLife,
     /// Protection of property rights.
     ProtectProperty,
-    /// Pacta sunt servanda — contractual obligations must be honored.
+    /// Pacta sunt servanda - contractual obligations must be honored.
     FulfillContract,
     /// Preservation of public order and safety.
     PreservePublicOrder,
-    /// Maqasid al-shariah — objectives of Islamic law (preservation of
+    /// Maqasid al-shariah - objectives of Islamic law (preservation of
     /// religion, life, intellect, lineage, wealth).
     MaqasidAlShariah,
     /// A jurisdiction-specific or domain-specific principle.
@@ -63,7 +63,7 @@ impl fmt::Display for PrincipleId {
 }
 
 // ---------------------------------------------------------------------------
-// CaseCategory — transition categories where conflicts arise
+// CaseCategory - transition categories where conflicts arise
 // ---------------------------------------------------------------------------
 
 /// The category of case/transition where a principle conflict may arise.
@@ -100,7 +100,7 @@ impl fmt::Display for CaseCategory {
 }
 
 // ---------------------------------------------------------------------------
-// PrincipleEdge — a directed edge in the priority DAG
+// PrincipleEdge - a directed edge in the priority DAG
 // ---------------------------------------------------------------------------
 
 /// A directed edge in the principle priority DAG: `winner` prevails over
@@ -119,7 +119,7 @@ pub struct PrincipleEdge {
 }
 
 // ---------------------------------------------------------------------------
-// BalancingStep — a first-class principle balancing step
+// BalancingStep - a first-class principle balancing step
 // ---------------------------------------------------------------------------
 
 /// A principle balancing step with explicit precedent citations.
@@ -144,7 +144,7 @@ pub struct BalancingStep {
 }
 
 // ---------------------------------------------------------------------------
-// PrincipleDeadlock — fail-closed error for unresolved collisions
+// PrincipleDeadlock - fail-closed error for unresolved collisions
 // ---------------------------------------------------------------------------
 
 /// Error produced when the principle priority DAG contains a cycle on the
@@ -182,7 +182,7 @@ impl fmt::Display for PrincipleDeadlock {
 impl std::error::Error for PrincipleDeadlock {}
 
 // ---------------------------------------------------------------------------
-// check_acyclicity — DAG acyclicity on the full product graph
+// check_acyclicity - DAG acyclicity on the full product graph
 // ---------------------------------------------------------------------------
 
 /// Verify that the principle priority DAG is acyclic on the full product
@@ -194,8 +194,8 @@ impl std::error::Error for PrincipleDeadlock {}
 /// per-category sub-graph independently.
 ///
 /// Returns `Ok(())` if acyclic, or `Err(PrincipleDeadlock)` with the first
-/// detected cycle. The cycle is reported on the full product graph — not its
-/// projection — as required by the Platonic Ideal specification.
+/// detected cycle. The cycle is reported on the full product graph - not its
+/// projection - as required by the Platonic Ideal specification.
 pub fn check_acyclicity(
     edges: &[PrincipleEdge],
     jurisdiction: &str,
@@ -348,7 +348,7 @@ mod tests {
 
     #[test]
     fn cycle_detected_within_same_category() {
-        // A > B > C > A in TreasuryAction — a clear cycle.
+        // A > B > C > A in TreasuryAction - a clear cycle.
         let edges = vec![
             edge(
                 PrincipleId::ProtectLife,
@@ -404,7 +404,7 @@ mod tests {
 
     #[test]
     fn different_categories_are_independent() {
-        // A > B in EntityFormation, B > A in CorridorCrossing — no cycle
+        // A > B in EntityFormation, B > A in CorridorCrossing - no cycle
         // because these are separate sub-graphs on the product graph.
         let edges = vec![
             edge(
@@ -511,7 +511,7 @@ mod tests {
 
     #[test]
     fn diamond_dag_without_cycle_passes() {
-        // A > B, A > C, B > D, C > D — diamond, no cycle.
+        // A > B, A > C, B > D, C > D - diamond, no cycle.
         let cat = CaseCategory::ComplianceEvaluation;
         let edges = vec![
             edge(PrincipleId::ProtectLife, cat.clone(), PrincipleId::ProtectProperty),

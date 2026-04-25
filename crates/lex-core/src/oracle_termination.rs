@@ -3,9 +3,9 @@
 //! Rules that invoke oracles (external decision procedures, sovereign APIs,
 //! or off-chain attestation services) cannot be structurally proven to
 //! terminate by the Lex type checker alone. Instead, the rule author declares
-//! a termination bound: `terminates_by oracle O: depth <= k`. At proof-kernel
+//! a termination bound: `terminates_by oracle O: depth <= k`. At proof-checking
 //! time, the obligation is discharged by presenting a signed
-//! [`OracleAttestation`] — a claim from the oracle operator that the oracle
+//! [`OracleAttestation`] - a claim from the oracle operator that the oracle
 //! terminates within the declared depth bound.
 //!
 //! The runtime then checks actual execution depth against the declared bound
@@ -44,7 +44,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 // ---------------------------------------------------------------------------
-// OracleTerminationDecl — rule-level declaration
+// OracleTerminationDecl - rule-level declaration
 // ---------------------------------------------------------------------------
 
 /// A rule-level declaration that an oracle terminates within a depth bound.
@@ -55,7 +55,7 @@ use std::fmt;
 /// ```
 ///
 /// The `signed_attestation` field, when present, carries the oracle operator's
-/// signature string for proof-kernel discharge. If absent, the obligation
+/// signature string for proof-checker discharge. If absent, the obligation
 /// remains undischarged and the rule cannot be certified.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct OracleTerminationDecl {
@@ -78,13 +78,13 @@ impl fmt::Display for OracleTerminationDecl {
 }
 
 // ---------------------------------------------------------------------------
-// OracleAttestation — signed claim from oracle operator
+// OracleAttestation - signed claim from oracle operator
 // ---------------------------------------------------------------------------
 
 /// A signed attestation from an oracle operator claiming that the oracle
 /// terminates within a declared depth bound.
 ///
-/// The proof kernel uses this to discharge the termination obligation for
+/// The proof checker uses this to discharge the termination obligation for
 /// rules that invoke the oracle. Verification checks structural validity
 /// (non-empty fields, positive depth bound); cryptographic signature
 /// verification is deferred to the embedder's signing layer.
@@ -111,7 +111,7 @@ impl fmt::Display for OracleAttestation {
 }
 
 // ---------------------------------------------------------------------------
-// verify_oracle_attestation — structural validity check
+// verify_oracle_attestation - structural validity check
 // ---------------------------------------------------------------------------
 
 /// Verify the structural validity of an [`OracleAttestation`].
@@ -133,20 +133,20 @@ pub fn verify_oracle_attestation(attestation: &OracleAttestation) -> bool {
 }
 
 // ---------------------------------------------------------------------------
-// OracleTerminationProof — runtime termination evidence
+// OracleTerminationProof - runtime termination evidence
 // ---------------------------------------------------------------------------
 
 /// Proof that an oracle invocation terminated within (or exceeded) the
 /// declared depth bound.
 ///
-/// Produced by [`check_oracle_termination`] after the oracle has actually
-/// executed. The `within_bound` field is `true` if `actual_depth <= depth_bound`
+/// Produced by [`check_oracle_termination`] after the oracle has executed.
+/// The `within_bound` field is `true` if `actual_depth <= depth_bound`
 /// and `actual_depth > 0`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct OracleTerminationProof {
     /// The oracle that was invoked.
     pub oracle_id: String,
-    /// The depth actually consumed during oracle evaluation.
+    /// The depth consumed during oracle evaluation.
     pub actual_depth: u64,
     /// Whether the actual depth was within the declared bound.
     pub within_bound: bool,
@@ -171,7 +171,7 @@ impl fmt::Display for OracleTerminationProof {
 }
 
 // ---------------------------------------------------------------------------
-// check_oracle_termination — runtime bound check
+// check_oracle_termination - runtime bound check
 // ---------------------------------------------------------------------------
 
 /// Check whether an oracle invocation terminated within its declared depth

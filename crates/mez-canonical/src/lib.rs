@@ -1,6 +1,6 @@
 #![deny(missing_docs)]
 
-//! # mez-canonical — Canonical Foundational Types
+//! # mez-canonical - Canonical Foundational Types
 //!
 //! The Mass ecosystem's canonical foundational types: Momentum Canonical
 //! Form (MCF) serialization ([`canonical::CanonicalBytes`]), SHA-256 content
@@ -8,23 +8,23 @@
 //! 23-variant [`domain::ComplianceDomain`] enum.
 //!
 //! This crate is the single source of truth for content-addressed compliance
-//! primitives across the public ecosystem (Lex, Op, gstore) and the kernel
-//! runtime that consumes them. Everything that needs to produce a
+//! primitives across the public ecosystem (Lex, Op, gstore) and downstream
+//! runtimes that consume them. Everything that needs to produce a
 //! content-addressed proof or interact with compliance domains depends on
 //! this crate; the wire format is stable across all consumers.
 //!
 //! ## Scope
 //!
-//! - [`canonical::CanonicalBytes`] — Momentum Canonical Form (MCF) serializer:
+//! - [`canonical::CanonicalBytes`] - Momentum Canonical Form (MCF) serializer:
 //!   RFC 8785 JCS plus datetime normalization to UTC seconds with a `Z`
 //!   suffix. Sole construction path for bytes entering digest computation.
 //! - [`digest::ContentDigest`], [`digest::DigestAlgorithm`],
-//!   [`digest::sha256_digest`] — SHA-256 content-addressed digest of
+//!   [`digest::sha256_digest`] - SHA-256 content-addressed digest of
 //!   [`canonical::CanonicalBytes`].
-//! - [`domain::ComplianceDomain`] — single enum with the 23 compliance
+//! - [`domain::ComplianceDomain`] - single enum with the 23 compliance
 //!   domains used across the EZ Stack. Exhaustive `match` enforced by the
 //!   compiler everywhere the enum appears.
-//! - [`error::CanonicalizationError`] — the error type returned from MCF
+//! - [`error::CanonicalizationError`] - the error type returned from MCF
 //!   canonicalization.
 //!
 //! ## Design Principles

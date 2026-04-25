@@ -157,6 +157,118 @@ Proof.
   - left. reflexivity.
 Qed.
 
+(** Normalized-meet form used by the paper.
+
+    The accumulator records whether an earlier exception already fired.  Before
+    the first firing exception, a firing guard contributes its body; every
+    later clause contributes [top].  If no exception fires, the base verdict
+    is contributed at the end. *)
+Fixpoint normalized_meet_from
+    (seen_fired : bool) (base : verdict) (xs : exceptions) : verdict :=
+  match xs with
+  | [] => if seen_fired then top else base
+  | x :: rest =>
+      meet
+        (if andb (negb seen_fired) (guard x) then body x else top)
+        (normalized_meet_from (orb seen_fired (guard x)) base rest)
+  end.
+
+Definition normalized_priority_meet (base : verdict) (xs : exceptions)
+  : verdict :=
+  normalized_meet_from false base xs.
+
+Definition priorities_lt (p : nat) (xs : exceptions) : Prop :=
+  Forall (fun x => priority x < p) xs.
+
+Fixpoint strictly_descending_priorities (xs : exceptions) : Prop :=
+  match xs with
+  | [] => True
+  | x :: rest =>
+      priorities_lt (priority x) rest /\ strictly_descending_priorities rest
+  end.
+
+Lemma meet_top_left :
+  forall v, meet top v = v.
+Proof.
+  intro v. rewrite meet_comm. apply meet_top.
+Qed.
+
+Lemma normalized_meet_seen_true :
+  forall base xs,
+    normalized_meet_from true base xs = top.
+Proof.
+  induction xs as [| x rest IH]; simpl.
+  - reflexivity.
+  - rewrite IH. apply meet_top_left.
+Qed.
+
+Lemma best_fired_priority_lt :
+  forall xs y p,
+    priorities_lt p xs ->
+    best_fired xs = Some y ->
+    priority y < p.
+Proof.
+  intros xs y p Hlt Hbest.
+  apply Forall_forall with (x := y) in Hlt.
+  - exact Hlt.
+  - apply best_fired_in. exact Hbest.
+Qed.
+
+Lemma best_fired_cons_highest_fired :
+  forall x rest,
+    guard x = true ->
+    priorities_lt (priority x) rest ->
+    best_fired (x :: rest) = Some x.
+Proof.
+  intros x rest Hguard Hlt.
+  simpl.
+  destruct (best_fired rest) as [y|] eqn:Hbest.
+  - rewrite Hguard.
+    assert (Hylt : priority y < priority x).
+    { eapply best_fired_priority_lt; eauto. }
+    assert (Hltb : Nat.ltb (priority y) (priority x) = true).
+    { apply Nat.ltb_lt. exact Hylt. }
+    rewrite Hltb.
+    reflexivity.
+  - rewrite Hguard. reflexivity.
+Qed.
+
+Lemma best_fired_cons_unfired :
+  forall x rest,
+    guard x = false ->
+    best_fired (x :: rest) = best_fired rest.
+Proof.
+  intros x rest Hguard.
+  simpl.
+  destruct (best_fired rest); rewrite Hguard; reflexivity.
+Qed.
+
+Theorem eval_defeasible_normalized_meet :
+  forall base xs,
+    strictly_descending_priorities xs ->
+    eval_defeasible base xs = normalized_priority_meet base xs.
+Proof.
+  induction xs as [| x rest IH]; intros Hdesc.
+  - reflexivity.
+  - simpl in Hdesc. destruct Hdesc as [Hlt Hrest].
+    unfold eval_defeasible, normalized_priority_meet.
+    destruct (guard x) eqn:Hguard.
+    + assert (Hbest : best_fired (x :: rest) = Some x).
+      { apply best_fired_cons_highest_fired; assumption. }
+      rewrite Hbest.
+      simpl. rewrite Hguard.
+      rewrite normalized_meet_seen_true.
+      rewrite meet_top.
+      reflexivity.
+    + assert (Hbest : best_fired (x :: rest) = best_fired rest).
+      { apply best_fired_cons_unfired; assumption. }
+      rewrite Hbest.
+      simpl. rewrite Hguard.
+      rewrite meet_top_left.
+      fold (normalized_priority_meet base rest).
+      rewrite <- IH; [reflexivity | exact Hrest].
+Qed.
+
 (** Adding a strictly lower-priority fired exception is inert
     relative to an existing higher-priority best_fired: since
     the best_fired function selects the maximal priority, a
@@ -246,7 +358,7 @@ Qed.
 
 (** If every exception in the list has [guard = false], then
     [best_fired] returns [None].  Backward direction of the iff
-    characterisation — used by [eval_all_unfired_is_base]. *)
+    characterisation - used by [eval_all_unfired_is_base]. *)
 Lemma best_fired_none_of_all_unfired :
   forall xs,
     (forall x, In x xs -> guard x = false) ->

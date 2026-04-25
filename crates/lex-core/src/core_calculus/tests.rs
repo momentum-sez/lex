@@ -6,8 +6,7 @@
 
 use super::cert::{DerivationCertificate, DiscretionStep, Verdict};
 use super::hole::{
-    Authority, AuthorityError, FilledHoleRecord, Hole, HoleId, NamedAuthority, PCAuthWitness,
-    ScopeConstraint,
+    AuthorityError, FilledHoleRecord, Hole, HoleId, NamedAuthority, PCAuthWitness, ScopeConstraint,
 };
 use super::monotone::{FourTuple, Proof};
 use super::oracle::{Horizon, OracleResponse, WitnessSupplyOracle};

@@ -3,7 +3,7 @@
 //! Uses `sha2::Sha256` directly. The input is serialized to JSON via
 //! `serde_json::to_vec`; frontier types deliberately avoid floats and other
 //! non-canonical fields so the JSON serialization is stable across
-//! invocations. Downstream kernel adapters that need canonical-equivalent
+//! invocations. Downstream runtime adapters that need canonical-equivalent
 //! digests (e.g., under `CanonicalBytes`) recompute at the bridge boundary.
 
 use serde::Serialize;
