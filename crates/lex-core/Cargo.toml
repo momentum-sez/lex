@@ -16,6 +16,11 @@ rust_decimal = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 
+[features]
+default = []
+# Feature-gate for future external SMT solver integration.
+smt-solver = []
+
 [dev-dependencies]
 criterion = { workspace = true }
 proptest = { workspace = true }
