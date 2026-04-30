@@ -309,6 +309,20 @@ boundary.
 `Pending` results. It is not the production semantics of the frontier core
 calculus.
 
+### Runtime caveat primitive
+
+`predicate_runtime` is the public first-order caveat fragment. A
+`LexProposition` is a closed proposition over named request attributes;
+`EvalContext` binds those attributes to `LexValue` values; `evaluate` returns a
+boolean decision or a structural error.
+
+`predicate_narrowing::caveats_narrow(parent, child)` checks attenuation. It
+accepts a child caveat set only when every context satisfying the child also
+satisfies the parent. Dedicated structural rules cover monetary, temporal,
+rate, operation, domain, resource, counterparty, subject, MCP, jurisdiction,
+and discretion caveats; custom caveats fall back to finite-context
+propositional enumeration.
+
 ### Lex-to-Op boundary
 
 Lex authorization of an Op payload requires an admission envelope, not merely a

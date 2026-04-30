@@ -176,6 +176,20 @@ proof obligations (each naming its decision procedure), a content-address
 of the certificate itself, and an ISO-8601 issuance timestamp. The
 certificate is `CanonicalBytes`-serializable and Ed25519-signable.
 
+## Runtime caveat fragment
+
+`lex-core::predicate_runtime` is the executable first-order caveat primitive.
+It decides closed propositions over request attributes: equality, ordering over
+numbers and timestamps, set membership, boolean composition, and context-set
+membership. `LexCaveat` adds a semantic kind tag so attenuation can use direct
+monotone rules where the kind has a canonical order.
+
+`lex-core::predicate_narrowing::caveats_narrow(parent, child)` checks that a
+child capability narrows its parent. The positive result means `child` implies
+`parent` for every request context in the supported fragment. Failure is
+explicit: missing caveat kind, non-narrowing structural comparison,
+propositional counterexample, or undecidable fallback.
+
 ## Relation to Op
 
 Lex is the rule and proof layer. Op (`github.com/momentum-sez/op`) is the

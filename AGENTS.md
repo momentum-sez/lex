@@ -156,7 +156,8 @@ diverge in substance.
 ## Repo Shape
 
 - `crates/lex-core/` — parser, elaborator, executable admissible checker,
-  obligations, certificate builder, and frontier `core_calculus`.
+  obligations, certificate builder, runtime caveat predicate/narrowing
+  primitives, and frontier `core_calculus`.
 - `crates/lex-cli/` — command-line authoring shell.
 - `docs/language-reference.md` — canonical public language reference.
 - `docs/language-spec.md` — explanatory language overview; defer to the

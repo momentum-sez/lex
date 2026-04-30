@@ -23,6 +23,10 @@ mez-canonical = { path = "crates/mez-canonical" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# Runtime caveat primitives
+chrono = { version = "0.4", features = ["serde"] }
+rust_decimal = { version = "1", features = ["serde"] }
+
 # Error handling
 thiserror = "2"
 

@@ -253,6 +253,12 @@ is the rule and proof layer; Op is the workflow layer. The interface is
 preconditions, postconditions, and effect discharge; neither language
 redefines the other's semantics.
 
+`lex-core` also exposes the public runtime caveat primitive:
+`predicate_runtime::{LexProposition, LexCaveat, evaluate}` decides closed
+first-order caveats against a request context, and
+`predicate_narrowing::caveats_narrow` checks attenuation by proving that a
+child caveat set implies its parent.
+
 ## Reproducibility
 
 See [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) for the exact toolchain pin,
