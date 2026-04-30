@@ -14,10 +14,11 @@ authority, and typed discretion holes marking the boundary where machine
 derivation must stop.
 
 The shipped Rust checker accepts a smaller executable admissible fragment.
-Surface hole syntax is parsed and preserved, then rejected by the main checker.
-The frontier `core_calculus` module models holes, fills, summaries, and
-certificates as typed Rust objects while checker integration and full PCAuth
-verification remain open work.
+Surface hole syntax is parsed and preserved; strict admission rejects it, while
+`typecheck::check_admissibility_mode(_, HoleExtension)` admits it only with
+structured residual obligations. The frontier `core_calculus` module models
+holes, fills, summaries, and certificates as typed Rust objects while full
+PCAuth discharge remains open work.
 
 ## What is new
 
@@ -42,8 +43,9 @@ compliance language carries all four.
 
 4. **Typed discretion holes.** `? h : T @ authority scope S` propagates a
    `discretion(authority)` effect in the full calculus. In this repository the
-   surface pipeline preserves holes and fills, the main checker rejects them,
-   and the frontier core calculus carries the typed model.
+   surface pipeline preserves holes and fills, strict admission rejects them,
+   `HoleExtension` admission residualizes them, and the frontier core calculus
+   carries the typed model.
 
 **Prior art.** Catala (Merigoux et al., *ICFP 2021*) has first-class
 defeasibility in a default calculus, but its types are ML-family without
@@ -82,9 +84,11 @@ mechanical evaluation that would have sufficed.
 Lex provides the type-theoretic interface. In the full design, the machine
 reduces the rule as far as the calculus permits and halts at a typed hole
 that specifies the judgment required, the authority that may supply it, and
-the scope in which the judgment applies. In the current executable checker,
-that boundary is represented by rejection with a structured admissibility
-diagnostic; filled-hole discharge is not yet admitted.
+the scope in which the judgment applies. In strict executable admission, that
+boundary is represented by rejection with a structured admissibility
+diagnostic; in residualized admission, it is represented by explicit
+`R-HOLE` / `R-HOLEFILL` obligations. Filled-hole discharge is not yet treated
+as fully mechanical.
 
 ## Quickstart
 
@@ -116,13 +120,14 @@ These are the repository's contract tests for the discretion-hole frontier.
 Each loads a surface example, runs `lexer::lex`, `parser::parse`, and
 `elaborate::elaborate`, and asserts that `Term::Hole` (or `Term::HoleFill`)
 is preserved through every pre-checker stage as a typed object. Each then
-calls `typecheck::infer` and asserts that the admissible checker rejects the
-term with precisely the diagnostic `AdmissibilityViolation::UnfilledHole` (or
-`HoleFillNotSupported`). The discretion hole crosses the surface pipeline as
-a first-class typed term; the admissible fragment declines to discharge it
-because sound discharge requires a PCAuth witness the frontier core calculus
-supplies and the admissible checker does not yet consume. This is the exact
-research boundary described in the paper.
+calls `typecheck::infer` and asserts that strict admissibility rejects the term
+with precisely the diagnostic `AdmissibilityViolation::UnfilledHole` (or
+`HoleFillNotSupported`). The discretion hole crosses the surface pipeline as a
+first-class typed term; the admissible fragment declines to discharge it
+because sound discharge requires a PCAuth witness. Callers that need to carry
+the term forward use `typecheck::check_admissibility_mode(_, HoleExtension)`,
+which admits the term with residuals rather than silently proving it. This is
+the exact research boundary described in the paper.
 
 The surface input `examples/discretion-hole-frontier.lex` is a single line:
 

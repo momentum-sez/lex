@@ -227,11 +227,13 @@ certificate prevents the Op payload from being treated as Lex-authorized.
 
 The compiler domain is narrower than the surface language. The current target
 domain is the executable admissible core plus only those frontier constructs
-with an explicit lowering and certificate rule. `Rec`, `Sigma`, modal forms,
-temporal coercions, unresolved content references, open holes, and unchecked
-hole fills remain outside the admitted compiler domain. Filled holes become
-admissible only after the checker can verify the PCAuth payload and record the
-effect/capability discharge in the certificate.
+with an explicit lowering and certificate rule. `Rec`, `Sigma`, unresolved
+content references, and unchecked certificate discharge remain outside the
+admitted compiler domain. Modal forms, temporal coercions, open holes, and
+unchecked hole fills may enter the public `HoleExtension` admission mode only
+with explicit residuals. Filled holes become fully discharged only after the
+checker can verify the PCAuth payload and record the effect/capability
+discharge in the certificate.
 
 The adequate compiler theorem should state: if a Lex term is in the admitted
 domain, the compiler emits a type-checked Op payload, and the admission

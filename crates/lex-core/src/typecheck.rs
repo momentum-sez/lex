@@ -667,9 +667,7 @@ fn term_size(term: &Term) -> usize {
                 go(t, acc);
                 go(ty, acc);
             }
-            Term::Let {
-                ty, val, body, ..
-            } => {
+            Term::Let { ty, val, body, .. } => {
                 go(ty, acc);
                 go(val, acc);
                 go(body, acc);
@@ -929,12 +927,413 @@ fn type_level(n: u64) -> Term {
 // Admissibility checker
 // ---------------------------------------------------------------------------
 
+/// Explicit admissibility mode for callers that need the public executable
+/// fragment or the public residualized discretion-hole extension.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AdmissibilityMode {
+    /// Public executable admissible fragment. This is identical to
+    /// [`check_admissibility`] and rejects discretion holes, hole fills,
+    /// modals, temporal coercions, unlocks, and other frontier forms.
+    Strict,
+    /// Public residualized extension. The same checker owns the acceptance,
+    /// but every frontier form admitted by this mode emits a residual that
+    /// downstream proof/certificate code must discharge before claiming a
+    /// fully mechanical verdict.
+    HoleExtension,
+}
+
+/// Residual emitted by [`AdmissibilityMode::HoleExtension`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AdmissibilityResidual {
+    /// Stable ledger code such as `R-HOLE` or `R-HOLEFILL`.
+    pub code: &'static str,
+    /// Human-readable discharge obligation.
+    pub description: &'static str,
+}
+
 /// Check that `term` is in the admissible fragment.
 ///
 /// Returns `Ok(())` if admissible, or `Err(TypeError::Admissibility)` with
 /// the specific violation.
 pub fn check_admissibility(term: &Term) -> Result<(), TypeError> {
     check_admissibility_inner(term, 0)
+}
+
+/// Check admissibility under an explicit public mode.
+///
+/// `Strict` is the executable admissible fragment. `HoleExtension` is the
+/// public form of the Mass/kernel F136 carve-out: it accepts the frontier
+/// judgment forms only with explicit residuals, preserving public Lex as the
+/// semantics owner instead of requiring a private kernel checker fork.
+pub fn check_admissibility_mode(
+    term: &Term,
+    mode: AdmissibilityMode,
+) -> Result<Vec<AdmissibilityResidual>, TypeError> {
+    match mode {
+        AdmissibilityMode::Strict => {
+            check_admissibility(term)?;
+            Ok(Vec::new())
+        }
+        AdmissibilityMode::HoleExtension => {
+            let mut residuals = Vec::new();
+            check_admissibility_hole_extension_inner(term, &mut residuals, 0)?;
+            Ok(residuals)
+        }
+    }
+}
+
+fn check_admissibility_hole_extension_inner(
+    term: &Term,
+    residuals: &mut Vec<AdmissibilityResidual>,
+    depth: usize,
+) -> Result<(), TypeError> {
+    if depth > MAX_DEPTH {
+        return Err(TypeError::RecursionLimitExceeded);
+    }
+    match term {
+        Term::Var { .. } | Term::Constant(_) => Ok(()),
+
+        Term::Sort(sort) => {
+            let level = match sort {
+                Sort::Type(level) | Sort::Rule(level) => level,
+                Sort::Prop | Sort::Time0 | Sort::Time1 => return Ok(()),
+            };
+            if let Some(var_idx) = find_level_var(level) {
+                return Err(TypeError::Admissibility {
+                    violation: AdmissibilityViolation::UnresolvedLevelVar(var_idx),
+                    term: term.clone(),
+                });
+            }
+            Ok(())
+        }
+
+        Term::Lambda { domain, body, .. } => {
+            check_admissibility_hole_extension_inner(domain, residuals, depth + 1)?;
+            check_admissibility_hole_extension_inner(body, residuals, depth + 1)
+        }
+
+        Term::Pi {
+            domain,
+            effect_row,
+            codomain,
+            ..
+        } => {
+            if let Some(row) = effect_row {
+                if !matches!(row, EffectRow::Empty) {
+                    return Err(TypeError::Admissibility {
+                        violation: AdmissibilityViolation::EffectfulPiNotSupported,
+                        term: term.clone(),
+                    });
+                }
+            }
+            check_admissibility_hole_extension_inner(domain, residuals, depth + 1)?;
+            check_admissibility_hole_extension_inner(codomain, residuals, depth + 1)
+        }
+
+        Term::App { func, arg } => {
+            check_admissibility_hole_extension_inner(func, residuals, depth + 1)?;
+            check_admissibility_hole_extension_inner(arg, residuals, depth + 1)
+        }
+
+        Term::Annot { term: t, ty } => {
+            check_admissibility_hole_extension_inner(t, residuals, depth + 1)?;
+            check_admissibility_hole_extension_inner(ty, residuals, depth + 1)
+        }
+
+        Term::Let { ty, val, body, .. } => {
+            check_admissibility_hole_extension_inner(ty, residuals, depth + 1)?;
+            check_admissibility_hole_extension_inner(val, residuals, depth + 1)?;
+            check_admissibility_hole_extension_inner(body, residuals, depth + 1)
+        }
+
+        Term::Match {
+            scrutinee,
+            return_ty,
+            branches,
+        } => {
+            for branch in branches {
+                match &branch.pattern {
+                    Pattern::Wildcard => {}
+                    Pattern::Constructor { constructor, .. } => {
+                        let ctor_name = constructor.name.segments.join(".");
+                        if !is_prelude_constructor(&ctor_name) {
+                            return Err(TypeError::Admissibility {
+                                violation: AdmissibilityViolation::MatchOnNonPreludeType {
+                                    constructor_name: ctor_name,
+                                },
+                                term: term.clone(),
+                            });
+                        }
+                    }
+                }
+            }
+
+            let scrutinee_datatype = resolve_match_scrutinee_datatype(scrutinee, branches);
+            let datatype = match scrutinee_datatype {
+                Some(dt) => dt,
+                None => {
+                    if branches
+                        .iter()
+                        .all(|b| matches!(b.pattern, Pattern::Wildcard))
+                    {
+                        check_admissibility_hole_extension_inner(scrutinee, residuals, depth + 1)?;
+                        check_admissibility_hole_extension_inner(return_ty, residuals, depth + 1)?;
+                        for branch in branches {
+                            check_admissibility_hole_extension_inner(
+                                &branch.body,
+                                residuals,
+                                depth + 1,
+                            )?;
+                        }
+                        return Ok(());
+                    }
+                    return Err(TypeError::Admissibility {
+                        violation: AdmissibilityViolation::MatchScrutineeDatatypeUnresolved,
+                        term: term.clone(),
+                    });
+                }
+            };
+
+            let expected_constructors =
+                crate::prelude::PreludeRegistry::lookup_variant_constructors(&datatype)
+                    .unwrap_or_default();
+            for branch in branches {
+                if let Pattern::Constructor { constructor, .. } = &branch.pattern {
+                    let ctor_name = constructor.name.segments.join(".");
+                    if !expected_constructors.iter().any(|c| *c == ctor_name) {
+                        let actual_datatype =
+                            crate::prelude::PreludeRegistry::constructor_datatype(&ctor_name)
+                                .map(str::to_string);
+                        return Err(TypeError::Admissibility {
+                            violation: AdmissibilityViolation::MatchBranchConstructorMismatch {
+                                scrutinee_datatype: datatype.clone(),
+                                branch_constructor: ctor_name,
+                                branch_constructor_datatype: actual_datatype,
+                            },
+                            term: term.clone(),
+                        });
+                    }
+                }
+            }
+
+            let has_wildcard = branches
+                .iter()
+                .any(|b| matches!(b.pattern, Pattern::Wildcard));
+            if !has_wildcard {
+                let covered: std::collections::BTreeSet<String> = branches
+                    .iter()
+                    .filter_map(|b| match &b.pattern {
+                        Pattern::Constructor { constructor, .. } => {
+                            Some(constructor.name.segments.join("."))
+                        }
+                        Pattern::Wildcard => None,
+                    })
+                    .collect();
+                let missing: Vec<String> = expected_constructors
+                    .iter()
+                    .filter(|c| !covered.contains(**c))
+                    .map(|c| (*c).to_string())
+                    .collect();
+                if !missing.is_empty() {
+                    return Err(TypeError::Admissibility {
+                        violation: AdmissibilityViolation::MatchNonExhaustive {
+                            scrutinee_datatype: datatype.clone(),
+                            missing_constructors: missing,
+                        },
+                        term: term.clone(),
+                    });
+                }
+            }
+
+            check_admissibility_hole_extension_inner(scrutinee, residuals, depth + 1)?;
+            check_admissibility_hole_extension_inner(return_ty, residuals, depth + 1)?;
+            for branch in branches {
+                check_admissibility_hole_extension_inner(&branch.body, residuals, depth + 1)?;
+            }
+            Ok(())
+        }
+
+        Term::Defeasible(rule) => {
+            check_admissibility_hole_extension_inner(&rule.base_ty, residuals, depth + 1)?;
+            check_admissibility_hole_extension_inner(&rule.base_body, residuals, depth + 1)?;
+            let mut prios: Vec<u32> = rule.exceptions.iter().filter_map(|e| e.priority).collect();
+            prios.sort_unstable();
+            for w in prios.windows(2) {
+                if w[0] == w[1] {
+                    return Err(TypeError::Admissibility {
+                        violation: AdmissibilityViolation::DefeasibleOrderNotTotal {
+                            priority: w[0],
+                        },
+                        term: term.clone(),
+                    });
+                }
+            }
+            for exception in &rule.exceptions {
+                check_admissibility_hole_extension_inner(&exception.guard, residuals, depth + 1)?;
+                check_admissibility_hole_extension_inner(&exception.body, residuals, depth + 1)?;
+            }
+            Ok(())
+        }
+
+        Term::Hole(hole) => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-HOLE",
+                description:
+                    "typed discretion hole admitted only as residualized public Lex evidence; fill-time authority verification is required",
+            });
+            check_admissibility_hole_extension_inner(&hole.ty, residuals, depth + 1)
+        }
+
+        Term::HoleFill { filler, pcauth, .. } => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-HOLEFILL",
+                description:
+                    "hole fill admitted only as residualized public Lex evidence; PCAuth signature verification is required",
+            });
+            check_admissibility_hole_extension_inner(filler, residuals, depth + 1)?;
+            check_admissibility_hole_extension_inner(pcauth, residuals, depth + 1)
+        }
+
+        Term::DefeatElim { rule } => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-DEFEATELIM",
+                description:
+                    "defeat elimination admitted only as residualized public Lex evidence; priority-order discharge is required",
+            });
+            check_admissibility_hole_extension_inner(rule, residuals, depth + 1)
+        }
+
+        Term::ModalAt { body, .. } => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-MODAL-AT",
+                description:
+                    "temporal @ modality admitted only as residualized public Lex evidence; time binding discharge is required",
+            });
+            check_admissibility_hole_extension_inner(body, residuals, depth + 1)
+        }
+
+        Term::ModalEventually { body, .. } => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-MODAL-EVENTUALLY",
+                description:
+                    "eventually modality admitted only as residualized public Lex evidence; bounded-horizon discharge is required",
+            });
+            check_admissibility_hole_extension_inner(body, residuals, depth + 1)
+        }
+
+        Term::ModalAlways { body, .. } => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-MODAL-ALWAYS",
+                description:
+                    "always modality admitted only as residualized public Lex evidence; interval discharge is required",
+            });
+            check_admissibility_hole_extension_inner(body, residuals, depth + 1)
+        }
+
+        Term::ModalIntro { body, .. } => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-MODAL-INTRO",
+                description:
+                    "tribunal modal introduction admitted only as residualized public Lex evidence; tribunal-reference discharge is required",
+            });
+            check_admissibility_hole_extension_inner(body, residuals, depth + 1)
+        }
+
+        Term::ModalElim {
+            term: inner,
+            witness,
+            ..
+        } => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-MODAL-ELIM",
+                description:
+                    "tribunal modal coercion admitted only as residualized public Lex evidence; bridge-witness discharge is required",
+            });
+            check_admissibility_hole_extension_inner(inner, residuals, depth + 1)?;
+            check_admissibility_hole_extension_inner(witness, residuals, depth + 1)
+        }
+
+        Term::SanctionsDominance { proof } => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-SANCTIONS-DOMINANCE",
+                description:
+                    "sanctions dominance admitted only as residualized public Lex evidence; dominance-proof discharge is required",
+            });
+            check_admissibility_hole_extension_inner(proof, residuals, depth + 1)
+        }
+
+        Term::PrincipleBalance(_) => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-PRINCIPLE-BALANCE",
+                description:
+                    "principle balancing admitted only as residualized public Lex evidence; precedent/citation discharge is required",
+            });
+            Ok(())
+        }
+
+        Term::Unlock { body, .. } => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-UNLOCK",
+                description:
+                    "branch-sensitive unlock admitted only as residualized public Lex evidence; row-well-formedness discharge is required",
+            });
+            check_admissibility_hole_extension_inner(body, residuals, depth + 1)
+        }
+
+        Term::Lift0 { time } => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-LIFT0",
+                description:
+                    "Time0 lift admitted only as residualized public Lex evidence; temporal-coherence discharge is required",
+            });
+            check_admissibility_hole_extension_inner(time, residuals, depth + 1)
+        }
+
+        Term::Derive1 { time, witness } => {
+            residuals.push(AdmissibilityResidual {
+                code: "R-DERIVE1",
+                description:
+                    "Time1 derivation admitted only as residualized public Lex evidence; rewrite-witness discharge is required",
+            });
+            check_admissibility_hole_extension_inner(time, residuals, depth + 1)?;
+            check_admissibility_hole_extension_inner(witness, residuals, depth + 1)
+        }
+
+        Term::Rec { .. } => Err(TypeError::Admissibility {
+            violation: AdmissibilityViolation::RecNotSupported,
+            term: term.clone(),
+        }),
+        Term::Sigma { .. } => Err(TypeError::Admissibility {
+            violation: AdmissibilityViolation::SigmaNotSupported,
+            term: term.clone(),
+        }),
+        Term::Pair { .. } => Err(TypeError::Admissibility {
+            violation: AdmissibilityViolation::PairNotSupported,
+            term: term.clone(),
+        }),
+        Term::Proj { .. } => Err(TypeError::Admissibility {
+            violation: AdmissibilityViolation::ProjectionNotSupported,
+            term: term.clone(),
+        }),
+        Term::AxiomUse { .. } => Err(TypeError::Admissibility {
+            violation: AdmissibilityViolation::AxiomNotSupported,
+            term: term.clone(),
+        }),
+        Term::InductiveIntro { .. } => Err(TypeError::Admissibility {
+            violation: AdmissibilityViolation::InductiveIntroNotSupported,
+            term: term.clone(),
+        }),
+        Term::ContentRefTerm(_) => Err(TypeError::Admissibility {
+            violation: AdmissibilityViolation::ContentRefNotSupported,
+            term: term.clone(),
+        }),
+        Term::IntLit(_) | Term::RatLit(_, _) | Term::StringLit(_) => {
+            Err(TypeError::Admissibility {
+                violation: AdmissibilityViolation::LiteralNotSupported,
+                term: term.clone(),
+            })
+        }
+    }
 }
 
 fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError> {
@@ -1050,8 +1449,7 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
             //
             // The last fallback keeps the match-on-wildcard-only form
             // admissible without requiring a typing context.
-            let scrutinee_datatype =
-                resolve_match_scrutinee_datatype(scrutinee, branches);
+            let scrutinee_datatype = resolve_match_scrutinee_datatype(scrutinee, branches);
 
             let datatype = match scrutinee_datatype {
                 Some(dt) => dt,
@@ -1090,12 +1488,11 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
                             crate::prelude::PreludeRegistry::constructor_datatype(&ctor_name)
                                 .map(str::to_string);
                         return Err(TypeError::Admissibility {
-                            violation:
-                                AdmissibilityViolation::MatchBranchConstructorMismatch {
-                                    scrutinee_datatype: datatype.clone(),
-                                    branch_constructor: ctor_name,
-                                    branch_constructor_datatype: actual_datatype,
-                                },
+                            violation: AdmissibilityViolation::MatchBranchConstructorMismatch {
+                                scrutinee_datatype: datatype.clone(),
+                                branch_constructor: ctor_name,
+                                branch_constructor_datatype: actual_datatype,
+                            },
                             term: term.clone(),
                         });
                     }
@@ -1173,11 +1570,7 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
             // check; they are left to the decision procedure's default
             // tie-breaking. The total-order check applies only to the
             // subset of exceptions that carry an explicit priority.
-            let mut prios: Vec<u32> = rule
-                .exceptions
-                .iter()
-                .filter_map(|e| e.priority)
-                .collect();
+            let mut prios: Vec<u32> = rule.exceptions.iter().filter_map(|e| e.priority).collect();
             prios.sort_unstable();
             for w in prios.windows(2) {
                 if w[0] == w[1] {
@@ -1312,7 +1705,12 @@ pub fn infer(ctx: &Context, term: &Term) -> Result<Term, TypeError> {
 }
 
 /// Inner inference with shared fuel counter and depth tracking.
-fn infer_inner(ctx: &Context, term: &Term, depth: usize, fuel: &mut usize) -> Result<Term, TypeError> {
+fn infer_inner(
+    ctx: &Context,
+    term: &Term,
+    depth: usize,
+    fuel: &mut usize,
+) -> Result<Term, TypeError> {
     if depth > MAX_DEPTH {
         return Err(TypeError::RecursionLimitExceeded);
     }
@@ -1511,7 +1909,12 @@ fn check_inner(
 }
 
 /// Inner sort inference with shared fuel counter and depth tracking.
-fn infer_sort(ctx: &Context, term: &Term, depth: usize, fuel: &mut usize) -> Result<u64, TypeError> {
+fn infer_sort(
+    ctx: &Context,
+    term: &Term,
+    depth: usize,
+    fuel: &mut usize,
+) -> Result<u64, TypeError> {
     let ty = infer_inner(ctx, term, depth, fuel)?;
     ensure_sort(&ty, depth, fuel)
 }
@@ -1867,6 +2270,50 @@ mod tests {
         }
     }
 
+    #[test]
+    fn hole_extension_mode_admits_hole_with_residual() {
+        let hole = Term::Hole(AstHole {
+            name: Some(Ident::new("h")),
+            ty: Box::new(type0()),
+            authority: AuthorityRef::Named(QualIdent::simple("authority.test")),
+            scope: None,
+        });
+
+        let residuals = check_admissibility_mode(&hole, AdmissibilityMode::HoleExtension).unwrap();
+        assert_eq!(residuals.len(), 1);
+        assert_eq!(residuals[0].code, "R-HOLE");
+
+        let strict = check_admissibility_mode(&hole, AdmissibilityMode::Strict);
+        assert!(matches!(
+            strict,
+            Err(TypeError::Admissibility {
+                violation: AdmissibilityViolation::UnfilledHole,
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn hole_extension_mode_preserves_match_exhaustiveness() {
+        let term = Term::match_expr(
+            Term::constant("True"),
+            Term::constant("Bool"),
+            vec![Branch {
+                pattern: ctor_pat("True"),
+                body: Term::constant("True"),
+            }],
+        );
+
+        let result = check_admissibility_mode(&term, AdmissibilityMode::HoleExtension);
+        assert!(matches!(
+            result,
+            Err(TypeError::Admissibility {
+                violation: AdmissibilityViolation::MatchNonExhaustive { .. },
+                ..
+            })
+        ));
+    }
+
     // -- 17. Unresolved level var rejected --
 
     #[test]
@@ -2195,7 +2642,8 @@ mod tests {
     #[test]
     fn effect_row_eq_branch_sensitive_matters() {
         let plain = EffectRow::Effects(vec![Effect::Read]);
-        let sensitive = EffectRow::BranchSensitive(Box::new(EffectRow::Effects(vec![Effect::Read])));
+        let sensitive =
+            EffectRow::BranchSensitive(Box::new(EffectRow::Effects(vec![Effect::Read])));
         assert!(!effect_row_eq(&Some(plain), &Some(sensitive)));
     }
 

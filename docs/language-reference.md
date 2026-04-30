@@ -29,7 +29,8 @@ scaffolds, not in the shipped admissible checker.
 | Parsing | `parser::parse` | Accepted | Builds `Term::Hole` and `Term::HoleFill` |
 | Elaboration | `elaborate::elaborate` | Preserved | Resolves names and assigns De Bruijn indices |
 | Temporal check | `temporal::check_temporal_stratification` | Traversed | Checks nested terms only |
-| Main type checker | `typecheck::{infer, check}` | Rejected | `Hole` and `HoleFill` are outside the executable admissible fragment |
+| Strict checker | `typecheck::{infer, check}` | Rejected | `Hole` and `HoleFill` are outside the executable admissible fragment |
+| Residualized checker | `typecheck::check_admissibility_mode(_, HoleExtension)` | Accepted with residuals | Emits `R-HOLE`, `R-HOLEFILL`, modal, temporal, and unlock residuals |
 | Frontier core calculus | `core_calculus::*` | Supported | Typed hole model, certificates, summaries |
 | Fiber composition | `compose::evaluate_all_fibers` | Not wired | Current implementation is a `Pending` stub |
 | Lex-to-Op compile | Not shipped in this repository | Boundary only | Companion Op compiler covers its own admitted skeleton |
@@ -39,7 +40,8 @@ The public claim set for this repository is:
 - The parser and elaborator preserve discretion-hole syntax.
 - The frontier core calculus provides the typed model for holes, fills,
   summaries, and certificates.
-- The main admissible checker rejects `Hole` and `HoleFill`.
+- The strict admissible checker rejects `Hole` and `HoleFill`.
+- The residualized public checker admits them only with explicit residuals.
 - `compose::evaluate_all_fibers` is not the production semantics of the
   frontier core calculus.
 - Lex states the source-side compile contract for Op, but this repository does
@@ -151,7 +153,9 @@ scope_field ::= "corridor" ":" qualident
 Notes:
 
 - The parser accepts surface hole forms and fill forms.
-- The main checker does not admit them.
+- The strict checker does not admit them.
+- `HoleExtension` admission admits them only with structured residuals, not as
+  fully discharged mechanical proof.
 - The frontier core calculus models the typed hole and typed fill semantics.
 
 ## 5. Types And Sorts
@@ -176,7 +180,7 @@ The executable checker supports:
 - `Defeasible` rules
 - `match` over prelude constructors
 
-The executable checker rejects:
+The strict executable checker rejects:
 
 - `Rec`
 - `Sigma`, pairs, and projections
@@ -186,6 +190,13 @@ The executable checker rejects:
 - `Hole` and `HoleFill`
 - literals
 - unresolved content references
+
+The public residualized mode
+`typecheck::check_admissibility_mode(_, HoleExtension)` accepts the same
+executable fragment plus typed holes, hole fills, modals, temporal coercions,
+defeat elimination, unlocks, sanctions dominance, and principle balancing
+only by emitting residuals. A residualized acceptance is admissible evidence,
+not proof discharge.
 
 The compliance prelude provides the public checker with core tags such as
 `ComplianceVerdict`, `ComplianceTag`, `Bool`, `Nat`, and `SanctionsResult`
@@ -213,10 +224,12 @@ The repository ships three distinct layers for discretion holes:
 
 1. The surface AST, parser, pretty-printer, elaborator, De Bruijn pass,
    temporal check, and obligation extractor preserve hole syntax.
-2. The main admissible checker rejects `Hole` with
+2. The strict admissible checker rejects `Hole` with
    `AdmissibilityViolation::UnfilledHole` and rejects `HoleFill` with
    `AdmissibilityViolation::HoleFillNotSupported`.
-3. The frontier core calculus in `crates/lex-core/src/core_calculus/hole.rs`
+3. The public residualized checker admits `Hole` / `HoleFill` with
+   `R-HOLE` / `R-HOLEFILL` residuals for proof-envelope transport.
+4. The frontier core calculus in `crates/lex-core/src/core_calculus/hole.rs`
    carries the typed hole model, authorized fills, discretion frontiers, and
    certificate records.
 
@@ -243,7 +256,8 @@ Making holes load-bearing in the main checker requires:
 - a checker rule that validates filled holes instead of rejecting them at the
   admissibility boundary
 
-Those pieces do not ship in the admissible checker today.
+Those pieces do not ship as fully discharged mechanical proof today; until
+they do, `HoleExtension` residuals must remain visible in admission envelopes.
 
 ## 7. Small-Step Operational Semantics
 
