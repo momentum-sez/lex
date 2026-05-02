@@ -1,0 +1,30 @@
+[package]
+name = "lex-core"
+description = "Lex: A Logic for Jurisdictional Rules — parser, type checker, evaluator, and proof obligation generator"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+mez-canonical = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = "0.10"
+chrono = { workspace = true }
+rust_decimal = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[features]
+default = []
+# Feature-gate for future external SMT solver integration.
+smt-solver = []
+
+[dev-dependencies]
+criterion = { workspace = true }
+proptest = { workspace = true }
+
+[[bench]]
+name = "lex_pipeline"
+harness = false

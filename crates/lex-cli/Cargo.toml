@@ -1,0 +1,17 @@
+[package]
+name = "lex-cli"
+description = "Command-line interface for Lex fiber authoring, type-checking, and air-gapped deployment"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "lex"
+path = "src/main.rs"
+
+[dependencies]
+lex-core = { path = "../lex-core" }
+clap = { version = "4", features = ["derive"] }
+serde = { workspace = true }
+serde_json = { workspace = true }

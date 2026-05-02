@@ -1,0 +1,292 @@
+# Lex
+
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![CI](https://github.com/raeez/lex/actions/workflows/ci.yml/badge.svg)](https://github.com/raeez/lex/actions/workflows/ci.yml)
+[![Coq](https://github.com/raeez/lex/actions/workflows/coq.yml/badge.svg)](https://github.com/raeez/lex/actions/workflows/coq.yml)
+[![Release](https://img.shields.io/badge/release-0.1.0-orange.svg)](https://github.com/raeez/lex/releases)
+[![Rust](https://img.shields.io/badge/rust-1.93.0-brown.svg)](rust-toolchain.toml)
+
+Lex is a dependently-typed, effect-typed programming language for
+jurisdictional compliance rules. The full calculus has defeasible rules with
+typed priority, temporal sorts that separate frozen historical time from
+derived legal time, tribunal modalities that index propositions by asserting
+authority, and typed discretion holes marking the boundary where machine
+derivation must stop.
+
+The shipped Rust checker accepts a smaller executable admissible fragment.
+Surface hole syntax is parsed and preserved; strict admission rejects it, while
+`typecheck::check_admissibility_mode(_, HoleExtension)` admits it only with
+structured residual obligations. The frontier `core_calculus` module models
+holes, fills, summaries, and certificates as typed Rust objects while full
+PCAuth discharge remains open work.
+
+## What is new
+
+Four features appear here as primitives of a single calculus. No prior
+compliance language carries all four.
+
+1. **Defeasibility as a typed primitive.** Defeasible rules with a typing
+   rule requiring type agreement between base and exceptions - an invariant
+   that untyped defeasible logic programs in the Governatori-Prakken-Sartor
+   tradition do not enforce.
+
+2. **Temporal sort separation.** `Time_0` (frozen historical) and `Time_1`
+   (derived legal) are distinct sorts with a directional coercion
+   `lift_0 : Time_0 → Time_1` and no inverse, enforced syntactically so
+   that retroactive amendment touches derived consequence without
+   contaminating historical fact.
+
+3. **Authority-relative interpretation.** Tribunal modals `[T] A` with
+   explicit `CanonBridge` witnesses, so divergent authority interpretations
+   surface as type obstructions rather than silent selection. No aggregation
+   operator exists over tribunals.
+
+4. **Typed discretion holes.** `? h : T @ authority scope S` propagates a
+   `discretion(authority)` effect in the full calculus. In this repository the
+   surface pipeline preserves holes and fills, strict admission rejects them,
+   `HoleExtension` admission residualizes them, and the frontier core calculus
+   carries the typed model.
+
+**Prior art.** Catala (Merigoux et al., *ICFP 2021*) has first-class
+defeasibility in a default calculus, but its types are ML-family without
+dependence, it does not model multiple interpreting authorities, and it
+offers no language-level construct for the machine-vs-judgment boundary
+(when the law requires judgment, the author supplies a value and the
+distinction vanishes at compile time). Rego and Datalog evaluate rules as
+logic programs over flat relations, without dependent types, without a
+temporal sort distinction, and without a typed interface across the
+discretion boundary. LegalRuleML (OASIS, 2013) is an interchange schema with
+no execution semantics. Isabelle/HOL and Coq encode rules in a general
+higher-order logic and push the encoding burden to the user, one priority
+DAG and one temporal stratification at a time. The published treatment of
+the core calculus, the admissible fragment, the termination argument, and
+the position against each of these systems is in the paper *Lex: A Logic
+for Jurisdictional Rules*.
+
+## Why it matters
+
+Compliance rules are already programs, executed today in Python, Java, SQL,
+and Solidity. Those substrates collapse three distinctions the law holds
+open. They conflate rule priority with control flow, so *lex specialis* and
+*lex posterior* are indistinguishable from the order of `if` branches. They
+treat time uniformly through mutable state, so the incorporation date of an
+entity and the tolled filing deadline that derives from it share the same
+sort. They have no language-level representation of the authority asserting
+a verdict, so a program that consults an ADGM FSRA rule and a Seychelles
+FSA rule produces a verdict with no traceable provenance. Above all, they
+have no typed construct for the boundary between what the machine computed
+and what a human approximated - "fit and proper person," "material adverse
+change," "good cause" become hard-coded booleans or inline heuristics,
+invisible to every downstream consumer. A verifier built on these substrates
+either oversteps into judgments no statute authorizes or understeps away from
+mechanical evaluation that would have sufficed.
+
+Lex provides the type-theoretic interface. In the full design, the machine
+reduces the rule as far as the calculus permits and halts at a typed hole
+that specifies the judgment required, the authority that may supply it, and
+the scope in which the judgment applies. In strict executable admission, that
+boundary is represented by rejection with a structured admissibility
+diagnostic; in residualized admission, it is represented by explicit
+`R-HOLE` / `R-HOLEFILL` obligations. Filled-hole discharge is not yet treated
+as fully mechanical.
+
+## Quickstart
+
+Clone and run the end-to-end example in three commands:
+
+```bash
+git clone https://github.com/raeez/lex.git
+cd lex
+cargo run --example hello-lex -p lex-core
+```
+
+The example walks the Seychelles International Business Companies Act 2016 s.66 - first-shareholder-meeting requirement - through the full Lex pipeline: AST construction, De Bruijn indexing, temporal stratification, type inference, proof-obligation extraction and discharge, certificate issuance. It then constructs a typed discretion hole for `fit_and_proper : Prop @ regulator` and extracts its scope obligations, demonstrating the judgment-boundary primitive that makes Lex distinct from other rule engines.
+
+Further reading: [`docs/getting-started.md`](docs/getting-started.md) for a five-minute cold-reader walk; [`docs/language-spec.md`](docs/language-spec.md) for the language reference; the paper *Lex: A Logic for Jurisdictional Rules* (public paper draft) for formal treatment.
+
+## Instant run
+
+```
+$ cargo test -p lex-core --test discretion_hole_contract
+
+running 2 tests
+test surface_fill_example_is_preserved_then_rejected_by_main_checker ... ok
+test surface_hole_example_is_preserved_then_rejected_by_main_checker ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured
+```
+
+These are the repository's contract tests for the discretion-hole frontier.
+Each loads a surface example, runs `lexer::lex`, `parser::parse`, and
+`elaborate::elaborate`, and asserts that `Term::Hole` (or `Term::HoleFill`)
+is preserved through every pre-checker stage as a typed object. Each then
+calls `typecheck::infer` and asserts that strict admissibility rejects the term
+with precisely the diagnostic `AdmissibilityViolation::UnfilledHole` (or
+`HoleFillNotSupported`). The discretion hole crosses the surface pipeline as a
+first-class typed term; the admissible fragment declines to discharge it
+because sound discharge requires a PCAuth witness. Callers that need to carry
+the term forward use `typecheck::check_admissibility_mode(_, HoleExtension)`,
+which admits the term with residuals rather than silently proving it. This is
+the exact research boundary described in the paper.
+
+The surface input `examples/discretion-hole-frontier.lex` is a single line:
+
+```lex
+? fit_and_proper : Prop @ regulator scope { jurisdiction : ADGM }
+```
+
+## Design properties
+
+- **Defeasibility.** Rules override other rules by explicit numeric priority.
+  The typing rule requires every exception body to inhabit the same type as
+  the base body. Conflict resolution is a bounded search over the priority
+  DAG, not a control-flow cut.
+- **Temporal stratification.** `Time_0` and `Time_1` are distinct sorts at
+  universe level 0. `lift_0 : Time_0 → Time_1` is the intended object-language
+  coercion; the Rust frontier API exposes no demotion operation from
+  `Asof<1>` to `Asof<0>`. Retroactive rule change regenerates `Time_1`-indexed
+  consequences from the unchanged `Time_0` record.
+- **Authority-relative interpretation.** Propositions are indexed by tribunal
+  through `[T] A`. Cross-tribunal coercion requires an explicit
+  `CanonBridge(T1, T2, A)` witness; no implicit aggregation operates over
+  tribunals.
+- **Typed discretion holes.** `?h : T @ auth scope S` produces the
+  `discretion(auth)` effect in the full calculus. The frontier Rust API
+  records filled-hole witnesses and performs a structural signer precheck;
+  cryptographic PCAuth, revocation, delegation, and scope validation are
+  outside the main checker today.
+- **Effect rows.** Effects form a bounded semilattice under union. The
+  `sanctions_query` effect is distinguished; the `branch_sensitive` wrapper
+  prevents privilege escalation through branch composition.
+- **Sanctions dominance.** A proof of sanctions non-compliance inhabits the
+  bottom type. No defeasibility exception, tribunal coercion, or discretion
+  hole overrides it.
+- **Principle conflict calculus.** Principle balancing runs on an acyclic
+  DAG indexed by `(PrincipleId, CaseCategory)`; cycles are rejected at load.
+
+## Repository layout
+
+```
+lex/
+├── crates/
+│   ├── lex-core/     parser, elaborator, admissible type checker,
+│   │                 obligations, prelude, decision procedures,
+│   │                 certificate, frontier core calculus
+│   ├── lex-diag/     structured diagnostic ontology
+│   └── lex-cli/      command-line authoring shell for air-gapped workflows
+├── docs/
+│   ├── language-reference.md           canonical public language reference
+│   └── frontier-work/
+│       └── 08-lex-core-calculus.md     typed-hole frontier design note
+├── examples/         surface fibers exercising the frontier boundary
+├── formal/
+│   ├── coq/          Coq mechanisation
+│   └── lean/         Lean 4 mirror
+├── Cargo.toml
+└── LICENSE
+```
+
+## Reading path
+
+The repository is organised in three layers; the boundary between them is
+load-bearing for every claim in the paper.
+
+**Executable - what the type checker accepts and what `cargo run` invokes.**
+
+| Artifact | Purpose |
+| --- | --- |
+| `docs/language-reference.md` | Surface grammar, the admissible fragment, small-step reduction, the pipeline, and the precise boundary the main checker enforces |
+| `crates/lex-core/` | Parser, elaborator, admissible type checker, obligations, prelude, decision procedures, certificate |
+| `crates/lex-core/tests/` | Integration tests: ADGM rules, Seychelles IBC rules, adversarial attacks (level self-application, cyclic priorities, unauthorised fills), proptest soundness, parse→elaborate→typecheck→obligations→certificate end-to-end |
+
+**Formal - scaffold and paper-level mechanisations.**
+
+| Artifact | Purpose |
+| --- | --- |
+| `formal/coq/LexCore.v`, `formal/lean/LexCore.lean` | Narrow-waist scaffold for the Frontier 08 commitments, not the full paper calculus |
+| `formal/coq/Lex/` | Paper-level Coq/Rocq development, including theorem-status ledgers |
+| `formal/README.md` | Mechanisation status; explicit separation between scaffold, paper-level Qed statements, conditional statements, and open obligations |
+
+**Frontier - typed objects the calculus defines but the admissible checker
+declines to discharge until the surrounding pipeline catches up.**
+
+| Artifact | Purpose |
+| --- | --- |
+| `docs/frontier-work/08-lex-core-calculus.md` | Frontier design note: level polymorphism, typed discretion holes, oracle totality, proof summaries, derivation certificates |
+| `crates/lex-core/src/core_calculus/` | Executable witness for the frontier types; preserved through the surface pipeline, rejected by the admissible checker by design |
+
+**Paper.** *Lex: A Logic for Jurisdictional Rules* -
+full core calculus, admissibility argument, typing rules, worked examples,
+related work, conjectures, and open obligations.
+
+## Build
+
+```
+cargo check --workspace
+cargo test --workspace
+cargo clippy --workspace -- -D warnings
+```
+
+Rust 1.93 or newer. The workspace is self-contained: a cold clone compiles
+without external checkouts. Foundational types (`CanonicalBytes`,
+`sha256_digest`, `ComplianceDomain`) are provided by the in-tree canonical
+crate.
+
+## CLI
+
+```
+lex check <file.lex>                 type-check a fiber against the admissible fragment
+lex parse <file.lex>                 parse and pretty-print the AST
+lex elaborate <file.lex>             surface → core elaboration with De Bruijn indices
+lex sign <file.lex> --key <key>      Ed25519 sign for air-gapped submission
+lex verify <file.lex.signed>         verify a signed fiber
+lex check-principles <file>          priority DAG acyclicity check
+```
+
+The air-gapped workflow separates authoring from submission: write and
+type-check a fiber on an offline machine, `lex sign` with a hardware key,
+transfer the signed artifact by physical media, submit to the target
+execution host.
+
+## Relation to Op
+
+Op (github.com/raeez/op) is the typed effectful workflow language Lex
+feeds into. A Lex rule encodes a typed jurisdictional predicate and emits
+proof obligations; an Op step references those obligations through `requires`
+and `ensures` contracts and discharges them as part of its effect row. Lex
+is the rule and proof layer; Op is the workflow layer. The interface is
+preconditions, postconditions, and effect discharge; neither language
+redefines the other's semantics.
+
+`lex-core` also exposes the public runtime caveat primitive:
+`predicate_runtime::{LexProposition, LexCaveat, evaluate}` decides closed
+first-order caveats against a request context, and
+`predicate_narrowing::caveats_narrow` checks attenuation by proving that a
+child caveat set implies its parent.
+
+## Reproducibility
+
+See [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) for the exact toolchain pin,
+expected test counts, example outputs, and hardware budgets. The repository
+ships with a pinned Rust toolchain (`rust-toolchain.toml`), GitHub Actions
+CI for Rust and Rocq, and a self-contained workspace that compiles from a
+cold clone without sibling checkouts.
+
+## Contributing
+
+Pull requests and issues welcome. Before opening a pull request, run
+`cargo test --workspace` and `cargo clippy --workspace -- -D warnings` and
+confirm both pass. New AST forms require parser, elaborator, type-checker,
+and admissible-fragment coverage; a change to a type rule updates
+`formal/coq/LexCore.v` and `formal/lean/LexCore.lean` in step. The
+contribution most valued: rules from a concrete jurisdiction that stress the
+admissible fragment. Every rule that fails to admit surfaces a design
+question the paper treats as open work.
+
+## Citing
+
+> *Lex: A Logic for Jurisdictional Rules.* Public paper draft.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE).
