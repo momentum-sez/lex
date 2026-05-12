@@ -46,6 +46,34 @@ Keep edits inside the requested surface. Avoid unrelated refactors. If a claim c
 
 If a proof, theorem, formal scaffold, executable semantics claim, or paper claim breaks, repair the object. Do not converge by deleting, demoting, or quietly weakening it. If repair cannot be completed, name the exact obstruction and next proof obligation.
 
+## XI. Code-Writing Discipline
+
+Twelve behavioural rules for code-writing agents (Claude, GPT-5-family, any subagent). Reproduced in their cultural form; sources: Karpathy (January 2026), Forrest Chang's CLAUDE.md (January 2026), thirty-codebase six-week empirical extension (May 2026). Bias: caution over speed on non-trivial work.
+
+**Rule 1 — Think Before Coding.** State assumptions explicitly. If uncertain, ask rather than guess. Present multiple interpretations when ambiguity exists. Push back when a simpler approach exists. Stop when confused. Name what's unclear.
+
+**Rule 2 — Simplicity First.** Minimum code that solves the problem. Nothing speculative. No features beyond what was asked. No abstractions for single-use code. Test: would a senior engineer say this is overcomplicated? If yes, simplify.
+
+**Rule 3 — Surgical Changes.** Touch only what you must. Clean up only your own mess. Don't "improve" adjacent code, comments, or formatting. Don't refactor what isn't broken. Match existing style.
+
+**Rule 4 — Goal-Driven Execution.** Define success criteria. Loop until verified. Don't follow steps; define success and iterate. Strong success criteria let you loop independently.
+
+**Rule 5 — Use the model only for judgment calls.** Use the model for classification, drafting, summarization, extraction. Do NOT use the model for routing, retries, deterministic transforms. If code can answer, code answers.
+
+**Rule 6 — Token budgets are not advisory.** Per-task: 4,000 tokens. Per-session: 30,000 tokens. If approaching budget, summarize and start fresh. Surface the breach. Do not silently overrun.
+
+**Rule 7 — Surface conflicts, don't average them.** If two patterns contradict, pick one (more recent / more tested). Explain why. Flag the other for cleanup. Don't blend conflicting patterns.
+
+**Rule 8 — Read before you write.** Before adding code, read exports, immediate callers, shared utilities. "Looks orthogonal" is dangerous. If unsure why code is structured a way, ask.
+
+**Rule 9 — Tests verify intent, not just behaviour.** Tests must encode WHY behaviour matters, not just WHAT it does. A test that can't fail when business logic changes is wrong.
+
+**Rule 10 — Checkpoint after every significant step.** Summarize what was done, what's verified, what's left. Don't continue from a state you can't describe back. If you lose track, stop and restate.
+
+**Rule 11 — Match the codebase's conventions, even if you disagree.** Conformance > taste inside the codebase. If you genuinely think a convention is harmful, surface it. Don't fork silently.
+
+**Rule 12 — Fail loud.** "Completed" is wrong if anything was skipped silently. "Tests pass" is wrong if any were skipped. Default to surfacing uncertainty, not hiding it.
+
 <!-- END INLINED-INVARIANTS -->
 
 ## Harness Discipline
@@ -123,3 +151,20 @@ obligation until that obligation is closed.
 
 Use terse, factual prose. Mark load-bearing statements as proved, tested,
 implemented, scaffolded, conjectural, or open.
+
+## Code-writing discipline — repo application
+
+Per the inlined `## XI. Code-Writing Discipline` block above. Twelve rules instantiated for lex (Lex language reference implementation + Coq/Lean formalization; Apache-2.0 public):
+
+1. **Think Before Coding.** Every change to `formal/coq/Lex/*.v` or `formal/lean/LexCore.lean` names the theorem or admissibility lemma affected. Every change to `crates/lex-core/` names the elaboration / executable / certificate surface touched.
+2. **Simplicity First.** No speculative extensions to the core calculus. No abstractions in `crates/lex-cli/` beyond the documented authoring shell.
+3. **Surgical Changes.** A `lex-cli` change does not touch `lex-core`. An elaboration tweak does not opportunistically refactor the certificate builder.
+4. **Goal-Driven Execution.** Success = `cargo check --workspace && cargo test --workspace && cargo clippy --workspace -- -D warnings` clean, `coqc LexCore.v` and `lean LexCore.lean` clean, paper-level Coq theorems remain `Qed.` (not `Admitted.`), `docs/language-reference.md` matches the executable surface.
+5. **Use the model only for judgment calls.** Admissible-obligation classification, narrowing, certificate construction are deterministic per the calculus. The model drafts documentation and tests; it does not choose which obligation kind applies.
+6. **Token budgets are not advisory.** Standard; checkpoint between Coq lemmas and between Rust crate edits.
+7. **Surface conflicts, don't average them.** If `docs/language-spec.md` and `docs/language-reference.md` disagree, the reference wins on executable boundaries. If Coq formalization and inline Rust doc-comments disagree, the formalization wins.
+8. **Read before you write.** Read `docs/language-reference.md` before editing the parser or elaborator. Read the relevant `formal/coq/Lex/*.v` before editing the corresponding Rust code.
+9. **Tests verify intent.** Paper-level Coq theorems must remain proven (no `Admitted.` reaching a load-bearing surface). Rust property tests assert calculus invariants, not just non-panicking parses.
+10. **Checkpoint after every significant step.** Between Coq lemma edits, summarize what is now proved versus what remains admissible. Between calculus edits, restate impact on the certificate format.
+11. **Match the codebase's conventions, even if you disagree.** Rust snake_case crate names; Coq notation per `formal/coq/Lex/`; documented narrow-waist scaffold in `LexCore.v` / `LexCore.lean`. No parallel formalization style.
+12. **Fail loud.** Never declare a Coq file checked if `Admitted.` is reachable from a load-bearing top-level theorem. Never claim the executable surface matches the spec without a referenced test. Surface every drift.
