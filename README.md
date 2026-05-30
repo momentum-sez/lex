@@ -1,9 +1,9 @@
 # Lex
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![CI](https://github.com/raeez/lex/actions/workflows/ci.yml/badge.svg)](https://github.com/raeez/lex/actions/workflows/ci.yml)
-[![Coq](https://github.com/raeez/lex/actions/workflows/coq.yml/badge.svg)](https://github.com/raeez/lex/actions/workflows/coq.yml)
-[![Release](https://img.shields.io/badge/release-0.1.0-orange.svg)](https://github.com/raeez/lex/releases)
+[![CI](https://github.com/momentum-sez/lex/actions/workflows/ci.yml/badge.svg)](https://github.com/momentum-sez/lex/actions/workflows/ci.yml)
+[![Coq](https://github.com/momentum-sez/lex/actions/workflows/coq.yml/badge.svg)](https://github.com/momentum-sez/lex/actions/workflows/coq.yml)
+[![Release](https://img.shields.io/badge/release-0.1.0-orange.svg)](https://github.com/momentum-sez/lex/releases)
 [![Rust](https://img.shields.io/badge/rust-1.93.0-brown.svg)](rust-toolchain.toml)
 
 Lex is a dependently-typed, effect-typed programming language for
@@ -95,7 +95,7 @@ as fully mechanical.
 Clone and run the end-to-end example in three commands:
 
 ```bash
-git clone https://github.com/raeez/lex.git
+git clone https://github.com/momentum-sez/lex.git
 cd lex
 cargo run --example hello-lex -p lex-core
 ```
@@ -250,7 +250,7 @@ execution host.
 
 ## Relation to Op
 
-Op (github.com/raeez/op) is the typed effectful workflow language Lex
+Op (github.com/momentum-sez/op) is the typed effectful workflow language Lex
 feeds into. A Lex rule encodes a typed jurisdictional predicate and emits
 proof obligations; an Op step references those obligations through `requires`
 and `ensures` contracts and discharges them as part of its effect row. Lex

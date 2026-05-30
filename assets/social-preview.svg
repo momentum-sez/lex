@@ -109,7 +109,7 @@
   <!-- Bottom-left: repo URL -->
   <text x="80" y="572" font-family="'SF Mono','Menlo','Consolas',monospace"
         font-size="18" fill="#2c2c2c">
-    github.com/raeez/lex
+    github.com/momentum-sez/lex
   </text>
 
   <!-- Bottom-right: license + test count + SN status -->

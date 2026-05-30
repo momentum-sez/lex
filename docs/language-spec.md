@@ -192,7 +192,7 @@ propositional counterexample, or undecidable fallback.
 
 ## Relation to Op
 
-Lex is the rule and proof layer. Op (`github.com/raeez/op`) is the
+Lex is the rule and proof layer. Op (`github.com/momentum-sez/op`) is the
 operational effect language that performs the state transitions Lex admits.
 Lex decides whether a transition is permitted; Op executes the transition
 and emits calls against its execution host. The two languages share effect rows

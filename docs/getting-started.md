@@ -22,7 +22,7 @@ If the installed toolchain is older, install `rustup` and run
 ## Clone and test
 
 ```bash
-git clone https://github.com/raeez/lex.git
+git clone https://github.com/momentum-sez/lex.git
 cd lex
 cargo test --workspace
 ```

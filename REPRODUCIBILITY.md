@@ -6,14 +6,14 @@ should obtain bit-identical or functionally-identical results.
 
 ## Repository
 
-- URL: <https://github.com/raeez/lex>
+- URL: <https://github.com/momentum-sez/lex>
 - Branch: `frontier/core-calculus`
 - License: Apache-2.0 (`LICENSE`)
 
 ## Clone
 
 ```
-git clone https://github.com/raeez/lex.git
+git clone https://github.com/momentum-sez/lex.git
 cd lex
 git checkout frontier/core-calculus
 ```
