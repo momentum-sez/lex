@@ -4,6 +4,29 @@
 //! error category. Error messages are published in controlled English, not
 //! Lex syntax. The compiler is considered incomplete if it produces an error
 //! outside the ontology — error ontology coverage is a soundness property.
+//!
+//! ## Status — target surface, NOT yet wired into the pipeline
+//!
+//! This crate is the **intended** diagnostic-ontology surface; it is not yet
+//! integrated. As of this revision:
+//!
+//! - **No crate depends on `lex-diag`.** It is a workspace member with leaf
+//!   dependencies only (`serde`, `serde_json`, `thiserror`); neither `lex-core`
+//!   nor `lex-cli` imports it.
+//! - **`lex-core` errors are not mapped into [`DiagnosticCategory`].** The
+//!   `// Maps to ...` notes on the category variants describe the *intended*
+//!   correspondence to `lex-core` error variants (parser, elaborator,
+//!   typechecker, evaluator); they are documentation of the target mapping,
+//!   not an implemented conversion.
+//! - **Wiring is future work** and requires: (1) a `lex-core` → `lex-diag`
+//!   dependency edge, and (2) per-error `From`/`TryFrom` conversions from each
+//!   `lex-core` error type into `DiagnosticCategory` / `StructuredDiagnostic`.
+//!   Until both exist, the "ontology coverage is a soundness property" claim
+//!   above is a *design goal* for the integrated compiler, not a checked
+//!   property of the current build.
+//!
+//! Do not treat the presence of this crate as evidence that Lex compilation
+//! already emits structured diagnostics through this ontology.
 
 pub mod category;
 pub mod coverage;

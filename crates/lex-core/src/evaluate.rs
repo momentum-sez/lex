@@ -1,10 +1,20 @@
-//! Runtime evaluator for Lex compliance rules.
+//! Reference (term-reduction) evaluator for Lex compliance rules.
 //!
-//! The type checker (`typecheck.rs`) verifies that rules are well-typed but
-//! cannot evaluate them against live entity data. This module bridges that gap:
-//! given a Lex `Term` (typically a `lambda (ctx : IncorporationContext). body`
-//! rule) and a [`RuntimeContext`] mapping accessor names to concrete values, it
-//! reduces the term to a [`ComplianceVerdict`].
+//! **Status — reference/experimental, NOT the production verdict path.** This
+//! module is a small term-reducer over the `Term` AST: given a Lex `Term`
+//! (typically a `lambda (ctx : IncorporationContext). body` rule) and a
+//! [`RuntimeContext`] mapping accessor names to concrete values, it reduces the
+//! term to a [`ComplianceVerdict`]. It exists as a readable reference for how a
+//! rule body reduces, and is referenced by the prelude/parser docs for that
+//! purpose. It has no callers in the shipped pipeline.
+//!
+//! The production caveat/predicate evaluation path is
+//! [`crate::predicate_runtime::evaluate`] (re-exported as
+//! [`crate::evaluate_predicate`]), which evaluates a structured
+//! `LexProposition` against a typed [`crate::predicate_runtime::EvalContext`]
+//! and is the surface the runtime narrowing/caveat machinery consumes. Do not
+//! route a production verdict through this module; route it through
+//! `predicate_runtime`.
 //!
 //! # Design
 //!
@@ -261,13 +271,11 @@ fn eval_term(
             let mut best_exception: Option<(u32, ComplianceVerdict)> = None;
 
             for exception in &rule.exceptions {
-                let guard_result = eval_guard(&exception.guard, ctx, depth + 1, fuel);
-                let guard_satisfied = match guard_result {
-                    Ok(true) => true,
-                    Ok(false) => false,
-                    // If the guard can't be evaluated, treat it as unsatisfied
-                    Err(_) => false,
-                };
+                // Propagate an unevaluable guard rather than silently treating
+                // it as unsatisfied: a guard that cannot be evaluated is a fault
+                // in the rule/context, not evidence that the exception does not
+                // apply. Swallowing it would drop a legal defeasible exception.
+                let guard_satisfied = eval_guard(&exception.guard, ctx, depth + 1, fuel)?;
 
                 if guard_satisfied {
                     let exception_verdict =
@@ -408,28 +416,39 @@ fn eval_to_constant(
 /// boolean-valued or constructor-match expressions. We evaluate them and
 /// interpret the result:
 /// - `Compliant` / `True` / `Clear` => satisfied (true)
-/// - `NonCompliant` / `False` / anything else => not satisfied (false)
+/// - `NonCompliant` / `False` => not satisfied (false)
+///
+/// A guard that reduces to a recognized form (verdict or known constant) yields
+/// a definite `Ok(true)`/`Ok(false)`. A guard that cannot be evaluated under
+/// **either** interpretation is a real error and is **propagated**, not
+/// silently read as "exception not satisfied": silently swallowing a guard
+/// failure would turn a malformed defeasible exception into one that never
+/// fires, dropping a legal exception without trace.
 fn eval_guard(
     guard: &Term,
     ctx: &RuntimeContext,
     depth: usize,
     fuel: &mut usize,
 ) -> Result<bool, EvalError> {
-    // Try to evaluate the guard as a verdict
+    // First interpretation: the guard reduces to a verdict.
     match eval_term(guard, ctx, depth, fuel) {
         Ok(ComplianceVerdict::Compliant) => Ok(true),
         Ok(ComplianceVerdict::NonCompliant) => Ok(false),
         Ok(ComplianceVerdict::Pending) => Ok(false),
-        Err(_) => {
-            // Guard might evaluate to a Bool constant instead of a verdict
-            // Try to evaluate to a constant name — share the same fuel budget
-            // to prevent unbounded evaluation across guards.
+        Err(verdict_err) => {
+            // Second interpretation: the guard reduces to a Bool/constant name
+            // (e.g. a guard written `all_identified ctx` returning `True`).
+            // Share the fuel budget to bound total work across guards. Only if
+            // BOTH interpretations fail do we surface an error — the verdict
+            // interpretation's error is the more specific one to report.
             match eval_to_constant(guard, ctx, depth, fuel) {
                 Ok(name) => match name.as_str() {
                     "True" | "Clear" | "Compliant" => Ok(true),
+                    // A recognized-but-false constant (`False`, `NonCompliant`,
+                    // a non-satisfying status tag) is a definite not-satisfied.
                     _ => Ok(false),
                 },
-                Err(_) => Ok(false),
+                Err(_) => Err(verdict_err),
             }
         }
     }
@@ -447,15 +466,38 @@ fn qual_ident_name(qi: &QualIdent) -> &str {
         .unwrap_or("")
 }
 
+/// Prefix for the non-zero-natural marker constructor name.
+///
+/// There is no prelude constructor for non-zero naturals, so a positive `Nat`
+/// is encoded as `"<prefix><value>"` (e.g. `__NonZeroNat:5`). Encoding the
+/// concrete value — rather than collapsing every positive natural onto a single
+/// sentinel — keeps the value recoverable, so a downstream comparison can tell
+/// `1` from `5`. The reserved prefix cannot collide with an authored
+/// constructor (it is not lexable as a single identifier) and never matches the
+/// `Zero` constructor, so a positive natural still falls through to wildcard
+/// branches the same way the old single sentinel did.
+const NON_ZERO_NAT_PREFIX: &str = "__NonZeroNat:";
+
+/// Encode a non-zero natural as its value-preserving marker constructor name.
+fn encode_non_zero_nat(n: u64) -> String {
+    format!("{NON_ZERO_NAT_PREFIX}{n}")
+}
+
+/// Decode a value-preserving non-zero-natural marker name back to its value.
+/// Returns `None` if `name` is not a non-zero-natural marker.
+fn decode_non_zero_nat(name: &str) -> Option<u64> {
+    name.strip_prefix(NON_ZERO_NAT_PREFIX)
+        .and_then(|rest| rest.parse::<u64>().ok())
+}
+
 /// Convert a RuntimeValue to a Lex Term constant.
 fn runtime_value_to_term(val: &RuntimeValue) -> Term {
     match val {
         RuntimeValue::Nat(0) => Term::Constant(QualIdent::simple("Zero")),
-        // Non-zero Nat: there's no prelude constructor for non-zero naturals.
-        // We use a wildcard-matching strategy: non-zero naturals will NOT match
-        // the "Zero" constructor, so they'll fall through to wildcard branches.
-        // Encode as a special non-zero marker that won't match "Zero".
-        RuntimeValue::Nat(_) => Term::Constant(QualIdent::simple("__NonZeroNat")),
+        // Non-zero Nat: encode the concrete value into the marker name so it
+        // survives the round-trip (see `NON_ZERO_NAT_PREFIX`). It still does
+        // not match the `Zero` constructor, so it falls through to wildcards.
+        RuntimeValue::Nat(n) => Term::Constant(QualIdent::simple(&encode_non_zero_nat(*n))),
         RuntimeValue::Bool(true) => Term::Constant(QualIdent::simple("True")),
         RuntimeValue::Bool(false) => Term::Constant(QualIdent::simple("False")),
         RuntimeValue::Tag(name) => Term::Constant(QualIdent::simple(name)),
@@ -467,7 +509,7 @@ fn runtime_value_to_term(val: &RuntimeValue) -> Term {
 fn runtime_value_to_constant_name(val: &RuntimeValue) -> String {
     match val {
         RuntimeValue::Nat(0) => "Zero".to_string(),
-        RuntimeValue::Nat(_) => "__NonZeroNat".to_string(),
+        RuntimeValue::Nat(n) => encode_non_zero_nat(*n),
         RuntimeValue::Bool(true) => "True".to_string(),
         RuntimeValue::Bool(false) => "False".to_string(),
         RuntimeValue::Tag(name) => name.clone(),
@@ -477,19 +519,20 @@ fn runtime_value_to_constant_name(val: &RuntimeValue) -> String {
 
 /// Convert a constant name (from `eval_to_constant`) back to a [`RuntimeValue`].
 ///
-/// Recognizes the well-known constructor names produced by [`runtime_value_to_constant_name`].
-/// Returns `None` for unrecognized names, allowing the caller to fall through
-/// to structural evaluation.
+/// Recognizes the well-known constructor names produced by
+/// [`runtime_value_to_constant_name`]. The non-zero-natural marker round-trips
+/// its concrete value. Returns `None` for any other name; the caller treats a
+/// `None` as "not a recognized runtime value" and does NOT mint a `Tag` from
+/// it (an unknown token is not silently coerced into a valid value).
 fn constant_name_to_runtime_value(name: &str) -> Option<RuntimeValue> {
     match name {
         "Zero" => Some(RuntimeValue::Nat(0)),
-        "__NonZeroNat" => Some(RuntimeValue::Nat(1)),
         "True" => Some(RuntimeValue::Bool(true)),
         "False" => Some(RuntimeValue::Bool(false)),
         "Clear" | "Hit" | "Pending" | "Compliant" | "NonCompliant" => {
             Some(RuntimeValue::Tag(name.to_string()))
         }
-        _ => Some(RuntimeValue::Tag(name.to_string())),
+        _ => decode_non_zero_nat(name).map(RuntimeValue::Nat),
     }
 }
 
@@ -971,5 +1014,153 @@ mod tests {
             Some(&RuntimeValue::Bool(true))
         );
         assert_eq!(ctx.get("nonexistent"), None);
+    }
+
+    // ── Non-zero Nat value preservation (LEX-1 fix i) ──────────────────
+    // WHY: the old encoding collapsed every positive natural onto one sentinel
+    // ("__NonZeroNat"), so a comparison could not tell 1 from 5 — a `>= 2`
+    // threshold would treat them identically. The marker now carries the value.
+
+    #[test]
+    fn non_zero_nat_marker_round_trips_distinct_values() {
+        // Distinct positive naturals encode to distinct marker names...
+        let one = runtime_value_to_constant_name(&RuntimeValue::Nat(1));
+        let five = runtime_value_to_constant_name(&RuntimeValue::Nat(5));
+        assert_ne!(one, five, "1 and 5 must not collapse to the same marker");
+
+        // ...and decode back to the original value (not a fixed sentinel).
+        assert_eq!(
+            constant_name_to_runtime_value(&one),
+            Some(RuntimeValue::Nat(1))
+        );
+        assert_eq!(
+            constant_name_to_runtime_value(&five),
+            Some(RuntimeValue::Nat(5))
+        );
+    }
+
+    #[test]
+    fn non_zero_nat_marker_never_matches_zero() {
+        // The value-carrying marker must still NOT equal the `Zero`
+        // constructor, so positive naturals fall through to wildcard branches.
+        assert_ne!(runtime_value_to_constant_name(&RuntimeValue::Nat(7)), "Zero");
+    }
+
+    #[test]
+    fn positive_nat_falls_through_zero_branch_to_wildcard() {
+        // End-to-end through the accessor path (`match director_count ctx`):
+        // a positive natural (3) must NOT match the `Zero` constructor and so
+        // hits the wildcard => Compliant; Nat(0) hits `Zero` => NonCompliant.
+        // The value-carrying marker preserves this fall-through behavior.
+        let rule = lam(
+            "ctx",
+            constant("IncorporationContext"),
+            match_expr(
+                app(constant("director_count"), var("ctx", 0)),
+                constant("ComplianceVerdict"),
+                vec![
+                    ctor_branch("Zero", constant("NonCompliant")),
+                    wildcard_branch(constant("Compliant")),
+                ],
+            ),
+        );
+
+        let mut ctx_three = RuntimeContext::new();
+        ctx_three.insert("director_count", RuntimeValue::Nat(3));
+        assert_eq!(
+            evaluate(&rule, &ctx_three).unwrap(),
+            ComplianceVerdict::Compliant,
+        );
+
+        let mut ctx_zero = RuntimeContext::new();
+        ctx_zero.insert("director_count", RuntimeValue::Nat(0));
+        assert_eq!(
+            evaluate(&rule, &ctx_zero).unwrap(),
+            ComplianceVerdict::NonCompliant,
+        );
+    }
+
+    // ── Constant catch-all is not Tag-minting (LEX-1 fix iii) ──────────
+    // WHY: the old catch-all turned ANY unknown token into a valid Tag, so a
+    // typo or stray constant silently became a legitimate runtime value.
+
+    #[test]
+    fn unknown_constant_name_resolves_to_none_not_tag() {
+        // A name that is neither a known constant nor a non-zero-nat marker is
+        // unrecognized; it must NOT be minted into a Tag.
+        assert_eq!(constant_name_to_runtime_value("TotallyUnknownToken"), None);
+        // Known constants still resolve.
+        assert_eq!(
+            constant_name_to_runtime_value("True"),
+            Some(RuntimeValue::Bool(true))
+        );
+        assert_eq!(
+            constant_name_to_runtime_value("Zero"),
+            Some(RuntimeValue::Nat(0))
+        );
+    }
+
+    // ── Guard error propagation (LEX-1 fix ii) ─────────────────────────
+    // WHY: the old eval_guard mapped every guard failure to Ok(false), silently
+    // turning a malformed defeasible exception into one that never fires —
+    // dropping a legal exception with no trace. An unevaluable guard must error.
+
+    #[test]
+    fn defeasible_guard_unknown_accessor_propagates_error() {
+        // Base: Compliant. Exception guard references an accessor that is not in
+        // the context AND cannot be read as a constant — it must surface as an
+        // error, not silently leave the exception un-triggered.
+        let rule = Term::Defeasible(DefeasibleRule {
+            name: Ident::new("guard_failure"),
+            base_ty: Box::new(constant("ComplianceVerdict")),
+            base_body: Box::new(constant("Compliant")),
+            exceptions: vec![Exception {
+                guard: Box::new(lam(
+                    "ctx",
+                    constant("IncorporationContext"),
+                    app(constant("missing_accessor"), var("ctx", 0)),
+                )),
+                body: Box::new(constant("NonCompliant")),
+                priority: Some(10),
+                authority: None,
+            }],
+            lattice: None,
+        });
+
+        let ctx = RuntimeContext::new();
+        let result = evaluate(&rule, &ctx);
+        assert!(
+            result.is_err(),
+            "an unevaluable guard must propagate, not be swallowed as not-satisfied",
+        );
+        match result.unwrap_err() {
+            EvalError::UnknownAccessor { name } => assert_eq!(name, "missing_accessor"),
+            other => panic!("expected UnknownAccessor, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn defeasible_guard_recognized_false_constant_stays_unsatisfied() {
+        // Counterpart to the propagation test: a guard that DOES evaluate to a
+        // recognized not-satisfied form (NonCompliant) is a definite false and
+        // must NOT error — the base verdict stands.
+        let rule = Term::Defeasible(DefeasibleRule {
+            name: Ident::new("guard_false"),
+            base_ty: Box::new(constant("ComplianceVerdict")),
+            base_body: Box::new(constant("Compliant")),
+            exceptions: vec![Exception {
+                guard: Box::new(constant("NonCompliant")),
+                body: Box::new(constant("Pending")),
+                priority: Some(10),
+                authority: None,
+            }],
+            lattice: None,
+        });
+
+        let ctx = RuntimeContext::new();
+        assert_eq!(
+            evaluate(&rule, &ctx).unwrap(),
+            ComplianceVerdict::Compliant,
+        );
     }
 }

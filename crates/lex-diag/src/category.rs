@@ -405,7 +405,7 @@ impl DiagnosticCategory {
             }
             Self::NotAVerdict => {
                 "The rule evaluated to a value that is not a recognized compliance verdict \
-                 (Compliant, NonCompliant, Pending, NotApplicable, or Exempt)."
+                 (Compliant, NonCompliant, or Pending)."
             }
             Self::NoMatchingBranch => {
                 "A case analysis in the rule did not have a branch matching the actual value. \
