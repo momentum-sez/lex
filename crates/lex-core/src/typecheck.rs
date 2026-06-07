@@ -35,7 +35,7 @@
 
 use std::collections::HashMap;
 
-use crate::ast::{EffectRow, Level, Pattern, QualIdent, Sort, Term};
+use crate::ast::{Constructor, EffectRow, Level, Pattern, QualIdent, Sort, Term};
 use crate::prelude::is_prelude_constructor;
 
 /// Maximum recursion depth for type-checking functions (shift, subst, whnf,
@@ -916,6 +916,79 @@ fn ensure_pi(ty: &Term, depth: usize, fuel: &mut usize) -> Result<(Term, Term), 
             found_type: n,
         }),
     }
+}
+
+/// Extend `ctx` with the binders introduced by a constructor match pattern.
+///
+/// A pattern `C x₁ … xₙ` binds `n` variables whose types are the first `n`
+/// argument (domain) types of the constructor `C`'s signature. The
+/// constructor's signature is its registered global constant type (the prelude
+/// registers each constructor as a named constant — nullary constructors get
+/// the datatype itself, e.g. `Compliant : ComplianceVerdict`; constructors
+/// with arguments get an arrow chain, e.g. `Some : IncorporationContext ->
+/// ComplianceTag`). We peel `binder_count` `Pi`-domains off that signature and
+/// push each as a context entry, in argument order: `x₁` is pushed first
+/// (deepest, highest De Bruijn index) and `xₙ` last (index 0 inside the body),
+/// matching the binding order the body's `Var` indices were assigned under.
+///
+/// Fail-loud: a constructor that admissibility accepted but whose signature is
+/// absent from the context, or that is applied to more binders than its arity
+/// (the signature stops being a `Pi` before `binder_count` domains are
+/// consumed), is a hard error — never silently checked in the wrong context.
+fn bind_match_branch_binders(
+    ctx: &Context,
+    constructor: &Constructor,
+    binder_count: usize,
+    depth: usize,
+    fuel: &mut usize,
+) -> Result<Context, TypeError> {
+    // The constructor's signature lives in the global constant table; this is
+    // the same lookup `Term::Constant` inference uses. Admissibility has
+    // already established the name is a prelude constructor, so a missing
+    // signature is a genuine context/signature gap, surfaced loudly.
+    let mut sig = ctx
+        .lookup_constant(&constructor.name)
+        .cloned()
+        .ok_or_else(|| TypeError::Admissibility {
+            violation: AdmissibilityViolation::ConstantNotSupported,
+            term: Term::Constant(constructor.name.clone()),
+        })?;
+
+    let mut ext = ctx.clone();
+    for _ in 0..binder_count {
+        // Peel one argument type off the constructor's arrow chain. If the
+        // signature is not a `Pi` here, the pattern over-applies the
+        // constructor — reject rather than check the body in an
+        // under-extended context.
+        let (domain, codomain) = ensure_pi(&sig, depth + 1, fuel)?;
+        ext = ext.extend(domain);
+        // The codomain is expressed *under* the binder we just pushed, so it
+        // is already correct for resolving the next argument's type (the
+        // dependent case); for the non-dependent prelude constructors the
+        // codomain has no free reference to the binder and this is a no-op
+        // beyond advancing along the chain.
+        sig = codomain;
+    }
+    Ok(ext)
+}
+
+/// Weaken a match motive `return_ty` for checking under a branch that binds
+/// `binder_count` pattern variables.
+///
+/// `return_ty` is written in the match's outer context. A branch body is
+/// checked under that context extended by `binder_count` binders, so the
+/// motive's free De Bruijn indices must be shifted up by `binder_count` to
+/// keep pointing at the same outer entries. `binder_count == 0` returns the
+/// motive unchanged.
+fn weaken_for_branch(
+    return_ty: &Term,
+    binder_count: usize,
+    depth: usize,
+) -> Result<Term, TypeError> {
+    if binder_count == 0 {
+        return Ok(return_ty.clone());
+    }
+    shift(return_ty, 0, binder_count as i64, depth + 1)
 }
 
 /// Make a `Sort::Type(Level::Nat(n))` term.
@@ -1858,7 +1931,8 @@ fn infer_inner(
         // Admissibility already verified that all patterns are prelude
         // constructors or wildcards.  The return_ty (motive) gives the
         // result type.  We verify the scrutinee type-checks, then check
-        // each branch body against the return type.
+        // each branch body under the context extended with the pattern's
+        // binder types.
         Term::Match {
             scrutinee,
             return_ty,
@@ -1868,13 +1942,29 @@ fn infer_inner(
             let _scrutinee_ty = infer_inner(ctx, scrutinee, depth + 1, fuel)?;
             // Return type must inhabit a sort.
             let _ = infer_sort(ctx, return_ty, depth + 1, fuel)?;
-            // Each branch body must check against the return type.
+            // Each branch body must check against the return type, under the
+            // context extended with the pattern's binders. A constructor
+            // pattern `C x₁ … xₙ` binds `n` variables whose types are the
+            // first `n` argument (domain) types of the constructor's
+            // signature; a wildcard binds nothing. The motive `return_ty`
+            // does not depend on the scrutinee in the admissible fragment, so
+            // it is checked once outside the branch context and weakened into
+            // the extended context (see `weaken_for_branch`).
             for branch in branches {
-                // For Constructor patterns with binders, we would need to
-                // extend the context with the binder types.  Prelude
-                // constructors are nullary (zero binders), so no context
-                // extension is needed.  Wildcard patterns also bind nothing.
-                check_inner(ctx, &branch.body, return_ty, depth + 1, fuel)?;
+                let (branch_ctx, binder_count) = match &branch.pattern {
+                    Pattern::Constructor {
+                        constructor,
+                        binders,
+                    } if !binders.is_empty() => {
+                        let ext =
+                            bind_match_branch_binders(ctx, constructor, binders.len(), depth, fuel)?;
+                        (ext, binders.len())
+                    }
+                    // Nullary constructor or wildcard: no new binders.
+                    _ => (ctx.clone(), 0),
+                };
+                let branch_return_ty = weaken_for_branch(return_ty, binder_count, depth)?;
+                check_inner(&branch_ctx, &branch.body, &branch_return_ty, depth + 1, fuel)?;
             }
             Ok((**return_ty).clone())
         }
@@ -3179,5 +3269,154 @@ mod tests {
             ],
         );
         check(&ctx, &term, &Term::constant("ComplianceVerdict")).unwrap();
+    }
+
+    // -- 38. Match branch binders are bound in the branch body --
+    //
+    // These tests pin the soundness fix for `Match`: when a branch pattern
+    // `C x₁ … xₙ` carries binders, the body must be type-checked under the
+    // context extended with each binder bound to the constructor's
+    // corresponding argument type. Before the fix the body was checked in the
+    // *outer* context (binders dropped), which both rejected well-typed bodies
+    // that reference a binder and would have accepted ill-typed ones.
+    //
+    // The current published prelude registers its recognized match-pattern
+    // constructors as nullary; a constructor's signature is its registered
+    // global constant type, so we exercise the binder path by registering a
+    // recognized prelude constructor (`Zero`, a `Nat` constructor accepted by
+    // the admissibility gate) with an arrow signature. This mirrors how a
+    // pack-local datatype constructor with arguments (e.g. `Some :
+    // IncorporationContext -> …`) is resolved.
+
+    /// Helper: a constructor pattern with `n` binders, named `b0..bn`.
+    fn ctor_pat_binders(name: &str, n: usize) -> Pattern {
+        Pattern::Constructor {
+            constructor: Constructor::new(QualIdent::simple(name)),
+            binders: (0..n).map(|i| Ident::new(&format!("b{}", i))).collect(),
+        }
+    }
+
+    /// A context where the `Nat` constructor `Zero` takes one
+    /// `IncorporationContext` argument, plus `f : IncorporationContext -> Nat`
+    /// and `g : Bool -> Nat` consumers and a `Nat`-typed scrutinee `subject`.
+    fn binder_test_ctx() -> Context {
+        use crate::prelude::compliance_prelude;
+        compliance_prelude()
+            .with_named_constant(
+                "Zero",
+                pi(Term::constant("IncorporationContext"), Term::constant("Nat")),
+            )
+            .with_named_constant(
+                "f",
+                pi(Term::constant("IncorporationContext"), Term::constant("Nat")),
+            )
+            .with_named_constant("g", pi(Term::constant("Bool"), Term::constant("Nat")))
+            .with_named_constant("subject", Term::constant("Nat"))
+    }
+
+    #[test]
+    fn match_branch_binder_in_scope_typechecks() {
+        let ctx = binder_test_ctx();
+
+        // match subject { Zero x => f x }  : Nat
+        //   x : IncorporationContext  (Zero's argument type)
+        //   f x : Nat                 (matches the motive)
+        // Under the pre-fix code `x` (De Bruijn index 0) was unbound, so this
+        // well-typed body was rejected.
+        let term = Term::match_expr(
+            Term::constant("subject"),
+            Term::constant("Nat"),
+            vec![Branch {
+                pattern: ctor_pat_binders("Zero", 1),
+                body: app(Term::constant("f"), var(0)),
+            }],
+        );
+        let ty = infer(&ctx, &term).expect("branch body referencing a binder must type-check");
+        assert!(test_conv_eq(&ty, &Term::constant("Nat")));
+    }
+
+    #[test]
+    fn match_branch_binder_wrong_type_rejected() {
+        let ctx = binder_test_ctx();
+
+        // match subject { Zero x => g x }
+        //   x : IncorporationContext, but g expects Bool -> mismatch.
+        // This proves the binder is bound to its *correct* argument type, not
+        // merely to some placeholder that any application would accept.
+        let term = Term::match_expr(
+            Term::constant("subject"),
+            Term::constant("Nat"),
+            vec![Branch {
+                pattern: ctor_pat_binders("Zero", 1),
+                body: app(Term::constant("g"), var(0)),
+            }],
+        );
+        let result = infer(&ctx, &term);
+        assert!(
+            matches!(result, Err(TypeError::Mismatch { .. })),
+            "binder used at the wrong type must be rejected, got: {:?}",
+            result
+        );
+    }
+
+    #[test]
+    fn match_branch_binder_unbound_outside_branch() {
+        // Sanity check on the de Bruijn bookkeeping: the binder is in scope
+        // *only* inside its own branch body. A sibling nullary/wildcard branch
+        // body that references index 0 must NOT see the other branch's binder.
+        let ctx = binder_test_ctx()
+            // Two-constructor Nat-like cover: keep `Zero` unary, add a nullary
+            // `One` so the match has a binder branch and a binder-free branch.
+            .with_named_constant("One", Term::constant("Nat"));
+
+        // match subject { Zero x => f x | _ => v0 }
+        // The wildcard body `v0` (index 0) has no binder in scope; with an
+        // empty outer local context index 0 is unbound -> rejected. This
+        // guards against the fix over-extending the context for sibling arms.
+        let term = Term::match_expr(
+            Term::constant("subject"),
+            Term::constant("Nat"),
+            vec![
+                Branch {
+                    pattern: ctor_pat_binders("Zero", 1),
+                    body: app(Term::constant("f"), var(0)),
+                },
+                Branch {
+                    pattern: Pattern::Wildcard,
+                    body: var(0),
+                },
+            ],
+        );
+        let result = infer(&ctx, &term);
+        assert!(
+            matches!(result, Err(TypeError::UnboundVar { index: 0, .. })),
+            "a wildcard-branch body must not see the constructor branch's binder, got: {:?}",
+            result
+        );
+    }
+
+    #[test]
+    fn match_branch_overapplied_constructor_rejected() {
+        // Fail-loud: a pattern that binds more variables than the
+        // constructor's arity must be rejected rather than checking the body
+        // in an under-extended context. Here `Zero` keeps its nullary prelude
+        // signature (`Zero : Nat`), but the pattern supplies one binder.
+        use crate::prelude::compliance_prelude;
+        let ctx = compliance_prelude().with_named_constant("subject", Term::constant("Nat"));
+
+        let term = Term::match_expr(
+            Term::constant("subject"),
+            Term::constant("Nat"),
+            vec![Branch {
+                pattern: ctor_pat_binders("Zero", 1),
+                body: Term::constant("Zero"),
+            }],
+        );
+        let result = infer(&ctx, &term);
+        assert!(
+            matches!(result, Err(TypeError::NotAFunction { .. })),
+            "over-applied constructor pattern must fail loud, got: {:?}",
+            result
+        );
     }
 }
