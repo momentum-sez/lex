@@ -1,20 +1,70 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::{json, Value};
 
 #[allow(unused_imports)]
 use crate::ast::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Outcome of a decision procedure.
+///
+/// `Proved` is the genuine evidence token consumed by
+/// [`crate::certificate::DischargedObligation::seal`] to mint a certificate
+/// discharge. It MUST therefore be unforgeable from outside this crate: a
+/// caller that could hand-construct `Proved { witness }` could fabricate a
+/// discharged obligation for a constraint that was never decided.
+///
+/// The forgery surface is closed at [`ProofWitness`], not on this enum:
+/// `Proved` carries a `ProofWitness`, and `ProofWitness` is `#[non_exhaustive]`
+/// — so an external crate cannot construct a `ProofWitness`, and therefore
+/// cannot construct `DecisionResult::Proved { .. }` at all. (`Refuted` /
+/// `Undecidable` carry only strings and are harmless to construct: `seal`
+/// rejects them, so they cannot mint a discharge.) The enum itself is left
+/// exhaustive so existing in-tree consumers — e.g. the `examples/` binaries,
+/// which are compiled as separate crates and `match` on it — do not need a
+/// catch-all arm.
+///
+/// The type also intentionally does NOT derive `Deserialize`: re-admitting
+/// `serde::Deserialize` would let untrusted JSON mint a `Proved` witness (the
+/// same fabrication the struct-literal seal forbids). `Serialize` is retained
+/// for one-way export/diagnostics only.
+#[derive(Debug, Clone, Serialize)]
 pub enum DecisionResult {
-    Proved { witness: ProofWitness },
-    Refuted { counterexample: String },
-    Undecidable { reason: String },
+    /// The proposition was decided positively, carrying the procedure's
+    /// proof witness. Constructible only by the decision procedures in this
+    /// module (its `ProofWitness` cannot be built externally).
+    Proved {
+        /// Evidence produced by the deciding procedure.
+        witness: ProofWitness,
+    },
+    /// The proposition was decided negatively, with a counterexample.
+    Refuted {
+        /// Human-readable counterexample.
+        counterexample: String,
+    },
+    /// The procedure could not decide the proposition.
+    Undecidable {
+        /// Why the procedure abstained.
+        reason: String,
+    },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Evidence accompanying a [`DecisionResult::Proved`].
+///
+/// `#[non_exhaustive]` seals construction at the crate boundary so a witness
+/// can only be minted by the decision procedures in this module. This is the
+/// load-bearing forgery guard: because `DecisionResult::Proved` carries a
+/// `ProofWitness`, an external crate that cannot build a `ProofWitness` cannot
+/// build a `Proved`. Public fields remain readable (the certificate sealer
+/// copies `description` and `procedure` from a genuine witness); only
+/// *construction* from outside the crate is forbidden. The type deliberately
+/// does not derive `Deserialize` for the reason stated on [`DecisionResult`].
+#[derive(Debug, Clone, Serialize)]
+#[non_exhaustive]
 pub struct ProofWitness {
+    /// Name of the decision procedure that produced this witness.
     pub procedure: String,
+    /// Human-readable account of what was decided.
     pub description: String,
+    /// Machine-readable evidence object.
     pub evidence: Value,
 }
 
@@ -200,6 +250,39 @@ mod tests {
     fn boolean_check_false_refutes() {
         let counterexample = expect_refuted(boolean_check(false));
         assert!(counterexample.contains("false"));
+    }
+
+    /// A `Proved` witness is unforgeable: its contents are derived by the
+    /// deciding procedure, not supplied by the caller. This test pins the
+    /// seal contract that [`crate::certificate::DischargedObligation::seal`]
+    /// relies on — a genuine `Proved` carries a procedure-stamped witness.
+    ///
+    /// The two external forgery paths are closed at *compile time* and so
+    /// cannot be exercised as runtime assertions:
+    ///   1. `#[non_exhaustive]` on `ProofWitness` makes `ProofWitness { .. }`
+    ///      from another crate a compile error, and since
+    ///      `DecisionResult::Proved` carries a `ProofWitness`, an external
+    ///      crate cannot construct a `Proved` either.
+    ///   2. Neither type derives `Deserialize`, so
+    ///      `serde_json::from_str::<DecisionResult>("{\"Proved\":..}")` does
+    ///      not type-check — JSON cannot mint a `Proved` witness.
+    ///
+    /// The compile-time guard is verified by `cargo check` of any external
+    /// consumer; here we assert the positive contract that the only witnesses
+    /// in existence are procedure-stamped.
+    #[test]
+    fn proved_witness_is_procedure_derived_not_caller_supplied() {
+        // Every Proved arises only from a decision procedure, and its
+        // procedure tag identifies the deciding method — there is no
+        // constructor that accepts an arbitrary procedure string.
+        let w = expect_proved(threshold_check(5, 1, ">="));
+        assert_eq!(w.procedure, "presburger_arithmetic");
+        assert_eq!(w.evidence["result"], true);
+
+        // Serialize is one-way (export/diagnostics). It exists, but there is
+        // no symmetric Deserialize to round-trip a fabricated witness back in.
+        let json = serde_json::to_string(&DecisionResult::Proved { witness: w }).unwrap();
+        assert!(json.contains("presburger_arithmetic"));
     }
 
     #[test]

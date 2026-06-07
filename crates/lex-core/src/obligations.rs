@@ -36,6 +36,124 @@ pub fn extract_obligations(term: &Term) -> Vec<ProofObligation> {
     obligations
 }
 
+/// A mismatch between a rule's extracted proof obligations and the discharges
+/// recorded on a [`crate::certificate::LexCertificate`].
+///
+/// Each variant names the offending obligation so the failure is debuggable —
+/// never a silent boolean.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ObligationVerificationError {
+    /// The certificate's discharged-obligation count does not match the
+    /// number of obligations extracted from the rule.
+    CountMismatch {
+        /// Number of obligations extracted from the rule term.
+        extracted: usize,
+        /// Number of discharged obligations recorded on the certificate.
+        certified: usize,
+    },
+    /// An extracted obligation has no matching discharge (by structural id)
+    /// on the certificate.
+    UncoveredObligation {
+        /// The extracted obligation id left uncovered.
+        obligation_id: String,
+        /// Its category (`Debug` form of [`ObligationCategory`]).
+        category: String,
+    },
+    /// An extracted obligation category is entirely absent from the
+    /// certificate's discharged set.
+    MissingCategory {
+        /// The category (`Debug` form of [`ObligationCategory`]) that no
+        /// discharge on the certificate covers.
+        category: String,
+    },
+}
+
+impl std::fmt::Display for ObligationVerificationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::CountMismatch {
+                extracted,
+                certified,
+            } => write!(
+                f,
+                "obligation count mismatch: rule extracted {extracted}, certificate covers {certified}"
+            ),
+            Self::UncoveredObligation {
+                obligation_id,
+                category,
+            } => write!(
+                f,
+                "extracted obligation `{obligation_id}` ({category}) has no discharge on the certificate"
+            ),
+            Self::MissingCategory { category } => {
+                write!(f, "no discharge on the certificate covers category {category}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for ObligationVerificationError {}
+
+/// Verify that a certificate's discharged obligations match the obligations
+/// extracted from a rule.
+///
+/// This is the read-side complement to
+/// [`crate::certificate::build_certificate`]: where `build_certificate`
+/// enforces coverage *at construction time*, this lets a downstream consumer
+/// — given a certificate it received plus the rule term it claims to certify
+/// — re-extract the obligations and FAIL LOUD if the certificate's coverage
+/// does not match.
+///
+/// Three checks, in order, each fail-loud with a [`ObligationVerificationError`]
+/// naming the offender (never a bare `false`):
+///   1. **Count** — the certificate's discharged count equals the extracted
+///      count (no missing, no extra discharge).
+///   2. **Per-obligation coverage** — every extracted obligation id has a
+///      matching discharge (the same structural-id key `build_certificate`
+///      seals on).
+///   3. **Per-category presence** — every extracted obligation category is
+///      present among the certificate's discharges.
+///
+/// Returns `Ok(())` only when all three hold.
+pub fn verify_certificate_obligations(
+    extracted: &[ProofObligation],
+    cert: &crate::certificate::LexCertificate,
+) -> Result<(), ObligationVerificationError> {
+    // 1. Count match — a mismatch means the certificate covers a different
+    //    obligation set than the rule actually produced.
+    if extracted.len() != cert.obligations.len() {
+        return Err(ObligationVerificationError::CountMismatch {
+            extracted: extracted.len(),
+            certified: cert.obligations.len(),
+        });
+    }
+
+    // 2. Every extracted obligation id is covered by a discharge.
+    for obligation in extracted {
+        let covered = cert
+            .obligations
+            .iter()
+            .any(|d| d.obligation_id() == obligation.id);
+        if !covered {
+            return Err(ObligationVerificationError::UncoveredObligation {
+                obligation_id: obligation.id.clone(),
+                category: format!("{:?}", obligation.category),
+            });
+        }
+    }
+
+    // 3. Every extracted category appears among the discharged categories.
+    for obligation in extracted {
+        let category = format!("{:?}", obligation.category);
+        let present = cert.obligations.iter().any(|d| d.category() == category);
+        if !present {
+            return Err(ObligationVerificationError::MissingCategory { category });
+        }
+    }
+
+    Ok(())
+}
+
 fn collect_term(term: &Term, obligations: &mut Vec<ProofObligation>, counter: &mut usize) {
     match term {
         Term::Match {
@@ -1064,5 +1182,142 @@ mod tests {
             .collect::<Vec<_>>();
 
         assert_eq!(ids, vec!["obl-0001", "obl-0002"]);
+    }
+
+    // ── verify_certificate_obligations: read-side coverage check ──────────
+
+    /// Build a real, coverage-complete certificate for a single-obligation
+    /// rule by sealing a genuine `Proved` decision against each extracted
+    /// obligation (mirrors `build_certificate`'s construction-time path).
+    fn build_covered_certificate(
+        extracted: &[ProofObligation],
+    ) -> crate::certificate::LexCertificate {
+        use crate::certificate::{build_certificate, ComplianceVerdict, DischargedObligation};
+        use crate::decide::boolean_check;
+
+        let discharged: Vec<DischargedObligation> = extracted
+            .iter()
+            .map(|o| {
+                // boolean_check(true) yields a genuine DecisionResult::Proved;
+                // seal copies the witness from that proof, not from us.
+                DischargedObligation::seal(o, &boolean_check(true))
+                    .expect("a Proved result must seal")
+            })
+            .collect();
+
+        build_certificate(
+            "rule-digest",
+            "sc",
+            "IBC Act 2016",
+            ComplianceVerdict::Compliant,
+            extracted,
+            discharged,
+        )
+        .expect("a fully-covered obligation set must certify")
+    }
+
+    #[test]
+    fn verify_certificate_obligations_accepts_matching_coverage() {
+        let term = Term::app(constant("sanctions_check"), var("counterparty"));
+        let extracted = extract_obligations(&term);
+        assert_eq!(extracted.len(), 1, "fixture must produce exactly one obligation");
+
+        let cert = build_covered_certificate(&extracted);
+        assert!(verify_certificate_obligations(&extracted, &cert).is_ok());
+    }
+
+    #[test]
+    fn verify_certificate_obligations_rejects_count_mismatch() {
+        let term = Term::app(constant("sanctions_check"), var("counterparty"));
+        let extracted = extract_obligations(&term);
+        let cert = build_covered_certificate(&extracted);
+
+        // A second extracted obligation the certificate never covered.
+        let extra = Term::let_in(
+            "v",
+            Term::type_sort(0),
+            Term::app(constant("sanctions_check"), var("counterparty")),
+            app2("amount_exceeds", var("amt"), Term::IntLit(75_000)),
+        );
+        let extracted_more = extract_obligations(&extra);
+        assert!(extracted_more.len() > cert.obligations.len());
+
+        match verify_certificate_obligations(&extracted_more, &cert) {
+            Err(ObligationVerificationError::CountMismatch { extracted, certified }) => {
+                assert_eq!(extracted, extracted_more.len());
+                assert_eq!(certified, cert.obligations.len());
+            }
+            other => panic!("expected CountMismatch, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn verify_certificate_obligations_rejects_category_mismatch() {
+        // Certificate built for a sanctions obligation; verify against a
+        // same-count rule of a DIFFERENT category (threshold). Obligation ids
+        // are positional (`obl-0001`), so they collide across re-extraction —
+        // the id check passes but the category check catches the mismatch.
+        let sanctions = Term::app(constant("sanctions_check"), var("counterparty"));
+        let sanctions_obls = extract_obligations(&sanctions);
+        let cert = build_covered_certificate(&sanctions_obls);
+
+        let threshold = app2("amount_exceeds", var("amt"), Term::IntLit(75_000));
+        let threshold_obls = extract_obligations(&threshold);
+        assert_eq!(threshold_obls.len(), cert.obligations.len());
+        assert_eq!(
+            threshold_obls[0].category,
+            ObligationCategory::ThresholdComparison
+        );
+
+        // Same count + same positional id, but the threshold category is not
+        // covered by the (sanctions-only) certificate.
+        match verify_certificate_obligations(&threshold_obls, &cert) {
+            Err(ObligationVerificationError::MissingCategory { category }) => {
+                assert_eq!(category, "ThresholdComparison");
+            }
+            other => panic!("expected MissingCategory, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn verify_certificate_obligations_rejects_uncovered_id() {
+        // Directly exercise the per-obligation id-coverage branch: a
+        // certificate whose single discharge covers a different obligation id
+        // than the one we verify against (same count, same category, so only
+        // the id check can catch it).
+        use crate::certificate::{build_certificate, ComplianceVerdict, DischargedObligation};
+        use crate::decide::boolean_check;
+
+        let threshold = app2("amount_exceeds", var("amt"), Term::IntLit(75_000));
+        let extracted = extract_obligations(&threshold);
+        assert_eq!(extracted.len(), 1);
+
+        // Build a discharge against a synthetic obligation carrying a
+        // DELIBERATELY different id but the SAME category, so count and
+        // category checks pass and only the id check fires.
+        let mut renamed = extracted[0].clone();
+        renamed.id = "obl-9999".to_string();
+        let discharged =
+            vec![
+                DischargedObligation::seal(&renamed, &boolean_check(true)).expect("seals"),
+            ];
+        let cert = build_certificate(
+            "rd",
+            "sc",
+            "lb",
+            ComplianceVerdict::Compliant,
+            std::slice::from_ref(&renamed),
+            discharged,
+        )
+        .expect("renamed obligation set certifies against itself");
+
+        // Now verify against the ORIGINAL extracted set (id obl-0001) — same
+        // count, same category, but id obl-0001 is absent on the cert.
+        match verify_certificate_obligations(&extracted, &cert) {
+            Err(ObligationVerificationError::UncoveredObligation { obligation_id, .. }) => {
+                assert_eq!(obligation_id, extracted[0].id);
+            }
+            other => panic!("expected UncoveredObligation, got {other:?}"),
+        }
     }
 }

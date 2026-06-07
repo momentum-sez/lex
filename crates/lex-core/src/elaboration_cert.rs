@@ -182,14 +182,22 @@ fn is_valid_sha256_hex(s: &str) -> bool {
 
 /// Extract preserved refinement predicates.
 ///
-/// TODO: a sound structural check must walk the AST of the surface term and
-/// the corresponding core term, verifying each surface refinement survives
-/// on the corresponding core term. Substring matching on source text is
-/// unsound and has been withdrawn — any comment mentioning a keyword would
-/// have trivially passed the old check.
+/// FOLLOW-ON (sound structural preservation walk). The sound check must walk
+/// the *parsed* surface term and the *elaborated* core term in parallel and
+/// verify each surface refinement predicate survives on the corresponding
+/// core term. The precise obstruction is the signature: this takes `&str`
+/// surface/core text, so it cannot inspect structure. Closing it requires
+/// (1) changing the input from `&str` to `&crate::ast::Term` (the parsed
+/// surface) and `&crate::ast::Term` (the elaborated core), and (2) defining,
+/// per refinement-predicate kind, what "survives elaboration" means
+/// structurally (this is the frontier `core_calculus` preservation
+/// obligation; see the repo Status Doctrine — it is open, not merely
+/// unimplemented plumbing). Substring matching on source text was unsound and
+/// has been deleted — any comment mentioning a keyword trivially passed.
 ///
-/// Until the structural walk is implemented, this function returns
-/// [`ElaborationCertError::PreservationCheckUnimplemented`].
+/// Until the structural walk exists, this fails closed with
+/// [`ElaborationCertError::PreservationCheckUnimplemented`] (honest
+/// fail-loud — never a fabricated success).
 fn extract_preserved_predicates(
     _surface: &str,
     _core: &str,
@@ -199,12 +207,14 @@ fn extract_preserved_predicates(
 
 /// Extract preserved effect annotations.
 ///
-/// TODO: a sound structural check must walk the AST of the surface term and
-/// the corresponding core term, verifying each surface effect annotation
-/// appears in the effect row of the corresponding core term. Substring
-/// matching on source text is unsound and has been withdrawn.
+/// FOLLOW-ON (sound structural preservation walk). Same obstruction as
+/// [`extract_preserved_predicates`]: a sound check must walk the parsed
+/// surface term and the elaborated core term and verify each surface effect
+/// annotation appears in the effect row of the corresponding core term —
+/// which requires the `Term` ASTs, not `&str` text. Substring matching was
+/// unsound and has been deleted.
 ///
-/// Until the structural walk is implemented, this function returns
+/// Until the structural walk exists, this fails closed with
 /// [`ElaborationCertError::PreservationCheckUnimplemented`].
 fn extract_preserved_effects(
     _surface: &str,
@@ -213,64 +223,13 @@ fn extract_preserved_effects(
     Err(ElaborationCertError::PreservationCheckUnimplemented)
 }
 
-/// Unsound substring-based preservation detection. RETAINED for reference
-/// only; callers must not use this. The sound replacement walks the ASTs.
-#[allow(dead_code, non_snake_case)]
-fn extract_preserved_predicates_STUB(surface: &str, core: &str) -> Vec<String> {
-    let candidate_predicates = [
-        ("match", "exhaustive_match"),
-        ("if", "conditional_branch"),
-        ("let", "let_binding"),
-        ("fun", "lambda_abstraction"),
-        ("forall", "universal_quantification"),
-        ("exists", "existential_quantification"),
-        ("effect", "effect_annotation"),
-        ("rule", "rule_definition"),
-        ("exception", "exception_clause"),
-        ("obligation", "obligation_marker"),
-        ("defeasible", "defeasible_reasoning"),
-        ("scope", "scope_constraint"),
-    ];
-
-    candidate_predicates
-        .iter()
-        .filter(|(keyword, _)| surface.contains(keyword) && core.contains(keyword))
-        .map(|(_, predicate)| predicate.to_string())
-        .collect()
-}
-
-/// Unsound substring-based effect-preservation detection. RETAINED for
-/// reference only; callers must not use this. The sound replacement walks
-/// the ASTs and inspects effect rows.
-#[allow(dead_code, non_snake_case)]
-fn extract_preserved_effects_STUB(surface: &str, core: &str) -> Vec<String> {
-    let candidate_effects = [
-        "Sanctions",
-        "DataPrivacy",
-        "Aml",
-        "Kyc",
-        "Tax",
-        "Securities",
-        "Corporate",
-        "Custody",
-        "Banking",
-        "Payments",
-        "Licensing",
-        "DigitalAssets",
-        "Employment",
-        "Immigration",
-        "Arbitration",
-        "Trade",
-        "Insurance",
-        "AntiBribery",
-    ];
-
-    candidate_effects
-        .iter()
-        .filter(|eff| surface.contains(*eff) && core.contains(*eff))
-        .map(|eff| eff.to_string())
-        .collect()
-}
+// The unsound substring-based preservation detectors
+// (`extract_preserved_predicates_STUB` / `extract_preserved_effects_STUB`)
+// were deleted: they were `#[allow(dead_code)]` reference-only stubs with no
+// production caller, and retaining them risked a future caller resurrecting
+// the unsound substring match (any comment mentioning a keyword trivially
+// passed). The sound replacement is the structural AST walk described in the
+// FOLLOW-ON on `extract_preserved_predicates` / `extract_preserved_effects`.
 
 /// Convert UNIX epoch seconds to an ISO 8601 UTC timestamp string.
 ///
@@ -388,24 +347,6 @@ mod tests {
     fn produce_rejects_empty_output() {
         let err = produce_elaboration_certificate("surface source", "").unwrap_err();
         assert_eq!(err, ElaborationCertError::EmptyOutput);
-    }
-
-    #[test]
-    fn stub_substring_logic_still_detects_keywords_for_reference() {
-        // Sanity-check that the withdrawn substring detectors, preserved
-        // under `_STUB` names for reference, still behave as before. This
-        // documents the old (unsound) behavior so reviewers can see what
-        // was replaced.
-        let surface_a = "rule a { match x { A => let y = 1 in y } }";
-        let core_a = "rule a { match x { A => let y = 1 in y } }";
-        let predicates = extract_preserved_predicates_STUB(surface_a, core_a);
-        assert!(predicates.contains(&"exhaustive_match".to_string()));
-        assert!(predicates.contains(&"let_binding".to_string()));
-
-        let surface_b = "rule r { effect Sanctions; match x { A => let y = 1 in y } }";
-        let core_b = "rule r { effect Sanctions; match x { A => let y = 1 in y } }";
-        let effects = extract_preserved_effects_STUB(surface_b, core_b);
-        assert!(effects.contains(&"Sanctions".to_string()));
     }
 
     #[test]

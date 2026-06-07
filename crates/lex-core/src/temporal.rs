@@ -240,8 +240,20 @@ pub fn infer_term_temporal_sort(term: &Term) -> Result<TemporalSort, TemporalErr
         // Let body propagates.
         Term::Let { body, .. } => infer_term_temporal_sort(body),
 
-        // Application: result from function.
-        Term::App { func, .. } => infer_term_temporal_sort(func),
+        // Application: the result's temporal sort is the unification of the
+        // function and argument sorts — NOT the function's alone. Ignoring the
+        // argument was unsound: it let `App` infer `NonTemporal`/`Time0` while
+        // `check_term_recursive` (the checker) unifies both children and would
+        // reject a Time₀/Time₁ mix. The inference must agree with the checker,
+        // so we unify here too. `NonTemporal` is the unit of `unify_sorts`, so
+        // a non-temporal function applied to a Time₁ argument correctly infers
+        // `Time₁`, and a genuine Time₀/Time₁ mix fails loud rather than being
+        // silently collapsed to the function's sort.
+        Term::App { func, arg } => {
+            let fs = infer_term_temporal_sort(func)?;
+            let as_ = infer_term_temporal_sort(arg)?;
+            unify_sorts(fs, as_, "in application temporal-sort inference")
+        }
 
         // Pi types are non-temporal (type-level).
         Term::Pi { .. } => Ok(TemporalSort::NonTemporal),
@@ -1003,5 +1015,46 @@ mod tests {
         );
         let err = infer_temporal_sort(&tt).unwrap_err();
         assert!(err.description.contains("non-temporal"));
+    }
+
+    // ── Test 22: App inference unifies the argument sort (soundness) ──────
+    //
+    // Regression for the App-inference-unsoundness defect: a non-temporal
+    // function applied to a Time₁ argument must INFER Time₁ (the argument's
+    // temporal sort flows through), matching what `check_term_recursive`
+    // unifies. The previous implementation returned only the function's sort
+    // (NonTemporal), disagreeing with the checker.
+    #[test]
+    fn app_inference_propagates_argument_temporal_sort() {
+        // f (lift₀(@asof₀(t) φ))  — function non-temporal, argument Time₁
+        // (lift₀ of a Time₀ term). `term_lift0` takes a `Term`, so wrap the
+        // Time₀ time-term in an `@`-modality first.
+        let time0_term = term_modal_at(time_asof0(var_term("t")), var_term("phi"));
+        let term = term_app(var_term("f"), term_lift0(time0_term));
+        assert_eq!(
+            infer_term_temporal_sort(&term).unwrap(),
+            TemporalSort::Time1,
+            "App must propagate the argument's Time₁ sort, not collapse to the function's NonTemporal"
+        );
+    }
+
+    // ── Test 23: App inference fails loud on a Time₀/Time₁ mix ────────────
+    //
+    // A Time₀ function applied to a Time₁ argument is an unsound mix and must
+    // fail loud in inference exactly as the checker rejects it — not be
+    // silently collapsed to either child's sort.
+    #[test]
+    fn app_inference_rejects_time0_time1_mix() {
+        // (@asof₀ modal : Time₀) applied to (lift₀(@asof₀ modal) : Time₁).
+        let func = term_modal_at(time_asof0(var_term("a")), var_term("phi"));
+        let arg = term_lift0(term_modal_at(time_asof0(var_term("b")), var_term("psi")));
+        let term = term_app(func, arg);
+        let err = infer_term_temporal_sort(&term).unwrap_err();
+        assert!(
+            err.description.contains("cannot mix"),
+            "expected a Time₀/Time₁ mix rejection, got: {err}"
+        );
+        // And the checker agrees — inference and checking are consistent.
+        assert!(check_temporal_stratification(&term).is_err());
     }
 }

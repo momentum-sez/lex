@@ -32,6 +32,42 @@ use std::fmt;
 
 const MAX_DEPTH: usize = 192;
 
+/// Reserved qualified-identifier segment used for the chunk-truncation
+/// placeholder term. No legitimate authored rule can produce this name (it
+/// is not lexable as a single identifier and is not a prelude constructor),
+/// so it is unambiguously greppable as "a term position that was truncated
+/// at a chunk boundary rather than authored".
+const TRUNCATION_MARKER_NAME: &str = "__lex_truncated_chunk_boundary__";
+
+/// Build the distinguishable chunk-truncation placeholder.
+///
+/// The Lex chunking harness (out-of-tree) splits multi-rule `.lex` sources on
+/// line-prefix heuristics that occasionally cut a rule mid-term (a missing
+/// `else`-branch, an `except` clause that ran off the end of the chunk, a bare
+/// `defeasible` whose body started in the next chunk). The parser tolerates
+/// these so the *primary* rule in the chunk can still be extracted — but it
+/// must NOT manufacture a silently-complete-looking term.
+///
+/// The previous behaviour synthesized a bare `Term::Sort(Sort::Prop)`, which
+/// is indistinguishable from an authored `Prop` and is *admissible* — a
+/// truncated guard/body would then flow into typechecking and evaluation as a
+/// vacuous term (and, for an exception guard, `eval_guard` reads a `Prop` as
+/// *not satisfied*, silently turning a truncated exception into one that never
+/// fires). That is the silent-fallback anti-pattern.
+///
+/// Instead we emit a reserved, unregistered `Constant`. It is:
+///   * **distinguishable** — the reserved name is greppable and cannot be
+///     authored;
+///   * **fail-loud at use** — an unregistered constant passes
+///     `check_admissibility` but FAILS `infer`/`check` with
+///     `AdmissibilityViolation::ConstantNotSupported`, and fails evaluation
+///     with `EvalError::NotAVerdict`. A truncated chunk therefore parses
+///     (the harness can read the primary rule) but the truncated *term*
+///     cannot be type-checked or evaluated as if it were real.
+fn truncation_marker() -> Term {
+    Term::Constant(QualIdent::simple(TRUNCATION_MARKER_NAME))
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // Parse errors
 // ═══════════════════════════════════════════════════════════════════════
@@ -660,8 +696,11 @@ impl<'a> Parser<'a> {
             self.advance();
             self.parse_term(next_depth)?
         } else {
-            // Chunk-truncated — default to `Prop` placeholder.
-            Term::Sort(Sort::Prop)
+            // Chunk-truncated: the `else`-branch ran off the end of the
+            // chunk. Emit the distinguishable truncation marker (NOT a bare
+            // `Prop`) so the missing branch fails loud at typecheck/eval
+            // rather than masquerading as an authored `Prop` else-branch.
+            truncation_marker()
         };
 
         let branches = vec![
@@ -1049,8 +1088,11 @@ impl<'a> Parser<'a> {
         let base_body = if self.is_term_start() {
             self.parse_term(next_depth)?
         } else {
-            // Synthesized empty body: Prop is a well-formed placeholder.
-            Term::Sort(Sort::Prop)
+            // Chunk-truncated: a bare `defeasible` whose body started in the
+            // next chunk. Emit the distinguishable truncation marker (NOT a
+            // bare `Prop`) so the empty body fails loud at typecheck/eval
+            // instead of masquerading as an authored `Prop` body.
+            truncation_marker()
         };
 
         // Optional `priority N`.
@@ -1222,9 +1264,10 @@ impl<'a> Parser<'a> {
     ///
     /// - Term-form sugar: `<body-term> [priority N]`. When the very
     ///   next token starts a binder/term surface that can't form a
-    ///   guard-atom before `=>` (lambda, let, match, fix, etc.), the
-    ///   guard is synthesized as a trivially-true `Prop` placeholder
-    ///   and the body takes the full term.
+    ///   guard-atom before `=>` (lambda, let, match, fix, etc.), this is
+    ///   an *unconditional* exception: the guard is synthesized as the
+    ///   `True` Bool constructor (which the evaluator reads as satisfied,
+    ///   so the exception always applies) and the body takes the full term.
     ///
     /// - `when <guard> then <body> [priority N]` — the `except`-alias
     ///   trailing form used by legacy authored files.
@@ -1234,15 +1277,21 @@ impl<'a> Parser<'a> {
     ///   readability.
     ///
     /// - Truncated-at-chunk-boundary: next token is `end`, `Eof`, or a
-    ///   `priority`-only clause. Synthesized with `Prop` placeholders.
+    ///   `priority`-only clause. Synthesized with the distinguishable
+    ///   chunk-truncation marker (see `truncation_marker`) in both guard and
+    ///   body positions, which fails loud at typecheck/eval — NOT a silent
+    ///   `Prop` placeholder.
     fn parse_exception_body(&mut self, depth: usize) -> Result<Exception, ParseError> {
         let next_depth = self.next_depth(depth)?;
 
-        // Chunk-boundary-truncated form.
+        // Chunk-boundary-truncated form. Both guard and body are emitted as
+        // the distinguishable truncation marker so a truncated exception
+        // cannot be silently admitted (a bare `Prop` guard is read by
+        // `eval_guard` as never-fires, masking the truncation).
         if matches!(self.peek(), Token::Eof | Token::End) {
             return Ok(Exception {
-                guard: Box::new(Term::Sort(Sort::Prop)),
-                body: Box::new(Term::Sort(Sort::Prop)),
+                guard: Box::new(truncation_marker()),
+                body: Box::new(truncation_marker()),
                 priority: None,
                 authority: None,
             });
@@ -1295,8 +1344,22 @@ impl<'a> Parser<'a> {
         );
 
         let (guard, body) = if is_term_form {
+            // Term-form sugar: `except <binder-term>` with no explicit guard
+            // is an *unconditional* exception. The disambiguation is
+            // structural — `is_term_form` is only true when the next token is
+            // a binder (lambda/Pi/Sigma/let/match/fix/defeasible), which can
+            // never begin a guard atom, so no malformed guard is masked here.
+            //
+            // The guard must be a constant that the evaluator reads as
+            // SATISFIED, so the documented "always applies" semantics
+            // actually hold. A bare `Term::Sort(Sort::Prop)` is WRONG here:
+            // `eval_guard` evaluates `Prop` to `NotAVerdict` and falls through
+            // to "not satisfied", silently turning an unconditional exception
+            // into one that never fires. The `True` Bool constructor is a
+            // registered prelude constant (admissible + typechecks) that
+            // `eval_guard` reads as satisfied.
             let body = self.parse_term(next_depth)?;
-            (Term::Sort(Sort::Prop), body)
+            (Term::Constant(QualIdent::simple("True")), body)
         } else {
             let guard = self.parse_atom(next_depth)?;
             self.expect(&Token::DoubleArrow)?;
@@ -1597,8 +1660,22 @@ impl<'a> Parser<'a> {
     // ── Variable / qualified identifier ─────────────────────────────
 
     fn parse_qual_ident(&mut self) -> Result<QualIdent, ParseError> {
-        let (name, _) = self.expect_ident()?;
-        Ok(QualIdent::new(name.split('.')))
+        let (name, span) = self.expect_ident()?;
+        // FAIL LOUD: reject empty segments (`a.b.`, `.a`, `a..b`). The lexer
+        // only folds a `.` into an identifier between two identifier-start
+        // characters, so a well-formed token cannot contain an empty segment;
+        // this is defense-in-depth against any caller that hands the parser a
+        // raw dotted string. A silently-dropped empty segment would let
+        // `a..b` collapse to the unrelated qualified name `a.b`.
+        let segments: Vec<&str> = name.split('.').collect();
+        if segments.iter().any(|seg| seg.is_empty()) {
+            return Err(ParseError {
+                span,
+                expected: "qualified identifier with non-empty segments".to_string(),
+                found: format!("`{name}` (contains an empty segment)"),
+            });
+        }
+        Ok(QualIdent::new(segments.into_iter()))
     }
 
     fn parse_tribunal_ref(&mut self) -> Result<TribunalRef, ParseError> {
@@ -1858,14 +1935,25 @@ impl<'a> Parser<'a> {
                     "fuel" => {
                         self.advance();
                         self.expect(&Token::Lparen)?;
-                        let (level_name, _) = self.expect_ident()?;
-                        // Parse level: extract numeric suffix from e.g. "l0" or "l_0"
-                        let level_num: u64 = level_name
+                        let (level_name, level_span) = self.expect_ident()?;
+                        // Parse level: extract the numeric suffix from a level
+                        // name like `l0` or `l_0`. FAIL LOUD: a level name with
+                        // no digits (e.g. `l`, `bogus`) or one whose digits do
+                        // not parse as a u64 (overflow) is rejected with a
+                        // ParseError — it must NOT silently default to fuel
+                        // level 0, which would admit a non-conforming program
+                        // at a fabricated (and maximally permissive) level.
+                        let digits: String = level_name
                             .chars()
                             .filter(|c| c.is_ascii_digit())
-                            .collect::<String>()
-                            .parse()
-                            .unwrap_or(0);
+                            .collect();
+                        let level_num: u64 = digits.parse().map_err(|_| ParseError {
+                            span: level_span,
+                            expected: "fuel level name carrying a numeric suffix \
+                                       (e.g. `l0`, `l_1`)"
+                                .to_string(),
+                            found: format!("`{level_name}`"),
+                        })?;
                         self.expect(&Token::Comma)?;
                         let (n, _) = self.expect_nat()?;
                         self.expect(&Token::Rparen)?;
