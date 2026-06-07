@@ -15,6 +15,9 @@ use mez_canonical::canonical::CanonicalBytes;
 use mez_canonical::digest::sha256_digest;
 use serde::{Deserialize, Serialize};
 
+use crate::decide::DecisionResult;
+use crate::obligations::ProofObligation;
+
 /// The compliance verdict produced by evaluating a rule.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ComplianceVerdict {
@@ -65,15 +68,96 @@ pub struct LexCertificate {
 }
 
 /// A proof obligation that was successfully discharged by a decision procedure.
+///
+/// # Unforgeability
+///
+/// The fields are private and there is **no public field constructor**. The
+/// only way to mint a `DischargedObligation` is [`DischargedObligation::seal`],
+/// which requires a genuine [`DecisionResult::Proved`] carrying a
+/// [`crate::decide::ProofWitness`]. `ProofWitness` values are produced only by
+/// the decision procedures in [`crate::decide`] (e.g. `finite_domain_check`,
+/// `threshold_check`, `boolean_compliance_check`, `defeasible_search`,
+/// `temporal_tableau`, `smt_check`). A caller cannot hand-construct a witness,
+/// so a certificate cannot be minted from a fabricated discharge: the
+/// `decision_procedure` and `witness` strings are copied **out of** the proof
+/// witness, not supplied by the caller, and the `obligation_id`/`category` are
+/// copied out of the real extracted [`ProofObligation`].
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DischargedObligation {
+    /// The id of the extracted obligation this discharge covers (e.g.
+    /// `"obl-0001"`). Bound at seal time from the genuine [`ProofObligation`];
+    /// this is the key `build_certificate` uses to verify coverage.
+    obligation_id: String,
     /// Obligation category name (e.g., "ExhaustiveMatch", "ThresholdComparison").
-    pub category: String,
-    /// Human-readable description of the witness evidence.
-    pub witness: String,
+    category: String,
+    /// Human-readable description of the witness evidence, copied from the
+    /// proof witness produced by the decision procedure.
+    witness: String,
     /// The decision procedure that discharged the obligation
-    /// (e.g., "finite_domain_enumeration", "presburger_arithmetic").
-    pub decision_procedure: String,
+    /// (e.g., "finite_domain_enumeration", "presburger_arithmetic"), copied
+    /// from the proof witness.
+    decision_procedure: String,
+}
+
+impl DischargedObligation {
+    /// Seal a discharged obligation from genuine decision-procedure evidence.
+    ///
+    /// This is the sole constructor. It binds the extracted `obligation`
+    /// (which carries the structural obligation id and category) to the
+    /// `result` of running a decision procedure against it. Only a
+    /// [`DecisionResult::Proved`] is accepted — a `Refuted` or `Undecidable`
+    /// result is **not** a discharge and is rejected, so a certificate can
+    /// never assert that an obligation was discharged when it was in fact
+    /// refuted or left undecided.
+    ///
+    /// The `witness` and `decision_procedure` recorded on the certificate are
+    /// taken from the proof witness, not from caller-supplied strings, which
+    /// is what makes a fabricated discharge impossible to mint.
+    pub fn seal(
+        obligation: &ProofObligation,
+        result: &DecisionResult,
+    ) -> Result<Self, CertificateError> {
+        match result {
+            DecisionResult::Proved { witness } => Ok(DischargedObligation {
+                obligation_id: obligation.id.clone(),
+                category: format!("{:?}", obligation.category),
+                witness: witness.description.clone(),
+                decision_procedure: witness.procedure.clone(),
+            }),
+            DecisionResult::Refuted { counterexample } => {
+                Err(CertificateError::ObligationNotDischarged {
+                    obligation_id: obligation.id.clone(),
+                    reason: format!("refuted: {counterexample}"),
+                })
+            }
+            DecisionResult::Undecidable { reason } => {
+                Err(CertificateError::ObligationNotDischarged {
+                    obligation_id: obligation.id.clone(),
+                    reason: format!("undecidable: {reason}"),
+                })
+            }
+        }
+    }
+
+    /// The id of the extracted obligation this discharge covers.
+    pub fn obligation_id(&self) -> &str {
+        &self.obligation_id
+    }
+
+    /// The obligation category (`Debug` form of [`crate::obligations::ObligationCategory`]).
+    pub fn category(&self) -> &str {
+        &self.category
+    }
+
+    /// The witness description, copied from the decision-procedure proof witness.
+    pub fn witness(&self) -> &str {
+        &self.witness
+    }
+
+    /// The decision procedure that discharged the obligation.
+    pub fn decision_procedure(&self) -> &str {
+        &self.decision_procedure
+    }
 }
 
 /// Errors that can occur during certificate construction.
@@ -83,6 +167,23 @@ pub enum CertificateError {
     ClockBeforeEpoch,
     /// Canonical serialization of the certificate failed.
     CanonicalizationFailed(String),
+    /// A decision result was not a genuine discharge (it was refuted or
+    /// undecidable), so it cannot seal a [`DischargedObligation`].
+    ObligationNotDischarged {
+        /// The extracted obligation that could not be discharged.
+        obligation_id: String,
+        /// Why it was not discharged (refuted counterexample / undecidable reason).
+        reason: String,
+    },
+    /// An extracted obligation has no matching genuine discharge in the
+    /// supplied discharged set. The certificate refuses to assert coverage it
+    /// did not verify.
+    UndischargedObligation {
+        /// The extracted obligation left uncovered.
+        obligation_id: String,
+        /// The obligation's category, for diagnostics.
+        category: String,
+    },
 }
 
 impl std::fmt::Display for CertificateError {
@@ -94,6 +195,22 @@ impl std::fmt::Display for CertificateError {
             CertificateError::CanonicalizationFailed(msg) => {
                 write!(f, "certificate canonicalization failed: {msg}")
             }
+            CertificateError::ObligationNotDischarged {
+                obligation_id,
+                reason,
+            } => write!(
+                f,
+                "obligation `{obligation_id}` was not discharged ({reason}); \
+                 only a Proved decision result can seal a discharge"
+            ),
+            CertificateError::UndischargedObligation {
+                obligation_id,
+                category,
+            } => write!(
+                f,
+                "extracted obligation `{obligation_id}` [{category}] has no matching \
+                 discharge; the certificate refuses to assert undischarged coverage"
+            ),
         }
     }
 }
@@ -152,6 +269,22 @@ fn unix_secs_to_iso8601(epoch_secs: u64) -> String {
 
 /// Build a [`LexCertificate`] from the Lex pipeline outputs.
 ///
+/// # Coverage validation (no unvalidated discharge)
+///
+/// `extracted` is the full set of proof obligations the rule produced (from
+/// [`crate::obligations::extract_obligations`]); `discharged` is the set of
+/// sealed discharges. This function verifies that **every** extracted
+/// obligation has a matching genuine [`DischargedObligation`] (keyed by
+/// obligation id) before it will issue a certificate. If any extracted
+/// obligation is uncovered, it returns
+/// [`CertificateError::UndischargedObligation`] and issues nothing — a
+/// certificate must not assert discharge it did not verify.
+///
+/// Because a `DischargedObligation` can only be produced by
+/// [`DischargedObligation::seal`] from a [`DecisionResult::Proved`], passing
+/// the coverage check is proof that each obligation was actually discharged by
+/// a decision procedure, not merely asserted.
+///
 /// Computes the `certificate_digest` by canonicalizing a preliminary
 /// certificate (with an empty digest) and taking its SHA-256 hash.
 pub fn build_certificate(
@@ -159,8 +292,25 @@ pub fn build_certificate(
     jurisdiction: &str,
     legal_basis: &str,
     verdict: ComplianceVerdict,
-    obligations: Vec<DischargedObligation>,
+    extracted: &[ProofObligation],
+    discharged: Vec<DischargedObligation>,
 ) -> Result<LexCertificate, CertificateError> {
+    // Coverage check: every extracted obligation must have a matching sealed
+    // discharge. Match on the structural obligation id bound at seal time.
+    for obligation in extracted {
+        let covered = discharged
+            .iter()
+            .any(|d| d.obligation_id == obligation.id);
+        if !covered {
+            return Err(CertificateError::UndischargedObligation {
+                obligation_id: obligation.id.clone(),
+                category: format!("{:?}", obligation.category),
+            });
+        }
+    }
+
+    let obligations = discharged;
+
     let secs = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_err(|_| CertificateError::ClockBeforeEpoch)?
@@ -191,19 +341,41 @@ pub fn build_certificate(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::decide::{boolean_check, finite_domain_check, threshold_check};
+    use crate::obligations::{ObligationCategory, ProofObligation};
+
+    // ── Test helpers: build genuine extracted-obligation / discharge pairs ──
+
+    /// A genuine extracted obligation. `ProofObligation` is a plain in-crate
+    /// struct; tests construct it the same way `extract_obligations` does.
+    fn extracted(id: &str, category: ObligationCategory) -> ProofObligation {
+        ProofObligation {
+            id: id.to_string(),
+            description: format!("test obligation {id}"),
+            category,
+            term: crate::ast::Term::StringLit(id.to_string()),
+            expected: "holds".to_string(),
+            suggested_procedure: "test".to_string(),
+        }
+    }
+
+    /// Seal a discharge from a genuine `boolean_check(true)` proof witness.
+    fn seal_proved(obl: &ProofObligation) -> DischargedObligation {
+        DischargedObligation::seal(obl, &boolean_check(true))
+            .expect("Proved result must seal")
+    }
 
     #[test]
     fn build_certificate_produces_valid_digest() {
+        let obl = extracted("obl-0001", ObligationCategory::ExhaustiveMatch);
+        let discharged = vec![seal_proved(&obl)];
         let cert = build_certificate(
             "abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234",
             "SC",
             "IBC Act 2016 s.66",
             ComplianceVerdict::Compliant,
-            vec![DischargedObligation {
-                category: "ExhaustiveMatch".to_string(),
-                witness: "all match arms cover the scrutinee domain".to_string(),
-                decision_procedure: "finite_domain_enumeration".to_string(),
-            }],
+            std::slice::from_ref(&obl),
+            discharged,
         )
         .unwrap();
 
@@ -219,16 +391,110 @@ mod tests {
         );
     }
 
+    // ── PRIORITY 1: a discharge cannot be forged ──
+
+    #[test]
+    fn seal_rejects_refuted_result() {
+        // `finite_domain_check` against a value outside the domain is Refuted.
+        let obl = extracted("obl-0001", ObligationCategory::DomainMembership);
+        let refuted = finite_domain_check("Jurisdiction", &["SC"], "XX");
+        let err = DischargedObligation::seal(&obl, &refuted).unwrap_err();
+        assert!(
+            matches!(err, CertificateError::ObligationNotDischarged { .. }),
+            "a refuted result must not seal a discharge, got {err:?}"
+        );
+    }
+
+    #[test]
+    fn seal_rejects_undecidable_result() {
+        // An unknown operator is Undecidable.
+        let obl = extracted("obl-0001", ObligationCategory::ThresholdComparison);
+        let undecidable = threshold_check(1, 1, "!=");
+        let err = DischargedObligation::seal(&obl, &undecidable).unwrap_err();
+        assert!(
+            matches!(err, CertificateError::ObligationNotDischarged { .. }),
+            "an undecidable result must not seal a discharge, got {err:?}"
+        );
+    }
+
+    #[test]
+    fn sealed_discharge_copies_strings_from_the_proof_witness() {
+        // The recorded procedure/witness come from the decision procedure,
+        // not from any caller-supplied string — this is what makes forgery
+        // impossible.
+        let obl = extracted("obl-0001", ObligationCategory::ThresholdComparison);
+        let proved = threshold_check(5, 1, ">=");
+        let sealed = DischargedObligation::seal(&obl, &proved).unwrap();
+        assert_eq!(sealed.decision_procedure(), "presburger_arithmetic");
+        assert_eq!(sealed.obligation_id(), "obl-0001");
+        assert_eq!(sealed.category(), "ThresholdComparison");
+        assert!(sealed.witness().contains("5 >= 1"));
+    }
+
+    // ── PRIORITY 2: build_certificate refuses unvalidated coverage ──
+
+    #[test]
+    fn build_certificate_rejects_uncovered_obligation() {
+        let covered = extracted("obl-0001", ObligationCategory::ExhaustiveMatch);
+        let uncovered = extracted("obl-0002", ObligationCategory::SanctionsCheck);
+        // Discharge only the first; leave the second uncovered.
+        let discharged = vec![seal_proved(&covered)];
+        let err = build_certificate(
+            &"ab".repeat(32),
+            "SC",
+            "IBC Act 2016 s.66",
+            ComplianceVerdict::Compliant,
+            &[covered, uncovered],
+            discharged,
+        )
+        .unwrap_err();
+        match err {
+            CertificateError::UndischargedObligation { obligation_id, .. } => {
+                assert_eq!(obligation_id, "obl-0002");
+            }
+            other => panic!("expected UndischargedObligation, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn build_certificate_accepts_full_coverage() {
+        let a = extracted("obl-0001", ObligationCategory::ExhaustiveMatch);
+        let b = extracted("obl-0002", ObligationCategory::ThresholdComparison);
+        let discharged = vec![seal_proved(&a), seal_proved(&b)];
+        let cert = build_certificate(
+            &"ab".repeat(32),
+            "SC",
+            "IBC Act 2016 s.66",
+            ComplianceVerdict::Compliant,
+            &[a, b],
+            discharged,
+        )
+        .expect("full coverage must succeed");
+        assert_eq!(cert.obligations.len(), 2);
+    }
+
+    #[test]
+    fn build_certificate_accepts_no_obligations() {
+        // A rule that extracts zero obligations is trivially fully covered.
+        let cert = build_certificate(
+            &"ff".repeat(32),
+            "SC",
+            "IBC Act 2016 s.66",
+            ComplianceVerdict::NonCompliant,
+            &[],
+            vec![],
+        )
+        .unwrap();
+        assert!(cert.obligations.is_empty());
+    }
+
     #[test]
     fn certificate_digest_is_deterministic_for_same_content() {
         // Two certificates with the same content (but built in the same second)
         // must produce the same digest. We control `issued_at` by building a
         // certificate manually.
-        let obligations = vec![DischargedObligation {
-            category: "ThresholdComparison".to_string(),
-            witness: "comparison holds".to_string(),
-            decision_procedure: "presburger_arithmetic".to_string(),
-        }];
+        let obl = extracted("obl-0001", ObligationCategory::ThresholdComparison);
+        let obligations = vec![seal_proved(&obl)];
 
         let mut cert = LexCertificate {
             rule_digest: "deadbeef".repeat(8),
@@ -255,23 +521,16 @@ mod tests {
 
     #[test]
     fn serde_roundtrip_certificate() {
+        let a = extracted("obl-0001", ObligationCategory::SanctionsCheck);
+        let b = extracted("obl-0002", ObligationCategory::IdentityVerification);
+        let discharged = vec![seal_proved(&a), seal_proved(&b)];
         let cert = build_certificate(
             &"ab".repeat(32),
             "ADGM",
             "Companies Regulations 2020 s.12",
             ComplianceVerdict::Pending,
-            vec![
-                DischargedObligation {
-                    category: "SanctionsCheck".to_string(),
-                    witness: "sanctions screening clear".to_string(),
-                    decision_procedure: "bdd_style_boolean_compliance".to_string(),
-                },
-                DischargedObligation {
-                    category: "IdentityVerification".to_string(),
-                    witness: "KYC attestation chain valid".to_string(),
-                    decision_procedure: "identity_attestation_chain".to_string(),
-                },
-            ],
+            &[a, b],
+            discharged,
         )
         .unwrap();
 
@@ -283,8 +542,11 @@ mod tests {
         assert_eq!(deserialized.legal_basis, "Companies Regulations 2020 s.12");
         assert_eq!(deserialized.verdict, ComplianceVerdict::Pending);
         assert_eq!(deserialized.obligations.len(), 2);
-        assert_eq!(deserialized.obligations[0].category, "SanctionsCheck");
-        assert_eq!(deserialized.obligations[1].decision_procedure, "identity_attestation_chain");
+        assert_eq!(deserialized.obligations[0].category(), "SanctionsCheck");
+        assert_eq!(
+            deserialized.obligations[0].decision_procedure(),
+            "boolean_decision"
+        );
         assert_eq!(deserialized.rule_digest, cert.rule_digest);
         assert_eq!(deserialized.issued_at, cert.issued_at);
     }
@@ -305,19 +567,17 @@ mod tests {
 
     #[test]
     fn serde_roundtrip_discharged_obligation() {
-        let obligation = DischargedObligation {
-            category: "DefeasibleResolution".to_string(),
-            witness: "highest-priority satisfied exception at priority 50".to_string(),
-            decision_procedure: "fuel_bounded_defeasible_search".to_string(),
-        };
+        let obl = extracted("obl-0001", ObligationCategory::DefeasibleResolution);
+        let obligation = seal_proved(&obl);
 
         let json = serde_json::to_string(&obligation).expect("serialize");
         let deserialized: DischargedObligation =
             serde_json::from_str(&json).expect("deserialize");
 
-        assert_eq!(deserialized.category, obligation.category);
-        assert_eq!(deserialized.witness, obligation.witness);
-        assert_eq!(deserialized.decision_procedure, obligation.decision_procedure);
+        assert_eq!(deserialized.category(), obligation.category());
+        assert_eq!(deserialized.witness(), obligation.witness());
+        assert_eq!(deserialized.decision_procedure(), obligation.decision_procedure());
+        assert_eq!(deserialized.obligation_id(), obligation.obligation_id());
     }
 
     #[test]
@@ -327,6 +587,7 @@ mod tests {
             "SC",
             "IBC Act 2016 s.66",
             ComplianceVerdict::NonCompliant,
+            &[],
             vec![],
         )
         .unwrap();
@@ -346,11 +607,8 @@ mod tests {
 
     #[test]
     fn different_verdicts_produce_different_digests() {
-        let obligations = vec![DischargedObligation {
-            category: "ExhaustiveMatch".to_string(),
-            witness: "covered".to_string(),
-            decision_procedure: "finite_domain_enumeration".to_string(),
-        }];
+        let obl = extracted("obl-0001", ObligationCategory::ExhaustiveMatch);
+        let obligations = vec![seal_proved(&obl)];
 
         let mut cert_compliant = LexCertificate {
             rule_digest: "aa".repeat(32),

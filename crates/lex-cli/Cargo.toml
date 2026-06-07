@@ -15,3 +15,6 @@ lex-core = { path = "../lex-core" }
 clap = { version = "4", features = ["derive"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
+# SHA-256 for content-addressing and the keyed HMAC-SHA256 authenticator used
+# by `lex sign`/`lex verify`. Same version `lex-core` and `mez-canonical` use.
+sha2 = "0.10"

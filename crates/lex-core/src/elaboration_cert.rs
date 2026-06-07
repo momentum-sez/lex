@@ -123,6 +123,13 @@ pub fn produce_elaboration_certificate(
     surface_source: &str,
     core_output: &str,
 ) -> Result<ElaborationCertificate, ElaborationCertError> {
+    // FOLLOW-ON: the sound surface↔core structural preservation walk is not
+    // implemented. This function fails closed with
+    // `PreservationCheckUnimplemented` rather than issuing a certificate from
+    // unsound substring matching. Closing this requires a structural walk over
+    // both the surface and elaborated-core ASTs that verifies each surface
+    // refinement predicate / effect annotation survives on the corresponding
+    // core term (see `extract_preserved_predicates` / `extract_preserved_effects`).
     if surface_source.is_empty() {
         return Err(ElaborationCertError::EmptySource);
     }

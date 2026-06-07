@@ -170,27 +170,17 @@ fn discharge(obligation: &ProofObligation, facts: IncorporationFacts<'_>) -> Dec
     }
 }
 
+/// Seal a discharge from genuine decision-procedure evidence.
+///
+/// Only a `DecisionResult::Proved` can seal a `DischargedObligation`; a
+/// refuted or undecidable result returns the `ObligationNotDischarged` error
+/// and yields nothing, so a certificate can never carry a fabricated or
+/// non-proved discharge.
 fn obligation_to_discharged(
     obligation: &ProofObligation,
     result: &DecisionResult,
-) -> CertDischargedObligation {
-    match result {
-        DecisionResult::Proved { witness } => CertDischargedObligation {
-            category: format!("{:?}", obligation.category),
-            witness: witness.description.clone(),
-            decision_procedure: witness.procedure.clone(),
-        },
-        DecisionResult::Refuted { counterexample } => CertDischargedObligation {
-            category: format!("{:?}", obligation.category),
-            witness: format!("refuted: {counterexample}"),
-            decision_procedure: obligation.suggested_procedure.clone(),
-        },
-        DecisionResult::Undecidable { reason } => CertDischargedObligation {
-            category: format!("{:?}", obligation.category),
-            witness: format!("undecidable: {reason}"),
-            decision_procedure: obligation.suggested_procedure.clone(),
-        },
-    }
+) -> Result<CertDischargedObligation, certificate::CertificateError> {
+    CertDischargedObligation::seal(obligation, result)
 }
 
 // ── Typed discretion hole: the Lex primitive ───────────────────────────────
@@ -293,10 +283,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("      [{:?}] undecidable: {}", o.category, reason);
             }
         }
-        discharged.push(obligation_to_discharged(o, &result));
+        // Only a Proved result seals a discharge; a refuted/undecidable
+        // obligation propagates as an error and aborts certificate assembly
+        // rather than minting a fabricated discharge.
+        discharged.push(obligation_to_discharged(o, &result)?);
     }
 
-    // 6. Build the compliance certificate.
+    // 6. Build the compliance certificate. `build_certificate` verifies that
+    // every extracted obligation is covered by a genuine sealed discharge
+    // before it will issue the certificate.
     let canonical = CanonicalBytes::new(&indexed)?;
     let rule_digest = sha256_digest(&canonical).to_hex();
     let cert = certificate::build_certificate(
@@ -304,6 +299,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         facts.jurisdiction,
         "IBC Act 2016 s.66",
         ComplianceVerdict::Compliant,
+        &extracted,
         discharged,
     )?;
     println!();

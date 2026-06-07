@@ -146,29 +146,21 @@ fn rule_content_hash(term: &Term) -> String {
     sha256_digest(&canonical).to_hex()
 }
 
+/// Seal a discharge for each extracted obligation, paired with the result of
+/// running a decision procedure against it. `DischargedObligation::seal`
+/// accepts only `Proved` results; a refuted/undecidable obligation surfaces
+/// as the `ObligationNotDischarged` error rather than a fabricated discharge.
 fn collect_discharged_obligations(
-    obligations: &[ProofObligation],
+    extracted: &[obligations::ProofObligation],
+    results: &[DecisionResult],
 ) -> Vec<CertDischargedObligation> {
-    obligations
+    extracted
         .iter()
-        .map(|obligation| match &obligation.result {
-            DecisionResult::Proved { witness } => CertDischargedObligation {
-                category: obligation.name.to_string(),
-                witness: witness.description.clone(),
-                decision_procedure: witness.procedure.clone(),
-            },
-            DecisionResult::Refuted { counterexample } => {
-                panic!(
-                    "obligation `{}` was refuted: {}",
-                    obligation.name, counterexample
-                )
-            }
-            DecisionResult::Undecidable { reason } => {
-                panic!(
-                    "obligation `{}` was undecidable: {}",
-                    obligation.name, reason
-                )
-            }
+        .zip(results.iter())
+        .map(|(obligation, result)| {
+            CertDischargedObligation::seal(obligation, result).unwrap_or_else(|err| {
+                panic!("obligation `{}` could not be sealed: {err}", obligation.id)
+            })
         })
         .collect()
 }
@@ -255,15 +247,18 @@ fn ibc_s66_full_proof_pipeline_produces_certificate() {
         director_count: 1,
     };
 
+    let results: Vec<DecisionResult> = extracted
+        .iter()
+        .map(|ext| discharge_extracted_obligation(ext, facts))
+        .collect();
+
     let obligations: Vec<ProofObligation> = extracted
         .iter()
-        .map(|ext| {
-            let result = discharge_extracted_obligation(ext, facts);
-            ProofObligation {
-                name: ext.id.clone(),
-                statement: ext.description.clone(),
-                result,
-            }
+        .zip(results.iter())
+        .map(|(ext, result)| ProofObligation {
+            name: ext.id.clone(),
+            statement: ext.description.clone(),
+            result: result.clone(),
         })
         .collect();
 
@@ -281,12 +276,13 @@ fn ibc_s66_full_proof_pipeline_produces_certificate() {
         );
     }
 
-    let discharged = collect_discharged_obligations(&obligations);
+    let discharged = collect_discharged_obligations(&extracted, &results);
     let certificate: LexCertificate = certificate::build_certificate(
         &rule_content_hash(&indexed_rule),
         facts.jurisdiction,
         "IBC Act 2016 s.66",
         ComplianceVerdict::Compliant,
+        &extracted,
         discharged,
     )
     .expect("build_certificate should succeed in test");
@@ -301,12 +297,16 @@ fn ibc_s66_full_proof_pipeline_produces_certificate() {
 
     for entry in &certificate.obligations {
         assert!(
-            !entry.decision_procedure.is_empty(),
+            !entry.decision_procedure().is_empty(),
             "every discharged obligation should name its decision procedure"
         );
         assert!(
-            !entry.category.is_empty(),
+            !entry.category().is_empty(),
             "every discharged obligation should be named"
+        );
+        assert!(
+            !entry.obligation_id().is_empty(),
+            "every discharged obligation should bind the extracted obligation id"
         );
     }
 }
