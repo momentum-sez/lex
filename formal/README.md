@@ -135,15 +135,35 @@ The headline status and honest qualifications are:
   (`par_subst_args_spec`) and Qed-closes the fold/scoping bridge from the
   stronger unary obligation (`par_subst_at_depth_spec`); the at-depth
   substitution theorem itself remains open.
-- **Progress**: Qed-closed over the full `Term` AST conditional on two named
-  Prop premises (`confluence_property`, `match_exhaustiveness_property`).
+- **Progress (CONDITIONAL — not delivered type safety)**: `progress` is
+  Qed-closed over the full `Term` AST *only conditional on two named, currently
+  undischarged Prop premises* (`confluence_property`,
+  `match_exhaustiveness_property`). It is NOT an unconditional safety result:
+  `confluence_property` is open (see Confluence below) and was provably FALSE
+  for the pre-G1 step relation (`ConfluenceCounterexampleArchive.v`'s Qed-closed
+  `confluence_property_refuted`); the G1 binder-congruence repair removes that
+  specific counterexample but does not prove confluence, so the hypothesis
+  remains undischarged. There is no `progress_unconditional` /
+  `canonical_forms_pi_unconditional` / `Confluence.confluence_provable`
+  artifact — earlier comments in `Typing_progress_skeleton.v` referred to such
+  "unconditional" forms that do not exist; those comments are corrected.
   `Typing.v` also defines the stronger certificate target
-  `match_coverage_property` and proves
-  `match_coverage_implies_exhaustiveness` plus
-  `progress_from_match_coverage`; the remaining work is to make the checker or
-  `T_Match` construct that coverage certificate.
+  `match_coverage_property` and proves `match_coverage_implies_exhaustiveness`
+  plus `progress_from_match_coverage` (which discharges only the
+  exhaustiveness premise, not confluence); the remaining work is to make the
+  checker or `T_Match` construct that coverage certificate AND to close
+  confluence.
 - **Preservation, confluence, strong normalization** (full calculus): open.
-  Confluence is open at the diamond-lemma level (`par_diamond_spec`);
+  Preservation is Qed-closed only conditional on the named `substitution_property`
+  Prop spec. Confluence is open at the diamond-lemma level (`par_diamond_spec`):
+  `Confluence.v` proves the parallel-reduction embeddings (`par_refl`,
+  `step_implies_par`, `par_implies_steps`) and the composition theorem
+  `confluence_from_par_star_diamond : par_star_diamond_spec -> confluence_spec`,
+  but the substantive Tait-Martin-Löf diamond (`par_diamond_spec`, hence
+  `par_star_diamond_spec`) is left as an open `Prop` specification. Confluence
+  is therefore NOT proved (conditionally or otherwise); it is a stated open
+  obligation, and every theorem that takes `confluence_property` as a hypothesis
+  (progress, `canonical_forms_pi`, `conv_eq_trans`) is conditional on it.
   SN-admissible is stated as a conjecture. The current closed SN frontier is
   the flat affine theorem plus the non-affine neutral-expansion kernel, not the
   full admissible-fragment normalization theorem.
@@ -152,7 +172,24 @@ The headline status and honest qualifications are:
 - **Explicit tracked admits**: the tracked Coq/Rocq files currently contain no
   explicit `Admitted.` statements and no live `admit` tactics. This count is
   separate from named open `Prop` premises, abstract `Parameter` declarations,
-  and Lean `axiom` declarations.
+  and Lean `axiom` declarations. A zero-`Admitted` count is NOT the same as
+  unconditional soundness: the load-bearing metatheory (progress, preservation,
+  conversion) is closed only modulo named open `Prop` hypotheses
+  (`confluence_property`, `substitution_property`, `match_exhaustiveness_property`),
+  and confluence's diamond lemma is itself an open `Prop` spec, so those
+  hypotheses are undischarged.
+- **Coq/Lean asymmetry on the certificate mechanical bit**: `mechanical_bit_correct`
+  (the discretion-frontier-empty ⇔ mechanical-bit-true property of
+  `DerivationCertificate`) is a Qed-closed `Theorem` in `coq/LexCore.v:297` but
+  is declared as an `axiom` in `lean/LexCore.lean:225`. The two are not at the
+  same strength: the Coq `Theorem` is derived trivially from a
+  `dc_mechanical_sound` field carried inside the `DerivationCertificate` record
+  (it re-exports a proof obligation the record already assumes), and both
+  assistants ultimately push correctness onto the Rust BUILDER in
+  `crates/lex-core/src/core_calculus/cert.rs` rather than proving the builder
+  preserves the invariant. Neither form is a mechanized proof of the builder;
+  the Lean `axiom` makes that explicit and the Coq `Theorem` hides it behind a
+  record field.
 
 For the per-statement status (including temporal non-regression, pack
 re-evaluation soundness, the verdict Heyting algebra, PCAuth quorum extraction,
