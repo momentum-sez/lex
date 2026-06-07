@@ -1637,14 +1637,23 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
 ///   1. If `scrutinee` is `Term::Constant(name)` and `name` is itself a
 ///      prelude type (e.g. `"Nat"`), the datatype is `name`.
 ///   2. If `scrutinee` is `Term::Constant(name)` and `name` is a prelude
-///      constructor (e.g. `"Compliant"`), the datatype is the one that
-///      constructor belongs to (e.g. `"ComplianceVerdict"`).
-///   3. Otherwise, if every constructor pattern across `branches` belongs
-///      to the same prelude datatype, that datatype is returned.
+///      constructor (e.g. `"Compliant"`), the datatype is its primary
+///      datatype (e.g. `"ComplianceVerdict"`).
+///   3. Otherwise, the datatype is recovered from the branch constructors as
+///      the *intersection* of the datatype-membership sets of every
+///      constructor pattern. A constructor may be a member of more than one
+///      prelude datatype (an overload — e.g. `Pending`, which is both the
+///      indeterminate `ComplianceVerdict` and an admissible `ComplianceTag`
+///      status value). The match is well-formed iff some single prelude
+///      datatype contains *every* branch constructor; that datatype is
+///      returned. When several survive the intersection (every branch
+///      constructor is overloaded identically), the primary datatype of the
+///      first constructor pattern is chosen so the result is deterministic.
 ///
-/// Returns `None` if none of those rules fire (e.g. opaque variable
-/// scrutinee with only-wildcard branches); the caller decides how to
-/// handle that case.
+/// Returns `None` if none of those rules fire — either the scrutinee is
+/// opaque with only-wildcard branches, or the branch constructors share no
+/// common datatype (a genuine cross-datatype clash). The caller decides how
+/// to handle that case.
 fn resolve_match_scrutinee_datatype(
     scrutinee: &Term,
     branches: &[crate::ast::Branch],
@@ -1662,20 +1671,54 @@ fn resolve_match_scrutinee_datatype(
         }
     }
 
-    // Rule 3: every constructor pattern shares a datatype.
-    let mut shared: Option<&'static str> = None;
+    // Rule 3: intersect the datatype-membership sets across constructor
+    // patterns, honoring constructor overloads. `candidates` is the set of
+    // prelude datatypes that contain *every* constructor pattern seen so far,
+    // and `first_primary` records the primary datatype of the first
+    // constructor pattern for a deterministic tie-break.
+    let mut candidates: Option<Vec<&'static str>> = None;
+    let mut first_primary: Option<&'static str> = None;
     for branch in branches {
         if let Pattern::Constructor { constructor, .. } = &branch.pattern {
             let ctor_name = constructor.name.segments.join(".");
-            let dt = PreludeRegistry::constructor_datatype(&ctor_name)?;
-            match shared {
-                None => shared = Some(dt),
-                Some(prev) if prev == dt => {}
-                Some(_) => return None,
+            let memberships = PreludeRegistry::constructor_datatypes(&ctor_name);
+            if memberships.is_empty() {
+                // Unknown constructor — cannot resolve syntactically.
+                // (The is_prelude_constructor gate in the caller already
+                // rejects non-prelude constructors before we get here, so
+                // this is a defensive guard.)
+                return None;
+            }
+            if first_primary.is_none() {
+                first_primary = memberships.first().copied();
+            }
+            candidates = Some(match candidates {
+                None => memberships,
+                Some(prev) => prev
+                    .into_iter()
+                    .filter(|dt| memberships.contains(dt))
+                    .collect(),
+            });
+            // Early exit: empty intersection is a genuine clash.
+            if candidates.as_ref().is_some_and(Vec::is_empty) {
+                return None;
             }
         }
     }
-    shared.map(str::to_string)
+
+    let candidates = candidates?;
+    // Prefer the first constructor's primary datatype when it survives the
+    // intersection; otherwise take the unique survivor. (With only `Pending`
+    // overloaded today the survivor set is a singleton whenever any branch
+    // constructor is non-overloaded, which is every real match; the
+    // primary-first tie-break only matters for the degenerate all-overloaded
+    // case and keeps the answer stable.)
+    if let Some(primary) = first_primary {
+        if candidates.contains(&primary) {
+            return Some(primary.to_string());
+        }
+    }
+    candidates.first().map(|dt| (*dt).to_string())
 }
 
 // ---------------------------------------------------------------------------

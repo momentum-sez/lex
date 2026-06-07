@@ -33,6 +33,28 @@ const BOOL_CONSTRUCTORS: &[&str] = &["True", "False"];
 const NAT_CONSTRUCTORS: &[&str] = &["Zero"];
 const SANCTIONS_CONSTRUCTORS: &[&str] = &["Clear"];
 
+/// Constructor names that are *also* admissible members of the flat
+/// `ComplianceTag` status-value universe, in addition to the primary
+/// datatype they are registered/typed under.
+///
+/// `ComplianceTag` is the open universe of status-value tags a status
+/// accessor (e.g. `economic_substance_status`) can return. The runtime
+/// matches tag scrutinees purely by constructor name
+/// ([`crate::evaluate`]'s `runtime_value_to_constant_name`), so a status
+/// accessor can legitimately yield a value whose name coincides with a
+/// constructor that the prelude *primarily* classifies elsewhere.
+///
+/// `Pending` is the one such overload in the published rule corpus: a
+/// regulator-review-in-progress status is written `| Pending => …` against
+/// status accessors (cayman / luxembourg economic-substance rules) while
+/// `Pending` remains the indeterminate [`ComplianceVerdict`]. It is kept in
+/// its primary `ComplianceVerdict` registration (so the `Pending` *constant*
+/// types as a verdict and pure-verdict matches resolve unchanged); this set
+/// only widens `ComplianceTag` *membership* for match admissibility, never
+/// the registered type. No other constructor name collides across datatypes
+/// (asserted by `no_unintended_constructor_collisions`).
+const TAG_OVERLOADED_CONSTRUCTORS: &[&str] = &["Pending"];
+
 const TAG_CONSTRUCTORS: &[&str] = &[
     "ADGM",
     "Active",
@@ -1565,18 +1587,42 @@ pub struct PreludeRegistry;
 impl PreludeRegistry {
     /// Return the full constructor list for a named prelude datatype, or
     /// `None` if `datatype_name` is not a known prelude type.
+    ///
+    /// For `ComplianceTag` the list includes the
+    /// [`TAG_OVERLOADED_CONSTRUCTORS`] (e.g. `Pending`) that are admissible
+    /// tag values in addition to the constructors registered with the tag
+    /// type. This is the constructor universe used for match-branch
+    /// membership and exhaustiveness checks; `ComplianceTag` is open, so
+    /// every concrete `ComplianceTag` match carries a wildcard and is never
+    /// driven to positive exhaustiveness over this list.
     pub fn lookup_variant_constructors(datatype_name: &str) -> Option<Vec<&'static str>> {
         match datatype_name {
             "ComplianceVerdict" => Some(VERDICT_CONSTRUCTORS.to_vec()),
             "Bool" => Some(BOOL_CONSTRUCTORS.to_vec()),
             "Nat" => Some(NAT_CONSTRUCTORS.to_vec()),
             "SanctionsResult" => Some(SANCTIONS_CONSTRUCTORS.to_vec()),
-            "ComplianceTag" => Some(TAG_CONSTRUCTORS.to_vec()),
+            "ComplianceTag" => Some(
+                TAG_CONSTRUCTORS
+                    .iter()
+                    .copied()
+                    .chain(TAG_OVERLOADED_CONSTRUCTORS.iter().copied())
+                    .collect(),
+            ),
             _ => None,
         }
     }
 
-    /// Return the datatype a prelude constructor belongs to.
+    /// Return the *primary* datatype a prelude constructor is registered and
+    /// typed under.
+    ///
+    /// A constructor has exactly one primary datatype (the one whose
+    /// `register_*` call gives the constant its type). Overloaded tag members
+    /// such as `Pending` report their primary datatype here
+    /// (`ComplianceVerdict`); their secondary `ComplianceTag` membership is
+    /// surfaced only through [`Self::constructor_datatypes`] and
+    /// [`Self::lookup_variant_constructors`]. Use this when a single, stable
+    /// datatype answer is required (e.g. error-message attribution); use
+    /// [`Self::constructor_datatypes`] for match-resolution membership.
     pub fn constructor_datatype(ctor_name: &str) -> Option<&'static str> {
         if VERDICT_CONSTRUCTORS.contains(&ctor_name) {
             Some("ComplianceVerdict")
@@ -1591,6 +1637,38 @@ impl PreludeRegistry {
         } else {
             None
         }
+    }
+
+    /// Return *every* prelude datatype a constructor is an admissible member
+    /// of (its primary registration plus any overload membership).
+    ///
+    /// This is the membership relation used to resolve the datatype of a
+    /// `match` from its branch constructors: a constructor that is overloaded
+    /// (e.g. `Pending`, a member of both `ComplianceVerdict` and
+    /// `ComplianceTag`) reports both, so a match whose remaining arms pin a
+    /// single shared datatype resolves to that datatype rather than failing
+    /// as "unresolved" on a spurious cross-datatype clash. The returned
+    /// `Vec` is empty for an unknown constructor.
+    pub fn constructor_datatypes(ctor_name: &str) -> Vec<&'static str> {
+        let mut dts = Vec::new();
+        if VERDICT_CONSTRUCTORS.contains(&ctor_name) {
+            dts.push("ComplianceVerdict");
+        }
+        if BOOL_CONSTRUCTORS.contains(&ctor_name) {
+            dts.push("Bool");
+        }
+        if NAT_CONSTRUCTORS.contains(&ctor_name) {
+            dts.push("Nat");
+        }
+        if SANCTIONS_CONSTRUCTORS.contains(&ctor_name) {
+            dts.push("SanctionsResult");
+        }
+        if TAG_CONSTRUCTORS.contains(&ctor_name)
+            || TAG_OVERLOADED_CONSTRUCTORS.contains(&ctor_name)
+        {
+            dts.push("ComplianceTag");
+        }
+        dts
     }
 }
 
