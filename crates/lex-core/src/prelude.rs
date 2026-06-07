@@ -31,7 +31,16 @@ const CORE_TYPES: &[&str] = &[
 const VERDICT_CONSTRUCTORS: &[&str] = &["Compliant", "NonCompliant", "Pending"];
 const BOOL_CONSTRUCTORS: &[&str] = &["True", "False"];
 const NAT_CONSTRUCTORS: &[&str] = &["Zero"];
-const SANCTIONS_CONSTRUCTORS: &[&str] = &["Clear"];
+const SANCTIONS_CONSTRUCTORS: &[&str] = &[
+    "Clear",
+    // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
+    // SanctionsResult discriminator extensions surfaced by
+    // modules/lex/cayman/sanctions_screening_loop.lex (rule body
+    // `match ctx.sanctions_check return ComplianceVerdict with
+    // | Clear => Compliant | Match => NonCompliant | PotentialMatch => Pending`).
+    "Match",
+    "PotentialMatch",
+];
 
 /// Constructor names that are *also* admissible members of the flat
 /// `ComplianceTag` status-value universe, in addition to the primary
@@ -349,12 +358,154 @@ const TAG_CONSTRUCTORS: &[&str] = &[
     "CounselFilingPath",
     "CredentialsAbsent",
     "CredentialsProvisioned",
+    // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
+    //
+    // Constructors lifted out of `-- MISSING-PRELUDE: <name>` markers in
+    // ~/kernel/modules/lex/{adgm,bermuda,bvi,cayman,de,eu,guernsey,
+    // hong_kong,iom,jersey,luxembourg,prospera,singapore,uae,uk,usa}/*.lex.
+    // Per the F51-LEX-COVERAGE convention (`F51-LEX-COVERAGE.md:139`)
+    // each marker named a typed accessor or constructor that the kernel-
+    // side Lex programs evaluate counsel-attested at runtime. This block
+    // closes the typed seam so those programs can typecheck through the
+    // prelude rather than relying on out-of-band counsel attestation.
+    //
+    // ── Family: Jurisdiction extensions ─────────────────────────────
+    // Delaware (USA-state-level — DGCL §132 registered-office gate from
+    // modules/lex/usa/states/us-de/dgcl_corporate_governance.lex Rule 12;
+    // shipped as `USDE` to disambiguate from country-level codes; joins
+    // the existing 10-jurisdiction set: ADGM/GB/HK/HN/KY/LU/PK/SC/SG/VG).
+    "USDE",
+    // Bermuda (BM), Jersey (JE), Guernsey (GG), Isle of Man (IM),
+    // Germany (DE), European Union (EU). Used as harbor markers in
+    // composed AML-CDD bundles (`modules/lex/aml_cdd_composition.lex`)
+    // and per-jurisdiction PoA programs.
+    "BM",
+    "JE",
+    "GG",
+    "IM",
+    "DE",
+    "EU",
+    "AE",
+    "BV",
+    // ── Family: AmlCddRegime ─────────────────────────────────────────
+    // Per-jurisdiction AML-CDD regulation tags scrutinised by
+    // `aml_cdd_jurisdiction` accessor matches in the Step-4 PoA
+    // programs (`modules/lex/{cayman,uk,usa,...}/aml_cdd_*.lex`). Each
+    // names the binding rule-set (statute / regulation / regulator
+    // notice / handbook).
+    "KyCimaAmlr",       // Cayman AML Regulations 2020 + CIMA Guidance Notes
+    "BmBmaGuidance",    // Bermuda BMA AML/ATF Sector-Specific Guidance
+    "JeJfscHandbook",   // Jersey JFSC AML/CFT Handbook
+    "GgGfscHandbook",   // Guernsey GFSC Handbook for FSBs
+    "ImIomfsaHandbook", // Isle of Man IOMFSA AML/CFT Handbook
+    "VgFscCode",        // BVI FSC AML Regulations + Code of Practice
+    "UkMlr2017",        // UK Money Laundering Regulations 2017
+    "UsCipMinimum",     // USA Customer Identification Program (FinCEN minimum)
+    "SgMasNotice626",   // Singapore MAS Notice 626 (Banks)
+    "SgVccN01",         // Singapore VCC Act + MAS Notice VCC-N01
+    "SgSfa04N02",       // Singapore SFA-04-N02 (Capital Markets)
+    "HkAmloSch2",       // Hong Kong AMLO Schedule 2
+    "HkHkmaGuideline",  // Hong Kong HKMA AML/CFT Guideline
+    "HkSfcGuideline",   // Hong Kong SFC AML/CFT Guideline
+    "DeGwG",            // Germany Geldwäschegesetz (GwG)
+    "EuFiveAmld",       // EU 5th AML Directive (2018/843)
+    "EuSixAmld",        // EU 6th AML Directive (2018/1673)
+    "EuAmlr",           // EU AML Regulation (in force from 2027)
+    "AeCbuaeStandards", // UAE Central Bank AML/CFT Standards
+    "AeScaRegulations", // UAE Securities and Commodities Authority Regs
+    "AeDifcDfsa",       // DIFC DFSA AML Module
+    "AeAdgmFsra",       // ADGM FSRA AML Rulebook
+    // ── Family: Status extensions (G2 wave) ──────────────────────────
+    // Bare-status constructors used by the kernel-side Step-4 / Step-9
+    // programs that don't fit Reg D / existing families. Most are
+    // pass-through ladder rungs (Compliant / NonCompliant / Pending
+    // bucket-shaping) on bespoke accessors.
+    "Appointed",                     // mlro_appointment_status — MLRO designated under reg.5
+    "NotAppointed",                  // mlro_appointment_status — designation absent
+    "AuditCurrent",                  // aml_audit_status — independent annual review current
+    "Breached",                      // recordkeeping_status — five-year retention failed
+    "NoMatchReportingNotRequired",   // fiu_report_status — no STR matter to report
+    "MatchReportedToFiu",            // fiu_report_status — STR filed with FIU
+    "MatchPendingReport",            // fiu_report_status — STR matter pending filing
+    "MatchUnreported",               // fiu_report_status — STR matter unfiled (breach)
+    "OfacClear",                     // ofac_sdn_screening_status — no SDN match
+    "OfacMatch",                     // ofac_sdn_screening_status — confirmed SDN hit
+    "OfacPotentialMatch",            // ofac_sdn_screening_status — name-similarity hit pending review
+    "OfacNotApplicable",             // ofac_sdn_screening_status — counterparty outside OFAC nexus
+    "FreshWithin24h",                // screening_freshness_status — sanctions-list cache <24h
+    "ExpiredBeyond24h",              // screening_freshness_status — cache expired beyond TTL
+    // (`Adequate` is already declared above (line 48) in the JurisdictionAdequacy
+    // family; the adequate_employees_and_premises_status / adequate_opex_status
+    // accessors accept both JurisdictionAdequacy and Status.)
+    "Inadequate",                    // adequate_employees_and_premises_status / adequate_opex_status
+    "ReducedSubstanceMet",           // holding_company_reduced_substance_status — pure-equity test met
+    "ReducedSubstanceNotMet",        // holding_company_reduced_substance_status — pure-equity test failed
+    "CigaPerformedLocally",          // ciga_status — CIGA in Cayman
+    "CigaOutsourcedExternally",      // ciga_status — CIGA outsourced offshore (breach)
+    "CigaNotPerformed",              // ciga_status — CIGA absent
+    "TravelRuleImplemented",         // travel_rule_status — VARA/FATF Rec 16 implemented
+    "TravelRuleMissing",             // travel_rule_status — implementation absent
+    "TravelRulePartial",             // travel_rule_status — partial coverage
+    "TechAuditPassed",               // technology_audit_status — third-party tech audit current
+    "TechAuditFailed",               // technology_audit_status — audit failure recorded
+    "TechAuditPending",              // technology_audit_status — audit underway
+    "ProgramApproved",               // aml_program_status — programme attested by MLRO
+    "ProgramRejected",               // aml_program_status — programme rejected
+    "AssessmentPending",             // aml_program_status — review pending
+    "ClassificationFiled",           // token_classification_status — VASP token-class declaration filed
+    "ClassificationMissing",         // token_classification_status — declaration absent
+    "ClassificationDisputed",        // token_classification_status — regulator-disputed classification
+    // (`Segregated` already declared above in the original Status block.)
+    "NotSegregated",                 // segregation_status — client/firm assets co-mingled
+    "AllPrincipalsClear",            // pep_screening_status — all principals OFAC/PEP clear
+    "AnyPrincipalFailed",            // pep_screening_status — at least one principal failed
+    "NoPepIdentified",               // pep_screening_status — no PEP among principals
+    "PepIdentifiedEddCurrent",       // pep_screening_status — PEP identified, EDD current
+    "Current",                       // ongoing_monitoring_status — monitoring current
+    "Lapsed",                        // ongoing_monitoring_status — monitoring lapsed
+    "CapitalMet",                    // vasp_capital_adequacy — minimum-capital test met
+    "CapitalShortfall",              // vasp_capital_adequacy — shortfall recorded
+    "SupervisionCurrent",            // vasp_supervision_status — VASP supervision active
+    "SupervisionInProgress",         // vasp_supervision_status — supervision in progress
+    "SupervisionOverdue",            // vasp_supervision_status — supervision lapsed
+    "FsraAuthorized",                // fsra_authorization_status — FSRA authorisation granted (Prospera)
+    "FsraSubmitted",                 // fsra_authorization_status — application submitted
+    "FsraRejected",                  // fsra_authorization_status — application rejected
+    "KycApproved",                   // kyc_status — investor KYC cleared
+    "KycPending",                    // kyc_status — investor KYC pending
+    "KycFailed",                     // kyc_status — investor KYC failed
+    // ── Family: VaspLicenseCategory ─────────────────────────────────
+    // Cayman VASP Act 2020 license-category classifier scrutinised by
+    // `vasp_license_category` accessor matches in
+    // `modules/lex/cayman/vasp_act.lex`.
+    "VaspLicenseCustodian",      // Custodian-only VASP license
+    "VaspLicenseTradingPlatform", // Trading-platform VASP license
+    "VaspRegistrationOnly",      // Registration without full license (transitional)
+    // (Note: `Match` / `PotentialMatch` are SanctionsResult constructors,
+    // registered above in SANCTIONS_CONSTRUCTORS, not TAG_CONSTRUCTORS —
+    // they are scrutinised against SanctionsResult-typed accessors like
+    // `ctx.sanctions_check` per modules/lex/cayman/sanctions_screening_loop.lex.)
 ];
 
 const NAT_ACCESSORS: &[&str] = &[
     "director_count",
     "natural_person_director_count",
     "shareholder_count",
+    // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
+    // AIFMD Article 18 substance counts (Luxembourg AIFM CSSF
+    // supervision; modules/lex/luxembourg/aifmd_aif_substance.lex).
+    "aifm_local_staff_count",
+    "aifm_conducting_officer_count",
+    // VARA Rulebook (Dubai); count of VAS activity classes the licensee
+    // is authorised to conduct under the VA Capital Markets Module.
+    "vas_activity_classes",
+    // FATF Recommendation 16 (Travel Rule) — per-transfer USD-equivalent
+    // amount used for the USD-1000 threshold gate
+    // (modules/lex/adgm/fatf_travel_rule.lex).
+    "transfer_amount_usd",
+    // Cayman ES Act 2024 — count of relevant-activity classes the
+    // entity is in scope for (modules/lex/cayman/economic_substance_test.lex).
+    "es_activity_class_count",
 ];
 
 const BOOL_ACCESSORS: &[&str] = &[
@@ -404,6 +555,31 @@ const BOOL_ACCESSORS: &[&str] = &[
     "requires_local_partner",
     "sifc_facilitated_investment",
     "transfers_data_cross_border",
+    // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
+    // PoA evidentiary surface — composed across harbors per
+    // modules/lex/aml_cdd_composition.lex and the sixteen per-jurisdiction
+    // PoA programs. True iff a `ProfileDocument` of type ProofOfAddress
+    // is on file, current under the per-jurisdiction freshness window,
+    // and signature/verification chain is valid.
+    "proof_of_address_on_file",
+    // True iff any applicable harbor (residence-side OR issuer-side)
+    // pulls PoA into the composed CDD requirement; computed by the
+    // composition resolver (Step 1 swarm — multi-harbor wire-up).
+    "requires_poa_composed",
+    // True iff the distribution path (BD CIP / 506(c) safe-harbor /
+    // sub-bank / RIA elected CIP) independently pulls PoA on,
+    // independent of harbor-side composition.
+    "path_requires_poa",
+    // AIFMD Art. 18 substance — physical office in Luxembourg.
+    "aifm_physical_office_in_lu",
+    // Cayman ES Act s.4(5) — pure-equity-holding-company reduced-substance
+    // toggle (Bool form, used in `unless` defeasibility clause).
+    "holding_company_reduced_substance",
+    // Cayman ES Act — applicability attestation (DITC/counsel record
+    // that the entity is/isn't in scope for the substance test).
+    "economic_substance_applicability_attestation",
+    // Cayman AML Regulations 2020 reg.11 — SDD eligibility predicate.
+    "simplified_due_diligence_eligible",
 ];
 
 const SANCTIONS_ACCESSORS: &[&str] = &["adgm_statutory_sanctions_screen", "sanctions_check"];
@@ -539,6 +715,82 @@ const TAG_ACCESSORS: &[&str] = &[
     "transfer_jurisdiction_adequacy",
     "vasp_license_status",
     "wire_transfer_compliance_status",
+    // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
+    //
+    // Per-jurisdiction AML-CDD regime tag (`AmlCddRegime` family;
+    // scrutinised in modules/lex/{cayman,uk,usa,...}/aml_cdd_*.lex
+    // PoA programs to identify the binding rule-set).
+    "aml_cdd_jurisdiction",
+    // Cayman AML 2020 Recordkeeping (reg.25 + PoCA s.136B) — five-year
+    // retention compliance ladder.
+    "recordkeeping_status",
+    // Cayman AML 2020 Compliance Officer (reg.5) — MLRO designation.
+    "mlro_appointment_status",
+    // Cayman CIMA AML programme audit (CIMA Guidance Notes Ch.5).
+    "aml_audit_status",
+    // OFAC SDN screening — sanctions screening loop status accessor.
+    "ofac_sdn_screening_status",
+    // Sanctions screening cache freshness (24h TTL gate).
+    "screening_freshness_status",
+    // Cayman VASP Act 2020 — license-category classifier.
+    "vasp_license_category",
+    // VASP segregation of client/firm assets (VASP Act + custody rules).
+    "segregation_status",
+    // VARA prudential VA module status (modules/lex/adgm/vara_digital_assets.lex).
+    "prudential_va_module_status",
+    // Cayman ES Act — annual ES return filing status accessor.
+    "es_filing_status",
+    // Cayman ES Act — CIGA adequacy.
+    "ciga_status",
+    // Cayman ES Act — adequate-employees-and-premises adequacy.
+    "adequate_employees_and_premises_status",
+    // Cayman ES Act — adequate-OPEX adequacy.
+    "adequate_opex_status",
+    // Cayman ES Act — pure-equity holding-company reduced-substance test status.
+    "holding_company_reduced_substance_status",
+    // Cayman DITC — CRS / FATCA / CbCR enrolment + filing statuses
+    // (modules/lex/cayman/tax_neutrality.lex).
+    "ditc_enrolment_status",
+    "crs_filing_status",
+    "cbcr_filing_status",
+    "self_certification_status",
+    "tax_exemption_undertaking_status",
+    // UK HMRC — corporation-tax / VAT filing statuses
+    // (modules/lex/uk/tax_corporation_tax.lex).
+    "ct_filing_status",
+    "vat_registration_status",
+    // Singapore IRAS — corporate-income-tax / GST filing statuses
+    // (modules/lex/singapore/tax_treaties.lex).
+    "cit_filing_status",
+    "gst_registration_status",
+    // Cayman/Cayman-VASP — STR/FIU report status accessor.
+    "fiu_report_status",
+    // Cayman VASP Act — supervision / capital-adequacy / tech-audit /
+    // travel-rule / token-classification statuses.
+    "vasp_supervision_status",
+    "vasp_capital_adequacy",
+    "technology_audit_status",
+    "travel_rule_status",
+    "token_classification_status",
+    // Cayman AML 2020 — AML programme review status.
+    "aml_program_status",
+    // Prospera regime selector — selected ZEDE regime status accessor
+    // (modules/lex/prospera/regime_selector.lex).
+    "selected_regime_status",
+    // Prospera reciprocity attestation (corridor-recognition surface).
+    "reciprocity_attestation_status",
+    // Prospera — ZEDE Council resolution receipt status
+    // (modules/lex/prospera/authority_council_approval.lex).
+    "council_approval_receipt_status",
+    // Prospera — investor classification status (kyc_status accessor
+    // separate from cross-jurisdictional kyc_aml_status).
+    "kyc_status",
+    // AIFMD Art. 18 — portfolio-manager and risk-manager physical
+    // location accessors.
+    "aifm_portfolio_manager_location",
+    "aifm_risk_manager_location",
+    // FATF Rec. 16 — beneficiary VASP jurisdiction (Travel Rule).
+    "beneficiary_vasp_jurisdiction",
 ];
 
 // ---------------------------------------------------------------------------
@@ -617,6 +869,24 @@ pub enum ConstructorFamily {
     /// flow when the issuer's kernel deployment has not been credentialed:
     /// CredentialsProvisioned / CredentialsAbsent / CounselFilingPath.
     EdgarCredentialStatus,
+    // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
+    /// AML/CDD per-jurisdiction regime tag scrutinised by the
+    /// `aml_cdd_jurisdiction` accessor in the Step-4 PoA programs.
+    /// Each constructor names the binding rule-set:
+    ///   * `KyCimaAmlr` — Cayman AML Regulations 2020 + CIMA Guidance Notes
+    ///   * `BmBmaGuidance` — Bermuda BMA AML/ATF Sector-Specific Guidance
+    ///   * `JeJfscHandbook` — Jersey JFSC AML/CFT Handbook
+    ///   * `GgGfscHandbook` — Guernsey GFSC Handbook for FSBs
+    ///   * `ImIomfsaHandbook` — Isle of Man IOMFSA AML/CFT Handbook
+    ///   * `VgFscCode` — BVI FSC AML Regulations + Code of Practice
+    ///   * `UkMlr2017` — UK Money Laundering Regulations 2017
+    ///   * `UsCipMinimum` — USA Customer Identification Program (FinCEN minimum)
+    ///   * `SgMasNotice626` / `SgVccN01` / `SgSfa04N02` — Singapore MAS Notices
+    ///   * `HkAmloSch2` / `HkHkmaGuideline` / `HkSfcGuideline` — Hong Kong instruments
+    ///   * `DeGwG` — Germany Geldwäschegesetz
+    ///   * `EuFiveAmld` / `EuSixAmld` / `EuAmlr` — EU AMLD 5 / 6 / AMLR
+    ///   * `AeCbuaeStandards` / `AeScaRegulations` / `AeDifcDfsa` / `AeAdgmFsra` — UAE instruments
+    AmlCddRegime,
 }
 
 /// Look up the constructor family for a TAG_CONSTRUCTOR name.
@@ -627,7 +897,12 @@ pub fn constructor_family(name: &str) -> Option<ConstructorFamily> {
     use ConstructorFamily::*;
     match name {
         // ── Jurisdiction ────────────────────────────────────────────
-        "ADGM" | "GB" | "HK" | "HN" | "KY" | "LU" | "PK" | "SC" | "SG" | "VG" => Some(Jurisdiction),
+        // Original 10-jurisdiction set + G2 additions: USDE (Delaware
+        // state-level — the dgcl_corporate_governance.lex registered-
+        // office gate), BM/JE/GG/IM/DE/EU/AE/BV (per-jurisdiction
+        // harbor-marker codes used by the composed AML-CDD bundle).
+        "ADGM" | "GB" | "HK" | "HN" | "KY" | "LU" | "PK" | "SC" | "SG" | "VG"
+        | "USDE" | "BM" | "JE" | "GG" | "IM" | "DE" | "EU" | "AE" | "BV" => Some(Jurisdiction),
 
         // ── Entity type ─────────────────────────────────────────────
         "IBC" | "ExemptedCompany" | "PublicCompany" | "ProtectedCell" => Some(EntityType),
@@ -651,7 +926,13 @@ pub fn constructor_family(name: &str) -> Option<ConstructorFamily> {
         | "CmsCreditRating"
         | "CmsCustodialServices"
         | "CmsDealingCapitalMarkets"
-        | "CmsFundManagement" => Some(LicenseType),
+        | "CmsFundManagement"
+        // G2 — Cayman VASP Act 2020 license-category constructors used
+        // in modules/lex/cayman/vasp_act.lex Rule 5 (vasp_license_category
+        // accessor).
+        | "VaspLicenseCustodian"
+        | "VaspLicenseTradingPlatform"
+        | "VaspRegistrationOnly" => Some(LicenseType),
 
         // ── Regulatory category ─────────────────────────────────────
         "Category1" | "Category2" | "Category3A" | "Category3B" | "Category3C" | "Category4" => {
@@ -863,7 +1144,70 @@ pub fn constructor_family(name: &str) -> Option<ConstructorFamily> {
         | "TaxNotRegistered"
         | "TaxRegistered"
         | "TransferMechanismInPlace"
-        | "UnderReview" => Some(Status),
+        | "UnderReview"
+        // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────
+        // Cayman AML 2020 + CIMA Guidance Notes ladder rungs.
+        | "Appointed"
+        | "NotAppointed"
+        | "AuditCurrent"
+        | "Breached"
+        // FIU/STR — Cayman PoCA + FRA reporting.
+        | "NoMatchReportingNotRequired"
+        | "MatchReportedToFiu"
+        | "MatchPendingReport"
+        | "MatchUnreported"
+        // OFAC SDN screening.
+        | "OfacClear"
+        | "OfacMatch"
+        | "OfacPotentialMatch"
+        | "OfacNotApplicable"
+        // Sanctions cache freshness (24h TTL gate).
+        | "FreshWithin24h"
+        | "ExpiredBeyond24h"
+        // Cayman ES Act adequacy ladder.
+        // (`Adequate` lives in JurisdictionAdequacy above; the
+        // adequate_employees_and_premises_status / adequate_opex_status
+        // accessors accept both JurisdictionAdequacy AND Status.)
+        | "Inadequate"
+        | "ReducedSubstanceMet"
+        | "ReducedSubstanceNotMet"
+        | "CigaPerformedLocally"
+        | "CigaOutsourcedExternally"
+        | "CigaNotPerformed"
+        // VASP technology / supervision / capital / travel-rule ladders.
+        | "TravelRuleImplemented"
+        | "TravelRuleMissing"
+        | "TravelRulePartial"
+        | "TechAuditPassed"
+        | "TechAuditFailed"
+        | "TechAuditPending"
+        | "ProgramApproved"
+        | "ProgramRejected"
+        | "AssessmentPending"
+        | "ClassificationFiled"
+        | "ClassificationMissing"
+        | "ClassificationDisputed"
+        | "NotSegregated"
+        // PEP / monitoring extensions.
+        | "AllPrincipalsClear"
+        | "AnyPrincipalFailed"
+        | "NoPepIdentified"
+        | "PepIdentifiedEddCurrent"
+        | "Current"
+        | "Lapsed"
+        // VASP capital + supervision.
+        | "CapitalMet"
+        | "CapitalShortfall"
+        | "SupervisionCurrent"
+        | "SupervisionInProgress"
+        | "SupervisionOverdue"
+        // Prospera FSRA application + KYC ladder rungs.
+        | "FsraAuthorized"
+        | "FsraSubmitted"
+        | "FsraRejected"
+        | "KycApproved"
+        | "KycPending"
+        | "KycFailed" => Some(Status),
 
         // ── USA Reg D §230.503 — ExemptionCode family ───────────────
         // (17 C.F.R. §§230.501–230.506, §4(a)(2), Reg S, Reg CF, Reg A.
@@ -903,6 +1247,32 @@ pub fn constructor_family(name: &str) -> Option<ConstructorFamily> {
         "CounselFilingPath" | "CredentialsAbsent" | "CredentialsProvisioned" => {
             Some(EdgarCredentialStatus)
         }
+
+        // ── G2 closure (2026-05-07) — AmlCddRegime family ───────────
+        // Per-jurisdiction AML/CDD regulation tags scrutinised by
+        // `aml_cdd_jurisdiction` accessor matches.
+        "KyCimaAmlr"
+        | "BmBmaGuidance"
+        | "JeJfscHandbook"
+        | "GgGfscHandbook"
+        | "ImIomfsaHandbook"
+        | "VgFscCode"
+        | "UkMlr2017"
+        | "UsCipMinimum"
+        | "SgMasNotice626"
+        | "SgVccN01"
+        | "SgSfa04N02"
+        | "HkAmloSch2"
+        | "HkHkmaGuideline"
+        | "HkSfcGuideline"
+        | "DeGwG"
+        | "EuFiveAmld"
+        | "EuSixAmld"
+        | "EuAmlr"
+        | "AeCbuaeStandards"
+        | "AeScaRegulations"
+        | "AeDifcDfsa"
+        | "AeAdgmFsra" => Some(AmlCddRegime),
 
         _ => None,
     }
@@ -1062,6 +1432,72 @@ pub fn accessor_families(accessor: &str) -> Option<&'static [ConstructorFamily]>
         "general_solicitation_status" => Some(&[SolicitationStatus]),
         "bad_actor_disqualification_status" => Some(&[BadActorStatus, Status]),
         "edgar_credential_status" => Some(&[EdgarCredentialStatus]),
+
+        // ── G2 closure (2026-05-07) — accessor families ──────────────
+        //
+        // Per-jurisdiction AML/CDD regime tag accessor (Step-4 PoA programs).
+        "aml_cdd_jurisdiction" => Some(&[AmlCddRegime]),
+        // Cayman AML 2020 + Cayman AML programme review status accessors.
+        "recordkeeping_status"
+        | "mlro_appointment_status"
+        | "aml_audit_status"
+        | "aml_program_status"
+        | "screening_freshness_status"
+        | "ofac_sdn_screening_status"
+        | "fiu_report_status"
+        | "es_filing_status"
+        | "ciga_status"
+        // Cayman DITC (CRS / FATCA / CbCR) — pure-status ladders.
+        | "ditc_enrolment_status"
+        | "crs_filing_status"
+        | "cbcr_filing_status"
+        | "self_certification_status"
+        | "tax_exemption_undertaking_status"
+        // UK HMRC — corporation-tax / VAT.
+        | "ct_filing_status"
+        | "vat_registration_status"
+        // Singapore IRAS — corporate-income-tax / GST.
+        | "cit_filing_status"
+        | "gst_registration_status"
+        // Cayman holding-company reduced-substance test (Status only).
+        | "holding_company_reduced_substance_status"
+        // VARA prudential VA module (modules/lex/adgm/vara_digital_assets.lex).
+        | "prudential_va_module_status"
+        // Cayman VASP supervision / capital / tech-audit / travel-rule /
+        // token-classification / AML-program ladders.
+        | "vasp_supervision_status"
+        | "vasp_capital_adequacy"
+        | "technology_audit_status"
+        | "travel_rule_status"
+        | "token_classification_status"
+        // Cayman VASP segregation status (Status family).
+        | "segregation_status"
+        // Prospera regime selector / reciprocity / Council resolution receipt.
+        | "selected_regime_status"
+        | "reciprocity_attestation_status"
+        | "council_approval_receipt_status"
+        // Prospera investor classification — distinct from kyc_aml_status.
+        | "kyc_status" => Some(&[Status]),
+
+        // Cayman ES adequacy accessors accept both JurisdictionAdequacy
+        // and Status families (Adequate/Inadequate constructors live in
+        // JurisdictionAdequacy; the bespoke adequacy ladders extend Status).
+        "adequate_employees_and_premises_status" | "adequate_opex_status" => {
+            Some(&[JurisdictionAdequacy, Status])
+        }
+
+        // Cayman VASP Act 2020 — license-category accessor accepts both
+        // LicenseType (the new VaspLicense* constructors) and Status
+        // (existing licensing-status ladder rungs).
+        "vasp_license_category" => Some(&[LicenseType, Status]),
+
+        // Jurisdiction-typed accessors added in G2:
+        // AIFMD Art. 18 substance — manager physical-location accessors.
+        "aifm_portfolio_manager_location" | "aifm_risk_manager_location" => {
+            Some(&[Jurisdiction])
+        }
+        // FATF Rec. 16 — beneficiary VASP jurisdiction (Travel Rule).
+        "beneficiary_vasp_jurisdiction" => Some(&[Jurisdiction]),
 
         _ => None,
     }
@@ -1724,6 +2160,79 @@ pub fn legacy_fixture_prelude() -> Context {
     // extension in this wave.
     ctx = ctx.with_named_constant("US_SEC_Counsel", constant("ComplianceTag"));
 
+    // ── G2 closure (2026-05-07) — authority refs and typed-discretion
+    // hole markers ──────────────────────────────────────────────────
+    //
+    // Each MISSING-PRELUDE marker in
+    // ~/kernel/modules/lex/{cayman,prospera,uk,singapore,usa/states/...}/*.lex
+    // for an authority-named typed discretion hole resolves through
+    // these names. Per the US_SEC_Counsel pattern, each is typed at
+    // ComplianceTag for elaboration-time name resolution. A richer
+    // AuthorityRef / regulator-graph extension that distinguishes
+    // recognition-grade and acceptance semantics is a follow-up
+    // frontier (tracked in the G2 punch list at
+    // ~/kernel/docs/architecture/frontier-work/G2-MISSING-PRELUDE-CLOSURE.md).
+    for authority_ref in [
+        // Cayman: Department for International Tax Cooperation (DITC).
+        "DITC",
+        // Cayman: Cayman Islands Monetary Authority.
+        "KY_CIMA",
+        // BVI Financial Services Commission.
+        "VG_FSC",
+        // Bermuda Monetary Authority.
+        "BM_BMA",
+        // Jersey Financial Services Commission.
+        "JE_JFSC",
+        // Guernsey Financial Services Commission.
+        "GG_GFSC",
+        // Isle of Man Financial Services Authority.
+        "IM_IOMFSA",
+        // UK Financial Conduct Authority + HMRC.
+        "UK_FCA",
+        "HMRC",
+        // Singapore Monetary Authority of Singapore + IRAS.
+        "SG_MAS",
+        "IRAS",
+        // Hong Kong HKMA + SFC.
+        "HK_HKMA",
+        "HK_SFC",
+        // Germany BaFin + EU EBA.
+        "DE_BAFIN",
+        "EU_EBA",
+        // UAE Central Bank + Securities Authority + DIFC + ADGM regulators.
+        "AE_CBUAE",
+        "AE_SCA",
+        "AE_DFSA",
+        "AE_FSRA",
+        // Delaware Court of Chancery — DGCL §141(a) fit-and-proper
+        // determinations (modules/lex/usa/states/us-de/dgcl_corporate_governance.lex
+        // Rule 9). Underscored form for the Lex name; the kernel
+        // authority-graph slug remains us-de-court-of-chancery.
+        "US_DE_Court_Of_Chancery",
+        // Prospera ZEDE Council — authority for council-resolution
+        // discretion holes (modules/lex/prospera/authority_council_approval.lex).
+        "Prospera_Council",
+        // ── Typed-discretion-hole markers ────────────────────────────
+        // Each names a discretion hole that is presently counsel-attested
+        // at runtime; the prelude resolves the name so elaboration
+        // succeeds. Closure to first-class typed-discretion-hole terms
+        // is tracked in the F51-LEX-COVERAGE follow-up frontier.
+        "DitcPenaltyAssessment",                  // cayman/tax_neutrality.lex
+        "HmrcEnquiryDiscretion",                  // uk/tax_corporation_tax.lex
+        "DiscoveryAssessment",                    // uk/tax_corporation_tax.lex
+        "ComptrollerDiscretion",                  // singapore/tax_treaties.lex
+        "GeneralAntiAvoidanceRule",               // singapore/tax_treaties.lex
+        "ArbitralMeritDetermination",             // prospera/arbitration.lex
+        "CouncilResolutionIssuance",              // prospera/authority_council_approval.lex
+        "USPersonDetermination",                  // prospera/investor_classification.lex
+        "AccreditedInvestorVerification",         // prospera/investor_classification.lex
+        "RegimeAvailabilityDetermination",        // prospera/regime_selector.lex
+        "HondurasLMVDigitalAssetClassification",  // prospera/fundraising_regime_classifier.lex
+        "AdequateProceduresDetermination",        // uk/bribery_act_2010.lex
+    ] {
+        ctx = ctx.with_named_constant(authority_ref, constant("ComplianceTag"));
+    }
+
     ctx
 }
 
@@ -1753,7 +2262,11 @@ mod tests {
     fn structural_prelude_contains_only_structural_symbols() {
         let ctx = structural_prelude();
 
-        assert_eq!(ctx.global_len(), 18);
+        // 2026-05-07 (G2 closure — MISSING-PRELUDE migration): raised
+        // from 18 to 20 to admit the SanctionsResult constructor
+        // extensions `Match` and `PotentialMatch` lifted out of
+        // modules/lex/cayman/sanctions_screening_loop.lex.
+        assert_eq!(ctx.global_len(), 20);
 
         for name in CORE_TYPES {
             assert_eq!(ctx.lookup_named_constant(name), Some(&type0()));
@@ -1822,7 +2335,15 @@ mod tests {
         let legacy = legacy_fixture_prelude();
         let compliance = compliance_prelude();
 
-        assert_eq!(legacy.global_len(), 433);
+        // 2026-05-07 (G2 closure — MISSING-PRELUDE migration): raised
+        // from 433 to 601 to admit the cross-jurisdictional rule
+        // surface lifted out of `-- MISSING-PRELUDE: <name>` markers
+        // in ~/kernel/modules/lex/{adgm,cayman,prospera,uk,singapore,
+        // hong_kong,uae,eu,de,bermuda,jersey,guernsey,iom,bvi,
+        // luxembourg,usa/states/...}/*.lex. See the size-pin block
+        // below in `prelude_context_size_is_stable` for the per-
+        // category accounting.
+        assert_eq!(legacy.global_len(), 601);
         assert_eq!(compliance.global_len(), legacy.global_len());
 
         for name in RULE_REFERENCED_CONSTANTS
@@ -1976,7 +2497,95 @@ mod tests {
         // FormDFilingStatus/BadActorStatus families AND the overlapping
         // ShareForm/Status families, so those existing constructors
         // continue to resolve unchanged.
-        assert_eq!(ctx.global_len(), 433);
+        //
+        // 2026-05-07 (G2 closure — MISSING-PRELUDE migration): raised
+        // from 433 to 601 (+168) to admit the cross-jurisdictional rule
+        // surface lifted out of `-- MISSING-PRELUDE: <name>` markers
+        // in ~/kernel/modules/lex/{adgm,cayman,prospera,uk,singapore,
+        // hong_kong,uae,eu,de,bermuda,jersey,guernsey,iom,bvi,
+        // luxembourg,usa/states/...}/*.lex. Per-category accounting:
+        //   +2  SANCTIONS_CONSTRUCTORS (Match, PotentialMatch — for
+        //                               cayman/sanctions_screening_loop.lex)
+        //   +9  TAG_CONSTRUCTORS · Jurisdiction (USDE, BM, JE, GG, IM,
+        //                                       DE, EU, AE, BV)
+        //  +22  TAG_CONSTRUCTORS · AmlCddRegime (KyCimaAmlr,
+        //                          BmBmaGuidance, JeJfscHandbook,
+        //                          GgGfscHandbook, ImIomfsaHandbook,
+        //                          VgFscCode, UkMlr2017, UsCipMinimum,
+        //                          SgMasNotice626, SgVccN01,
+        //                          SgSfa04N02, HkAmloSch2,
+        //                          HkHkmaGuideline, HkSfcGuideline,
+        //                          DeGwG, EuFiveAmld, EuSixAmld,
+        //                          EuAmlr, AeCbuaeStandards,
+        //                          AeScaRegulations, AeDifcDfsa,
+        //                          AeAdgmFsra)
+        //  +50  TAG_CONSTRUCTORS · Status (AML/CDD ladder rungs, OFAC
+        //                          SDN buckets, sanctions freshness, ES
+        //                          adequacy, VASP capital/supervision/
+        //                          tech-audit/travel-rule/token-
+        //                          classification, Cayman PoCA STR/FIU
+        //                          buckets, PEP/monitoring extensions,
+        //                          Prospera FSRA/KYC ladders. `Adequate`
+        //                          and `Segregated` reused from existing
+        //                          JurisdictionAdequacy / Status families.)
+        //   +3  TAG_CONSTRUCTORS · LicenseType (VaspLicenseCustodian,
+        //                          VaspLicenseTradingPlatform,
+        //                          VaspRegistrationOnly — Cayman VASP
+        //                          Act 2020 license categories.)
+        //   +5  NAT_ACCESSORS (aifm_local_staff_count,
+        //                      aifm_conducting_officer_count,
+        //                      vas_activity_classes, transfer_amount_usd,
+        //                      es_activity_class_count)
+        //   +7  BOOL_ACCESSORS (proof_of_address_on_file,
+        //                       requires_poa_composed, path_requires_poa,
+        //                       aifm_physical_office_in_lu,
+        //                       holding_company_reduced_substance,
+        //                       economic_substance_applicability_attestation,
+        //                       simplified_due_diligence_eligible)
+        //  +37  TAG_ACCESSORS (aml_cdd_jurisdiction, recordkeeping_status,
+        //                      mlro_appointment_status, aml_audit_status,
+        //                      aml_program_status, ofac_sdn_screening_status,
+        //                      screening_freshness_status, vasp_license_category,
+        //                      segregation_status, prudential_va_module_status,
+        //                      es_filing_status, ciga_status,
+        //                      adequate_employees_and_premises_status,
+        //                      adequate_opex_status,
+        //                      holding_company_reduced_substance_status,
+        //                      ditc_enrolment_status, crs_filing_status,
+        //                      cbcr_filing_status, self_certification_status,
+        //                      tax_exemption_undertaking_status,
+        //                      ct_filing_status, vat_registration_status,
+        //                      cit_filing_status, gst_registration_status,
+        //                      fiu_report_status, vasp_supervision_status,
+        //                      vasp_capital_adequacy, technology_audit_status,
+        //                      travel_rule_status, token_classification_status,
+        //                      selected_regime_status,
+        //                      reciprocity_attestation_status,
+        //                      council_approval_receipt_status,
+        //                      kyc_status, aifm_portfolio_manager_location,
+        //                      aifm_risk_manager_location,
+        //                      beneficiary_vasp_jurisdiction)
+        //  +33  with_named_constant (G2 authority refs DITC, KY_CIMA,
+        //                            VG_FSC, BM_BMA, JE_JFSC, GG_GFSC,
+        //                            IM_IOMFSA, UK_FCA, HMRC, SG_MAS,
+        //                            IRAS, HK_HKMA, HK_SFC, DE_BAFIN,
+        //                            EU_EBA, AE_CBUAE, AE_SCA, AE_DFSA,
+        //                            AE_FSRA, US_DE_Court_Of_Chancery,
+        //                            Prospera_Council; typed-discretion-
+        //                            hole markers DitcPenaltyAssessment,
+        //                            HmrcEnquiryDiscretion,
+        //                            DiscoveryAssessment,
+        //                            ComptrollerDiscretion,
+        //                            GeneralAntiAvoidanceRule,
+        //                            ArbitralMeritDetermination,
+        //                            CouncilResolutionIssuance,
+        //                            USPersonDetermination,
+        //                            AccreditedInvestorVerification,
+        //                            RegimeAvailabilityDetermination,
+        //                            HondurasLMVDigitalAssetClassification,
+        //                            AdequateProceduresDetermination)
+        //  Subtotal: 2+9+22+50+3+5+7+37+33 = 168.
+        assert_eq!(ctx.global_len(), 601);
     }
 
     // ── Constructor family tests ────────────────────────────────────
@@ -2454,5 +3063,412 @@ mod tests {
                 "Reg D constructor {name} has no family assignment"
             );
         }
+    }
+
+    // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration tests ────
+
+    /// Every symbol lifted into the prelude for the
+    /// `~/kernel/modules/lex/{adgm,cayman,prospera,uk,singapore,...}/*.lex`
+    /// MISSING-PRELUDE markers resolves via the prelude context lookup.
+    /// File-level coverage gate for the G2 closure: if any G2 symbol
+    /// regresses out of the prelude, this test fails.
+    #[test]
+    fn g2_prelude_extensions_are_resolvable() {
+        let ctx = legacy_fixture_prelude();
+
+        // 9 new Jurisdiction codes (USDE Delaware + 8 harbor markers).
+        let g2_jurisdictions: &[&str] =
+            &["USDE", "BM", "JE", "GG", "IM", "DE", "EU", "AE", "BV"];
+
+        // 22 AmlCddRegime constructors (per-jurisdiction AML/CDD rule-sets).
+        let g2_aml_cdd_regimes: &[&str] = &[
+            "KyCimaAmlr",
+            "BmBmaGuidance",
+            "JeJfscHandbook",
+            "GgGfscHandbook",
+            "ImIomfsaHandbook",
+            "VgFscCode",
+            "UkMlr2017",
+            "UsCipMinimum",
+            "SgMasNotice626",
+            "SgVccN01",
+            "SgSfa04N02",
+            "HkAmloSch2",
+            "HkHkmaGuideline",
+            "HkSfcGuideline",
+            "DeGwG",
+            "EuFiveAmld",
+            "EuSixAmld",
+            "EuAmlr",
+            "AeCbuaeStandards",
+            "AeScaRegulations",
+            "AeDifcDfsa",
+            "AeAdgmFsra",
+        ];
+
+        // Status / LicenseType ladder rungs lifted out of MISSING-PRELUDE
+        // markers (52 across AML/CDD, sanctions, ES adequacy, VASP, KYC).
+        let g2_status_extensions: &[&str] = &[
+            "Appointed",
+            "NotAppointed",
+            "AuditCurrent",
+            "Breached",
+            "NoMatchReportingNotRequired",
+            "MatchReportedToFiu",
+            "MatchPendingReport",
+            "MatchUnreported",
+            "OfacClear",
+            "OfacMatch",
+            "OfacPotentialMatch",
+            "OfacNotApplicable",
+            "FreshWithin24h",
+            "ExpiredBeyond24h",
+            "Inadequate",
+            "ReducedSubstanceMet",
+            "ReducedSubstanceNotMet",
+            "CigaPerformedLocally",
+            "CigaOutsourcedExternally",
+            "CigaNotPerformed",
+            "TravelRuleImplemented",
+            "TravelRuleMissing",
+            "TravelRulePartial",
+            "TechAuditPassed",
+            "TechAuditFailed",
+            "TechAuditPending",
+            "ProgramApproved",
+            "ProgramRejected",
+            "AssessmentPending",
+            "ClassificationFiled",
+            "ClassificationMissing",
+            "ClassificationDisputed",
+            "NotSegregated",
+            "AllPrincipalsClear",
+            "AnyPrincipalFailed",
+            "NoPepIdentified",
+            "PepIdentifiedEddCurrent",
+            "Current",
+            "Lapsed",
+            "CapitalMet",
+            "CapitalShortfall",
+            "SupervisionCurrent",
+            "SupervisionInProgress",
+            "SupervisionOverdue",
+            "FsraAuthorized",
+            "FsraSubmitted",
+            "FsraRejected",
+            "KycApproved",
+            "KycPending",
+            "KycFailed",
+            "VaspLicenseCustodian",
+            "VaspLicenseTradingPlatform",
+            "VaspRegistrationOnly",
+        ];
+
+        // 2 SanctionsResult extensions lifted from
+        // cayman/sanctions_screening_loop.lex.
+        let g2_sanctions_extensions: &[&str] = &["Match", "PotentialMatch"];
+
+        // 5 NAT_ACCESSORS.
+        let g2_nat_accessors: &[&str] = &[
+            "aifm_local_staff_count",
+            "aifm_conducting_officer_count",
+            "vas_activity_classes",
+            "transfer_amount_usd",
+            "es_activity_class_count",
+        ];
+
+        // 7 BOOL_ACCESSORS (composed PoA + path PoA + AIFMD substance +
+        // ES applicability + simplified-DD eligibility).
+        let g2_bool_accessors: &[&str] = &[
+            "proof_of_address_on_file",
+            "requires_poa_composed",
+            "path_requires_poa",
+            "aifm_physical_office_in_lu",
+            "holding_company_reduced_substance",
+            "economic_substance_applicability_attestation",
+            "simplified_due_diligence_eligible",
+        ];
+
+        // 37 TAG_ACCESSORS (per-jurisdiction ladder accessors).
+        let g2_tag_accessors: &[&str] = &[
+            "aml_cdd_jurisdiction",
+            "recordkeeping_status",
+            "mlro_appointment_status",
+            "aml_audit_status",
+            "ofac_sdn_screening_status",
+            "screening_freshness_status",
+            "vasp_license_category",
+            "segregation_status",
+            "prudential_va_module_status",
+            "es_filing_status",
+            "ciga_status",
+            "adequate_employees_and_premises_status",
+            "adequate_opex_status",
+            "holding_company_reduced_substance_status",
+            "ditc_enrolment_status",
+            "crs_filing_status",
+            "cbcr_filing_status",
+            "self_certification_status",
+            "tax_exemption_undertaking_status",
+            "ct_filing_status",
+            "vat_registration_status",
+            "cit_filing_status",
+            "gst_registration_status",
+            "fiu_report_status",
+            "vasp_supervision_status",
+            "vasp_capital_adequacy",
+            "technology_audit_status",
+            "travel_rule_status",
+            "token_classification_status",
+            "aml_program_status",
+            "selected_regime_status",
+            "reciprocity_attestation_status",
+            "council_approval_receipt_status",
+            "kyc_status",
+            "aifm_portfolio_manager_location",
+            "aifm_risk_manager_location",
+            "beneficiary_vasp_jurisdiction",
+        ];
+
+        // 21 authority refs + 12 typed-discretion-hole markers.
+        let g2_authority_refs: &[&str] = &[
+            "DITC",
+            "KY_CIMA",
+            "VG_FSC",
+            "BM_BMA",
+            "JE_JFSC",
+            "GG_GFSC",
+            "IM_IOMFSA",
+            "UK_FCA",
+            "HMRC",
+            "SG_MAS",
+            "IRAS",
+            "HK_HKMA",
+            "HK_SFC",
+            "DE_BAFIN",
+            "EU_EBA",
+            "AE_CBUAE",
+            "AE_SCA",
+            "AE_DFSA",
+            "AE_FSRA",
+            "US_DE_Court_Of_Chancery",
+            "Prospera_Council",
+            "DitcPenaltyAssessment",
+            "HmrcEnquiryDiscretion",
+            "DiscoveryAssessment",
+            "ComptrollerDiscretion",
+            "GeneralAntiAvoidanceRule",
+            "ArbitralMeritDetermination",
+            "CouncilResolutionIssuance",
+            "USPersonDetermination",
+            "AccreditedInvestorVerification",
+            "RegimeAvailabilityDetermination",
+            "HondurasLMVDigitalAssetClassification",
+            "AdequateProceduresDetermination",
+        ];
+
+        for name in g2_jurisdictions
+            .iter()
+            .chain(g2_aml_cdd_regimes.iter())
+            .chain(g2_status_extensions.iter())
+            .chain(g2_sanctions_extensions.iter())
+            .chain(g2_nat_accessors.iter())
+            .chain(g2_bool_accessors.iter())
+            .chain(g2_tag_accessors.iter())
+            .chain(g2_authority_refs.iter())
+        {
+            assert!(
+                ctx.contains_named_constant(name),
+                "G2 prelude extension missing symbol: {name}"
+            );
+        }
+
+        // Pin counts so a future accidental removal of any symbol is
+        // caught by arithmetic in addition to membership.
+        assert_eq!(g2_jurisdictions.len(), 9);
+        assert_eq!(g2_aml_cdd_regimes.len(), 22);
+        assert_eq!(g2_status_extensions.len(), 53);
+        assert_eq!(g2_sanctions_extensions.len(), 2);
+        assert_eq!(g2_nat_accessors.len(), 5);
+        assert_eq!(g2_bool_accessors.len(), 7);
+        assert_eq!(g2_tag_accessors.len(), 37);
+        assert_eq!(g2_authority_refs.len(), 33);
+    }
+
+    /// G2 jurisdiction additions resolve through `office_country` /
+    /// `registered_office_country` accessors. Pins the policy so the
+    /// Step-3 us-de DGCL Rule 12 (`registered_office_country` against
+    /// `USDE`) typechecks once the kernel side migrates.
+    #[test]
+    fn g2_office_country_admits_new_jurisdictions() {
+        for j in &["USDE", "BM", "JE", "GG", "IM", "DE", "EU", "AE", "BV"] {
+            assert!(
+                validate_match_family("registered_office_country", j),
+                "registered_office_country must admit G2 jurisdiction {j}"
+            );
+            assert!(
+                validate_match_family("office_country", j),
+                "office_country must admit G2 jurisdiction {j}"
+            );
+        }
+    }
+
+    /// `aml_cdd_jurisdiction` accessor admits the new AmlCddRegime
+    /// constructors and rejects unrelated families. Pins the policy
+    /// so `match ctx.aml_cdd_jurisdiction return Bool with | KyCimaAmlr
+    /// => True | _ => True` typechecks across all sixteen Step-4 PoA
+    /// programs.
+    #[test]
+    fn g2_aml_cdd_jurisdiction_admits_aml_cdd_regime_only() {
+        // AmlCddRegime members admit.
+        for ctor in &[
+            "KyCimaAmlr",
+            "BmBmaGuidance",
+            "JeJfscHandbook",
+            "GgGfscHandbook",
+            "ImIomfsaHandbook",
+            "VgFscCode",
+            "UkMlr2017",
+            "UsCipMinimum",
+            "SgMasNotice626",
+            "SgVccN01",
+            "SgSfa04N02",
+            "HkAmloSch2",
+            "HkHkmaGuideline",
+            "HkSfcGuideline",
+            "DeGwG",
+            "EuFiveAmld",
+            "EuSixAmld",
+            "EuAmlr",
+            "AeCbuaeStandards",
+            "AeScaRegulations",
+            "AeDifcDfsa",
+            "AeAdgmFsra",
+        ] {
+            assert!(
+                validate_match_family("aml_cdd_jurisdiction", ctor),
+                "aml_cdd_jurisdiction must admit AmlCddRegime constructor {ctor}"
+            );
+        }
+        // Unrelated families rejected.
+        assert!(!validate_match_family("aml_cdd_jurisdiction", "ADGM"));
+        assert!(!validate_match_family("aml_cdd_jurisdiction", "Active"));
+        assert!(!validate_match_family("aml_cdd_jurisdiction", "Filed"));
+    }
+
+    /// Cayman ES adequacy accessors admit both JurisdictionAdequacy
+    /// (`Adequate` / `Inadequate`) and Status families. Pins the
+    /// policy so modules/lex/cayman/economic_substance.lex Rule 4 + 5
+    /// typecheck without re-authoring.
+    #[test]
+    fn g2_es_adequacy_admits_jurisdictionadequacy_and_status() {
+        for accessor in &["adequate_employees_and_premises_status", "adequate_opex_status"] {
+            assert!(validate_match_family(accessor, "Adequate"));
+            assert!(validate_match_family(accessor, "Inadequate"));
+            // Status family pass-through verdicts.
+            assert!(validate_match_family(accessor, "Pending"));
+        }
+        // Unrelated rejected.
+        assert!(!validate_match_family("adequate_opex_status", "ADGM"));
+    }
+
+    /// VASP license-category accessor admits both LicenseType (the new
+    /// VaspLicense* constructors) and Status families (the existing
+    /// licensing-status ladder rungs Active / Suspended / Revoked). Pins
+    /// the policy so cayman/vasp_act.lex Rule 5 typechecks.
+    #[test]
+    fn g2_vasp_license_category_admits_licensetype_and_status() {
+        for ctor in &[
+            "VaspLicenseCustodian",
+            "VaspLicenseTradingPlatform",
+            "VaspRegistrationOnly",
+        ] {
+            assert!(
+                validate_match_family("vasp_license_category", ctor),
+                "vasp_license_category must admit {ctor}"
+            );
+        }
+        // Status rungs admit (existing LicenseType-Status overlap pattern).
+        assert!(validate_match_family("vasp_license_category", "Suspended"));
+        assert!(validate_match_family("vasp_license_category", "Revoked"));
+        // Unrelated rejected.
+        assert!(!validate_match_family("vasp_license_category", "ADGM"));
+        assert!(!validate_match_family("vasp_license_category", "IBC"));
+    }
+
+    /// AIFMD Article 18 manager-location accessors admit Jurisdiction
+    /// only — the modules/lex/luxembourg/aifmd_aif_substance.lex
+    /// rules scrutinise them as `Jurisdiction` returning Bool.
+    #[test]
+    fn g2_aifm_location_admits_jurisdiction_only() {
+        for accessor in &["aifm_portfolio_manager_location", "aifm_risk_manager_location"] {
+            assert!(validate_match_family(accessor, "LU"));
+            assert!(validate_match_family(accessor, "GB"));
+            assert!(!validate_match_family(accessor, "Active"));
+            assert!(!validate_match_family(accessor, "Filed"));
+        }
+    }
+
+    /// Every G2 AmlCddRegime constructor has a family assignment in
+    /// `constructor_family()`. The G2-specific instance of the global
+    /// invariant enforced by
+    /// `constructor_family_coverage_matches_tag_constructors`.
+    #[test]
+    fn g2_every_aml_cdd_regime_constructor_has_a_family() {
+        for name in &[
+            "KyCimaAmlr",
+            "BmBmaGuidance",
+            "JeJfscHandbook",
+            "GgGfscHandbook",
+            "ImIomfsaHandbook",
+            "VgFscCode",
+            "UkMlr2017",
+            "UsCipMinimum",
+            "SgMasNotice626",
+            "SgVccN01",
+            "SgSfa04N02",
+            "HkAmloSch2",
+            "HkHkmaGuideline",
+            "HkSfcGuideline",
+            "DeGwG",
+            "EuFiveAmld",
+            "EuSixAmld",
+            "EuAmlr",
+            "AeCbuaeStandards",
+            "AeScaRegulations",
+            "AeDifcDfsa",
+            "AeAdgmFsra",
+        ] {
+            assert_eq!(
+                constructor_family(name),
+                Some(ConstructorFamily::AmlCddRegime),
+                "AmlCddRegime constructor {name} not assigned to AmlCddRegime family"
+            );
+        }
+    }
+
+    /// Sanctions-result extensions resolve as SanctionsResult-typed
+    /// (not ComplianceTag). Pins the policy so
+    /// modules/lex/cayman/sanctions_screening_loop.lex Rule 1
+    /// (`match ctx.sanctions_check return ComplianceVerdict with
+    /// | Clear => Compliant | Match => NonCompliant
+    /// | PotentialMatch => Pending`) typechecks against the existing
+    /// `sanctions_check` accessor of type
+    /// `IncorporationContext → SanctionsResult`.
+    #[test]
+    fn g2_sanctions_extensions_typed_as_sanctions_result() {
+        let ctx = legacy_fixture_prelude();
+        for name in &["Match", "PotentialMatch"] {
+            assert_eq!(
+                ctx.lookup_named_constant(name),
+                Some(&constant("SanctionsResult")),
+                "G2 SanctionsResult constructor {name} typed incorrectly"
+            );
+        }
+        // Existing `Clear` continues to resolve.
+        assert_eq!(
+            ctx.lookup_named_constant("Clear"),
+            Some(&constant("SanctionsResult"))
+        );
     }
 }
