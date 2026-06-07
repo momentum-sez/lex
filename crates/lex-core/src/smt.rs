@@ -872,6 +872,16 @@ fn declaration_sort_key(decl: &str) -> String {
 /// * Application form `App(App(op, lhs), rhs)` where `op` is a recognized
 ///   built-in comparison (`>`, `=`, `<`, `>=`, `<=`).
 ///
+/// # Verdict-body admissibility precondition
+///
+/// Every decision/exception arm body whose verdict is extracted (via
+/// [`extract_verdict_from_body`]) must reduce to one of the three legal Lex
+/// verdict constants — `Compliant`, `NonCompliant`, or `Pending` — possibly
+/// under `Lambda` binders or inside a `Match` with a verdict-constant arm. A
+/// body that does not satisfy this precondition is rejected
+/// ([`SmtTranslationError::Unsupported`] / [`SmtTranslationError::InvalidVerdict`]),
+/// never silently defaulted to a verdict.
+///
 /// Any other shape returns [`SmtTranslationError::Unsupported`].
 pub fn translate_lex_to_smt(
     term: &Term,
@@ -1570,7 +1580,7 @@ fn translate_defeasible(
     for exc in &rule.exceptions {
         let guard_body = unwrap_lambda_body(&exc.guard);
         let guard_sexpr = translate_term_to_bool(guard_body, ctx)?;
-        let verdict = extract_verdict_from_body(&exc.body);
+        let verdict = extract_verdict_from_body(&exc.body, &rule.name.name)?;
         let verdict_sym = verdict_literal(&verdict);
         let priority = exc.priority.unwrap_or(0);
         ctx.push_assertion(format!(
@@ -1612,7 +1622,7 @@ fn translate_match(
     let mut default = String::from("2"); // Pending default
     let mut cases: Vec<(String, String)> = Vec::new();
     for (i, br) in branches.iter().enumerate() {
-        let body_verdict = extract_verdict_from_body(&br.body);
+        let body_verdict = extract_verdict_from_body(&br.body, "match")?;
         let body_sexpr = verdict_literal(&body_verdict);
         match &br.pattern {
             Pattern::Wildcard => {
@@ -1803,30 +1813,80 @@ fn unwrap_lambda_body(term: &Term) -> &Term {
     }
 }
 
-fn extract_verdict_from_body(term: &Term) -> String {
-    match term {
-        Term::Lambda { body, .. } => extract_verdict_from_body(body),
+/// Extract the verdict named by the body of a decision/exception arm.
+///
+/// # Admissibility precondition
+///
+/// The body must reduce to one of the three legal Lex verdict constants
+/// (`Compliant`, `NonCompliant`, `Pending`), optionally wrapped in
+/// `Lambda` binders, OR be a `Match` at least one of whose
+/// constructor/wildcard arms is such a verdict constant. Any other shape
+/// is NOT admissible for verdict extraction and is a hard error — there is
+/// no silent default. A silently-defaulted verdict would be unsound: it
+/// would assert a compliance decision the rule body does not actually make.
+///
+/// `context` names the surrounding rule/table for diagnostics and is used
+/// as the `table` field of an [`SmtTranslationError::InvalidVerdict`].
+fn extract_verdict_from_body(
+    term: &Term,
+    context: &str,
+) -> Result<String, SmtTranslationError> {
+    let name = match term {
+        Term::Lambda { body, .. } => return extract_verdict_from_body(body, context),
         Term::Match { branches, .. } => {
-            // Return the verdict of the first non-default (non-wildcard) arm,
-            // defaulting to Pending if only a wildcard is present.
+            // Prefer the first constructor arm whose body is a verdict
+            // constant; otherwise the wildcard arm. If neither arm yields a
+            // verdict constant, the Match is not an admissible verdict body.
+            let mut found: Option<String> = None;
             for br in branches {
                 if let Pattern::Constructor { .. } = &br.pattern {
                     if let Term::Constant(q) = &br.body {
-                        return qual_name(q);
+                        found = Some(qual_name(q));
+                        break;
                     }
                 }
             }
-            for br in branches {
-                if matches!(br.pattern, Pattern::Wildcard) {
-                    if let Term::Constant(q) = &br.body {
-                        return qual_name(q);
+            if found.is_none() {
+                for br in branches {
+                    if matches!(br.pattern, Pattern::Wildcard) {
+                        if let Term::Constant(q) = &br.body {
+                            found = Some(qual_name(q));
+                            break;
+                        }
                     }
                 }
             }
-            "Pending".to_string()
+            match found {
+                Some(n) => n,
+                None => {
+                    return Err(SmtTranslationError::Unsupported {
+                        shape: "Term::Match without a verdict-constant arm".to_string(),
+                        reason: "verdict extraction requires at least one Match arm whose \
+                                 body is a Compliant/NonCompliant/Pending constant"
+                            .to_string(),
+                    });
+                }
+            }
         }
         Term::Constant(q) => qual_name(q),
-        _ => "Pending".to_string(),
+        other => {
+            return Err(SmtTranslationError::Unsupported {
+                shape: lex_term_shape(other),
+                reason: "verdict extraction requires a verdict constant, a Lambda \
+                         wrapping one, or a Match with a verdict-constant arm"
+                    .to_string(),
+            });
+        }
+    };
+    // Fail-closed on a non-verdict constant name (e.g. a constructor that is
+    // not one of the three legal verdicts). Mirrors the up-front validation
+    // in `translate_decision_table`.
+    match name.as_str() {
+        "Compliant" | "NonCompliant" | "Pending" => Ok(name),
+        _ => Err(SmtTranslationError::InvalidVerdict {
+            table: context.to_string(),
+            verdict: name,
+        }),
     }
 }
 
@@ -2367,5 +2427,98 @@ mod tests {
             result == SmtResult::Sat || result == SmtResult::Unknown,
             "expected Sat or Unknown for satisfiable threshold query"
         );
+    }
+
+    // -----------------------------------------------------------------
+    // smt-verdict-extraction-silent-fallback regression — a verdict body
+    // must resolve to a legal verdict constant or ERROR; it must never
+    // silently default to "Pending".
+    // -----------------------------------------------------------------
+
+    fn verdict_match(arm_body: Term) -> Term {
+        // match scrutinee with | C => <arm_body>
+        Term::Match {
+            scrutinee: Box::new(Term::constant("x")),
+            return_ty: Box::new(Term::constant("Verdict")),
+            branches: vec![Branch {
+                pattern: Pattern::Constructor {
+                    constructor: Constructor::new(QualIdent::simple("C")),
+                    binders: vec![],
+                },
+                body: arm_body,
+            }],
+        }
+    }
+
+    #[test]
+    fn extract_verdict_accepts_legal_constants() {
+        for v in ["Compliant", "NonCompliant", "Pending"] {
+            assert_eq!(
+                extract_verdict_from_body(&Term::constant(v), "t"),
+                Ok(v.to_string())
+            );
+        }
+    }
+
+    #[test]
+    fn extract_verdict_unwraps_lambda() {
+        let body = Term::lam("ctx", Term::constant("Context"), Term::constant("Compliant"));
+        assert_eq!(extract_verdict_from_body(&body, "t"), Ok("Compliant".to_string()));
+    }
+
+    #[test]
+    fn extract_verdict_from_match_arm() {
+        let body = verdict_match(Term::constant("NonCompliant"));
+        assert_eq!(
+            extract_verdict_from_body(&body, "t"),
+            Ok("NonCompliant".to_string())
+        );
+    }
+
+    #[test]
+    fn extract_verdict_rejects_non_verdict_constant() {
+        // A constant that is not one of the three legal verdicts must NOT
+        // silently become Pending — it must be an InvalidVerdict error.
+        let r = extract_verdict_from_body(&Term::constant("Approved"), "rule-7");
+        assert!(matches!(
+            r,
+            Err(SmtTranslationError::InvalidVerdict { ref verdict, ref table })
+                if verdict == "Approved" && table == "rule-7"
+        ));
+    }
+
+    #[test]
+    fn extract_verdict_rejects_unsupported_body_shape() {
+        // An integer-literal body is not an admissible verdict body. Before
+        // the fix this silently returned "Pending"; now it is a hard error.
+        let r = extract_verdict_from_body(&Term::IntLit(42), "t");
+        assert!(matches!(
+            r,
+            Err(SmtTranslationError::Unsupported { .. })
+        ));
+    }
+
+    #[test]
+    fn extract_verdict_rejects_match_without_verdict_arm() {
+        // A Match whose only arm body is itself a non-constant term yields
+        // no verdict constant → unsupported, not a silent Pending.
+        let body = verdict_match(Term::IntLit(0));
+        let r = extract_verdict_from_body(&body, "t");
+        assert!(matches!(
+            r,
+            Err(SmtTranslationError::Unsupported { .. })
+        ));
+    }
+
+    #[test]
+    fn extract_verdict_match_rejects_non_verdict_constant_arm() {
+        // A Match arm whose body IS a constant but not a legal verdict must
+        // surface InvalidVerdict, never default.
+        let body = verdict_match(Term::constant("Maybe"));
+        let r = extract_verdict_from_body(&body, "t");
+        assert!(matches!(
+            r,
+            Err(SmtTranslationError::InvalidVerdict { ref verdict, .. }) if verdict == "Maybe"
+        ));
     }
 }

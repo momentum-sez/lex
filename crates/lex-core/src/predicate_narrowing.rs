@@ -236,6 +236,21 @@ fn le_number(prop: &LexProposition) -> Option<(&str, &Decimal)> {
     None
 }
 
+/// Extract a temporal window `[not_before, not_after]` from a caveat
+/// proposition, as `(attr, not_before, not_after)`.
+///
+/// Canonical shape: `And(Ge { attr, not_before }, Le { attr, not_after })`.
+/// The two conjuncts may appear in EITHER order — `And(Le, Ge)` is also
+/// accepted — but the bound is always assigned by its *operator*, never by
+/// its position: the `Ge` conjunct is the lower bound (`not_before`), the
+/// `Le` conjunct is the upper bound (`not_after`). Assigning by position is
+/// the bug this function exists to avoid; a positional reading would treat
+/// `And(Le{T2}, Ge{T1})` as the window `[T2, T1]`, silently inverting it.
+///
+/// The conjuncts must (a) reference the same attribute and (b) form a
+/// non-empty interval (`not_before <= not_after`). An inverted window
+/// (`not_after < not_before`) is unsatisfiable — no instant satisfies it —
+/// and is rejected (`None`) so it can never be accepted as a narrowing.
 fn temporal_window(
     prop: &LexProposition,
 ) -> Option<(
@@ -243,16 +258,31 @@ fn temporal_window(
     &chrono::DateTime<chrono::Utc>,
     &chrono::DateTime<chrono::Utc>,
 )> {
-    // Expect `And(Ge { attr, not_before }, Le { attr, not_after })`.
     let LexProposition::And(a, b) = prop else {
         return None;
     };
-    let (a_attr, a_ts) = ge_timestamp(a).or_else(|| le_timestamp_swap(a))?;
-    let (b_attr, b_ts) = le_timestamp(b).or_else(|| ge_timestamp_swap(b))?;
-    if a_attr != b_attr {
+    // Assign each conjunct to a bound by its operator, accepting either
+    // conjunct order. The `Ge` side is the lower bound, the `Le` side the
+    // upper bound.
+    let (lo_attr, not_before, hi_attr, not_after) =
+        match (ge_timestamp(a), le_timestamp(b)) {
+            (Some((la, lt)), Some((ha, ht))) => (la, lt, ha, ht),
+            _ => match (le_timestamp(a), ge_timestamp(b)) {
+                (Some((ha, ht)), Some((la, lt))) => (la, lt, ha, ht),
+                _ => return None,
+            },
+        };
+    if lo_attr != hi_attr {
         return None;
     }
-    Some((a_attr, a_ts, b_ts))
+    // Reject inverted / empty windows. `not_before <= not_after` must hold
+    // for the interval to contain any instant; an inverted window is
+    // unsatisfiable and must never be admitted as a valid (let alone
+    // narrowing) window.
+    if not_before > not_after {
+        return None;
+    }
+    Some((lo_attr, not_before, not_after))
 }
 
 fn ge_timestamp(prop: &LexProposition) -> Option<(&str, &chrono::DateTime<chrono::Utc>)> {
@@ -275,16 +305,6 @@ fn le_timestamp(prop: &LexProposition) -> Option<(&str, &chrono::DateTime<chrono
         return Some((attr.as_str(), t));
     }
     None
-}
-
-/// If the temporal window was built with the `Le` conjunct first, try
-/// matching it as the lower bound of an inverted window. Used for
-/// tolerance during structural recognition.
-fn le_timestamp_swap(prop: &LexProposition) -> Option<(&str, &chrono::DateTime<chrono::Utc>)> {
-    le_timestamp(prop)
-}
-fn ge_timestamp_swap(prop: &LexProposition) -> Option<(&str, &chrono::DateTime<chrono::Utc>)> {
-    ge_timestamp(prop)
 }
 
 fn rate_bounds(prop: &LexProposition) -> Option<(&Decimal, &Decimal)> {
@@ -604,6 +624,137 @@ mod tests {
     fn temporal_broader_window_fails() {
         let parent = temporal("2026-03-01T00:00:00Z", "2026-06-30T00:00:00Z");
         let child = temporal("2026-01-01T00:00:00Z", "2026-12-31T23:59:59Z");
+        assert!(matches!(
+            caveats_narrow(&[parent], &[child]),
+            Err(NarrowingError::NotNarrower { .. }) | Err(NarrowingError::Refuted)
+        ));
+    }
+
+    // -----------------------------------------------------------------
+    // temporal_window_bounds_swap regression — a caveat must only NARROW.
+    // The window recognizer must (a) assign bounds by operator, not by
+    // conjunct position, and (b) reject inverted/empty windows so a
+    // widened or unsatisfiable interval can never be admitted as a
+    // narrowing.
+    // -----------------------------------------------------------------
+
+    /// Build a temporal caveat with the `Le` conjunct FIRST and the `Ge`
+    /// conjunct second (the reverse of the canonical order). `not_before`
+    /// and `not_after` still name the intended lower/upper bound — the
+    /// recognizer must recover them by operator regardless of order.
+    fn temporal_swapped(not_before: &str, not_after: &str) -> LexCaveat {
+        LexCaveat::new(
+            CaveatKind::Temporal,
+            LexProposition::And(
+                Box::new(LexProposition::Le {
+                    attr: "now".into(),
+                    value: ts(not_after),
+                }),
+                Box::new(LexProposition::Ge {
+                    attr: "now".into(),
+                    value: ts(not_before),
+                }),
+            ),
+        )
+    }
+
+    /// Direct unit check on the recognizer: a swapped-order but VALID
+    /// window is recovered with bounds correctly labeled.
+    #[test]
+    fn temporal_window_recognizes_swapped_order() {
+        let cav = temporal_swapped("2026-03-01T00:00:00Z", "2026-06-30T00:00:00Z");
+        let (attr, nb, na) = temporal_window(&cav.predicate).expect("valid swapped window");
+        assert_eq!(attr, "now");
+        assert_eq!(nb, &DateTime::<Utc>::from_str("2026-03-01T00:00:00Z").unwrap());
+        assert_eq!(na, &DateTime::<Utc>::from_str("2026-06-30T00:00:00Z").unwrap());
+        // And nb <= na (non-empty interval).
+        assert!(nb <= na);
+    }
+
+    /// An INVERTED window (`not_after < not_before`) is unsatisfiable and
+    /// must be rejected by the recognizer — canonical conjunct order.
+    #[test]
+    fn temporal_window_rejects_inverted_canonical_order() {
+        // Ge{2026-12-31} ∧ Le{2026-01-01}: lower > upper → empty interval.
+        let cav = temporal("2026-12-31T23:59:59Z", "2026-01-01T00:00:00Z");
+        assert!(temporal_window(&cav.predicate).is_none());
+    }
+
+    /// An inverted window expressed in swapped conjunct order is likewise
+    /// rejected — a positional reader would have mislabeled it as a valid
+    /// (or widened) window. This is the exact swap-bug class.
+    #[test]
+    fn temporal_window_rejects_inverted_swapped_order() {
+        // Le{2026-01-01} first, Ge{2026-12-31} second. Intended lower =
+        // 2026-12-31, upper = 2026-01-01 → inverted, must reject.
+        let cav = temporal_swapped("2026-12-31T23:59:59Z", "2026-01-01T00:00:00Z");
+        assert!(temporal_window(&cav.predicate).is_none());
+    }
+
+    /// End-to-end: a swapped-order but valid child window contained in the
+    /// parent still narrows correctly (operator-based extraction).
+    #[test]
+    fn temporal_swapped_order_narrower_passes() {
+        let parent = temporal("2026-01-01T00:00:00Z", "2026-12-31T23:59:59Z");
+        let child = temporal_swapped("2026-03-01T00:00:00Z", "2026-06-30T00:00:00Z");
+        assert_eq!(caveats_narrow(&[parent], &[child]), Ok(true));
+    }
+
+    /// An inverted window must never be admitted as a STRUCTURAL temporal
+    /// narrowing — neither as child nor as parent. This is the load-bearing
+    /// safety property: the structural containment check must never see an
+    /// inverted (and therefore meaningless) interval. Whether an inverted
+    /// *child* nonetheless narrows vacuously (it authorizes nothing — a
+    /// deny-all, consistent with `subject_empty_child_narrows_nonempty_parent`)
+    /// is decided by the propositional fallback, not by structural temporal.
+    #[test]
+    fn temporal_inverted_window_never_structural_narrowing() {
+        let valid = temporal("2026-01-01T00:00:00Z", "2026-12-31T23:59:59Z");
+        let inverted = temporal("2026-08-01T00:00:00Z", "2026-02-01T00:00:00Z");
+        // Inverted as child against a valid parent: not a structural narrowing.
+        assert_eq!(
+            structural_temporal(&inverted.predicate, &valid.predicate),
+            None
+        );
+        // Inverted as parent: a valid child cannot structurally narrow an
+        // inverted (uninterpretable) parent window either.
+        assert_eq!(
+            structural_temporal(&valid.predicate, &inverted.predicate),
+            None
+        );
+        // Inverted vs inverted: still None — no inverted interval is ever a
+        // recognized window.
+        assert_eq!(
+            structural_temporal(&inverted.predicate, &inverted.predicate),
+            None
+        );
+    }
+
+    /// An inverted (empty) child window authorizes nothing — it is the
+    /// extreme deny-all narrowing and is accepted, exactly as an empty
+    /// subject set is (`subject_empty_child_narrows_nonempty_parent`). The
+    /// key safety guarantee is that this acceptance flows through the
+    /// vacuous propositional path (unsatisfiable child), NOT through a
+    /// structural reading that mislabeled the inverted bounds.
+    #[test]
+    fn temporal_inverted_child_is_deny_all_not_structural() {
+        let parent = temporal("2026-01-01T00:00:00Z", "2026-12-31T23:59:59Z");
+        let inverted_child = temporal("2026-08-01T00:00:00Z", "2026-02-01T00:00:00Z");
+        // The structural recognizer refuses the inverted child …
+        assert_eq!(
+            structural_temporal(&inverted_child.predicate, &parent.predicate),
+            None
+        );
+        // … and the deny-all child narrows vacuously (authorizes nothing).
+        assert_eq!(caveats_narrow(&[parent], &[inverted_child]), Ok(true));
+    }
+
+    /// A widened child window dressed up in swapped conjunct order must
+    /// still fail — the swap must not become a widening backdoor.
+    #[test]
+    fn temporal_swapped_widening_fails() {
+        let parent = temporal("2026-03-01T00:00:00Z", "2026-06-30T00:00:00Z");
+        let child = temporal_swapped("2026-01-01T00:00:00Z", "2026-12-31T23:59:59Z");
         assert!(matches!(
             caveats_narrow(&[parent], &[child]),
             Err(NarrowingError::NotNarrower { .. }) | Err(NarrowingError::Refuted)
