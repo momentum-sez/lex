@@ -186,6 +186,8 @@ pub enum Token {
     Unless,
     /// `priority`
     Priority,
+    /// `applies_to` (rule-level scope clause; Frontier-09)
+    AppliesTo,
     /// `end`
     End,
     /// `Type` (universe sort)
@@ -331,6 +333,7 @@ impl Token {
                 | Token::Defeasible
                 | Token::Unless
                 | Token::Priority
+                | Token::AppliesTo
                 | Token::End
                 | Token::Type
                 | Token::Prop
@@ -426,6 +429,7 @@ impl fmt::Display for Token {
             Token::Defeasible => write!(f, "defeasible"),
             Token::Unless => write!(f, "unless"),
             Token::Priority => write!(f, "priority"),
+            Token::AppliesTo => write!(f, "applies_to"),
             Token::End => write!(f, "end"),
             Token::Type => write!(f, "Type"),
             Token::Prop => write!(f, "Prop"),
@@ -516,6 +520,7 @@ impl Token {
             "defeasible" => Some(Token::Defeasible),
             "unless" => Some(Token::Unless),
             "priority" => Some(Token::Priority),
+            "applies_to" => Some(Token::AppliesTo),
             "end" => Some(Token::End),
             "Type" => Some(Token::Type),
             "Prop" => Some(Token::Prop),

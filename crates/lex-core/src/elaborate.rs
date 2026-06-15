@@ -227,6 +227,7 @@ fn resolve_names_inner(
                 .map(|exception| resolve_exception(exception, prelude, locals))
                 .collect::<Result<Vec<_>, _>>()?,
             lattice: rule.lattice.clone(),
+            applies_to: rule.applies_to.clone(),
         })),
         Term::Hole(hole) => Ok(Term::Hole(Hole {
             name: hole.name.clone(),
@@ -515,6 +516,7 @@ mod tests {
             base_body: Box::new(body),
             exceptions,
             lattice: None,
+            applies_to: None,
         })
     }
 

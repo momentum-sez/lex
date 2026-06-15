@@ -15,6 +15,7 @@ use mez_canonical::canonical::CanonicalBytes;
 use mez_canonical::digest::sha256_digest;
 use serde::{Deserialize, Serialize};
 
+use crate::ast::AppliesTo;
 use crate::decide::DecisionResult;
 use crate::obligations::ProofObligation;
 
@@ -51,8 +52,22 @@ pub struct LexCertificate {
     pub rule_digest: String,
     /// Fiber identifier (if the rule is registered in a fiber registry).
     pub fiber_id: Option<String>,
-    /// Jurisdiction this rule applies to.
+    /// Jurisdiction this rule applies to (runtime evaluation metadata — the
+    /// concrete jurisdiction the rule was evaluated under).
     pub jurisdiction: String,
+    /// The rule's typed scope declaration, lifted verbatim from
+    /// [`crate::ast::DefeasibleRule::applies_to`] (Frontier-09 §1 commitment 4).
+    ///
+    /// `None` for a pre-09 rule that carried no `applies_to` clause. A
+    /// downstream consumer (e.g. a sovereign kernel binding a Lex certificate
+    /// to an operation it admits) reads this typed scope to verify the cert's
+    /// `(operation_family, jurisdiction)` binding **from the certificate body
+    /// itself** — it does not have to invent a private `(operation, rule)`
+    /// mapping table. The scope is part of the certificate's content digest, so
+    /// it cannot be altered after issuance without invalidating
+    /// `certificate_digest`.
+    #[serde(default)]
+    pub applies_to: Option<AppliesTo>,
     /// Legal basis citation (e.g., "IBC Act 2016 s.66").
     pub legal_basis: String,
     /// The compliance verdict produced by evaluating the rule.
@@ -295,6 +310,38 @@ pub fn build_certificate(
     extracted: &[ProofObligation],
     discharged: Vec<DischargedObligation>,
 ) -> Result<LexCertificate, CertificateError> {
+    build_certificate_with_scope(
+        rule_digest,
+        jurisdiction,
+        None,
+        legal_basis,
+        verdict,
+        extracted,
+        discharged,
+    )
+}
+
+/// Build a [`LexCertificate`] carrying the rule's typed `applies_to` scope
+/// (Frontier-09 §1 commitment 4).
+///
+/// Identical to [`build_certificate`] except it records `applies_to` on the
+/// certificate. The scope is part of the content-addressed body, so the
+/// `certificate_digest` binds it: a downstream consumer that reads the scope
+/// off the certificate to verify an `(operation_family, jurisdiction)` binding
+/// is reading a digest-bound field, not a forgeable side annotation.
+///
+/// Callers that have the admitted rule's `DefeasibleRule.applies_to` pass it
+/// through here; callers that do not (legacy pre-09 path) use
+/// [`build_certificate`], which records `None`.
+pub fn build_certificate_with_scope(
+    rule_digest: &str,
+    jurisdiction: &str,
+    applies_to: Option<AppliesTo>,
+    legal_basis: &str,
+    verdict: ComplianceVerdict,
+    extracted: &[ProofObligation],
+    discharged: Vec<DischargedObligation>,
+) -> Result<LexCertificate, CertificateError> {
     // Coverage check: every extracted obligation must have a matching sealed
     // discharge. Match on the structural obligation id bound at seal time.
     for obligation in extracted {
@@ -322,6 +369,7 @@ pub fn build_certificate(
         rule_digest: rule_digest.to_string(),
         fiber_id: None,
         jurisdiction: jurisdiction.to_string(),
+        applies_to,
         legal_basis: legal_basis.to_string(),
         verdict,
         obligations,
@@ -488,6 +536,86 @@ mod tests {
         assert!(cert.obligations.is_empty());
     }
 
+    // ── Frontier-09 §1 commitment 4: certificate carries typed applies_to ──
+
+    fn scope_sc_incorporate() -> AppliesTo {
+        use crate::ast::{JurisdictionScope, OperationKindScope, QualIdent};
+        AppliesTo {
+            jurisdictions: vec![JurisdictionScope::Specific(QualIdent::from_dotted("sc"))],
+            operation_kinds: vec![OperationKindScope::Specific(QualIdent::from_dotted(
+                "entity.incorporate",
+            ))],
+        }
+    }
+
+    #[test]
+    fn build_certificate_records_no_scope_by_default() {
+        let cert = build_certificate(
+            &"ab".repeat(32),
+            "SC",
+            "IBC Act 2016 s.66",
+            ComplianceVerdict::Compliant,
+            &[],
+            vec![],
+        )
+        .unwrap();
+        assert_eq!(cert.applies_to, None);
+    }
+
+    #[test]
+    fn build_certificate_with_scope_records_typed_applies_to() {
+        let scope = scope_sc_incorporate();
+        let cert = build_certificate_with_scope(
+            &"ab".repeat(32),
+            "SC",
+            Some(scope.clone()),
+            "IBC Act 2016 s.66",
+            ComplianceVerdict::Compliant,
+            &[],
+            vec![],
+        )
+        .unwrap();
+        // A downstream consumer reads the operation family + jurisdiction off
+        // the certificate body directly — no private mapping table.
+        assert_eq!(cert.applies_to, Some(scope));
+        let recorded = cert.applies_to.unwrap();
+        assert_eq!(recorded.operation_kinds.len(), 1);
+        assert_eq!(recorded.jurisdictions.len(), 1);
+    }
+
+    #[test]
+    fn certificate_digest_binds_applies_to_scope() {
+        // The scope is part of the content-addressed body: a certificate with a
+        // scope and one without must have different digests (the scope cannot
+        // be altered post-issuance without invalidating the digest).
+        let no_scope = build_certificate(
+            &"cd".repeat(32),
+            "SC",
+            "IBC Act 2016 s.66",
+            ComplianceVerdict::Compliant,
+            &[],
+            vec![],
+        )
+        .unwrap();
+        let with_scope = build_certificate_with_scope(
+            &"cd".repeat(32),
+            "SC",
+            Some(scope_sc_incorporate()),
+            "IBC Act 2016 s.66",
+            ComplianceVerdict::Compliant,
+            &[],
+            vec![],
+        )
+        .unwrap();
+        // Same second, same everything except scope → digests must differ.
+        // (If the clock ticked between builds, issued_at also differs, but the
+        // scope difference alone guarantees inequality regardless.)
+        assert_ne!(
+            no_scope.certificate_digest, with_scope.certificate_digest,
+            "applies_to must be inside the content digest"
+        );
+    }
+
     #[test]
     fn certificate_digest_is_deterministic_for_same_content() {
         // Two certificates with the same content (but built in the same second)
@@ -500,6 +628,7 @@ mod tests {
             rule_digest: "deadbeef".repeat(8),
             fiber_id: None,
             jurisdiction: "SC".to_string(),
+            applies_to: None,
             legal_basis: "IBC Act 2016 s.66".to_string(),
             verdict: ComplianceVerdict::Compliant,
             obligations: obligations.clone(),
@@ -614,6 +743,7 @@ mod tests {
             rule_digest: "aa".repeat(32),
             fiber_id: None,
             jurisdiction: "SC".to_string(),
+            applies_to: None,
             legal_basis: "IBC Act 2016 s.66".to_string(),
             verdict: ComplianceVerdict::Compliant,
             obligations: obligations.clone(),

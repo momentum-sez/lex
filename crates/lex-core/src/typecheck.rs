@@ -2802,6 +2802,7 @@ mod tests {
             base_body: Box::new(type0()),
             exceptions: vec![],
             lattice: None,
+            applies_to: None,
         });
         assert!(check_admissibility(&term).is_ok());
     }
@@ -2827,6 +2828,7 @@ mod tests {
                 },
             ],
             lattice: None,
+            applies_to: None,
         });
         assert!(check_admissibility(&term).is_ok());
     }
@@ -2844,6 +2846,7 @@ mod tests {
             base_body: Box::new(rec_term),
             exceptions: vec![],
             lattice: None,
+            applies_to: None,
         });
         let result = check_admissibility(&term);
         assert!(result.is_err());
@@ -2874,6 +2877,7 @@ mod tests {
                 authority: None,
             }],
             lattice: None,
+            applies_to: None,
         });
         let result = check_admissibility(&term);
         assert!(result.is_err());
@@ -2904,6 +2908,7 @@ mod tests {
                 authority: None,
             }],
             lattice: None,
+            applies_to: None,
         });
         let result = check_admissibility(&term);
         assert!(result.is_err());
@@ -2929,6 +2934,7 @@ mod tests {
             base_body: Box::new(type0()),
             exceptions: vec![],
             lattice: None,
+            applies_to: None,
         });
         let result = check_admissibility(&term);
         assert!(result.is_err());
@@ -2954,6 +2960,7 @@ mod tests {
             base_body: Box::new(type0()),
             exceptions: vec![],
             lattice: None,
+            applies_to: None,
         });
         let ty = infer(&ctx, &term).unwrap();
         assert!(test_conv_eq(&ty, &type1()));
@@ -2975,6 +2982,7 @@ mod tests {
                 authority: None,
             }],
             lattice: None,
+            applies_to: None,
         });
         let ty = infer(&ctx, &term).unwrap();
         assert!(test_conv_eq(&ty, &type1()));

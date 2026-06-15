@@ -7,9 +7,10 @@
 use std::fmt;
 
 use crate::ast::{
-    AuthorityRef, Branch, Constructor, ContentRef, DefeasibleRule, Effect, EffectRow, Exception,
-    Hole, Level, LevelVar, OracleRef, Pattern, PrecedentRef, PrincipleBalancingStep, PrincipleRef,
-    QualIdent, ScopeConstraint, ScopeField, Sort, Term, TimeLiteral, TimeTerm, TribunalRef,
+    AppliesTo, AuthorityRef, Branch, Constructor, ContentRef, DefeasibleRule, Effect, EffectRow,
+    Exception, Hole, JurisdictionScope, Level, LevelVar, OperationKindScope, OracleRef, Pattern,
+    PrecedentRef, PrincipleBalancingStep, PrincipleRef, QualIdent, ScopeConstraint, ScopeField,
+    Sort, Term, TimeLiteral, TimeTerm, TribunalRef,
 };
 
 // ---------------------------------------------------------------------------
@@ -240,6 +241,35 @@ impl PrettyPrinter {
             OracleRef::Named(qi) => self.print_qual_ident(qi),
             OracleRef::ContentAddressed(cr) => self.print_content_ref(cr),
         }
+    }
+
+    /// Render a rule's `applies_to { ... }` scope clause (Frontier-09 §2.3).
+    fn print_applies_to(&mut self, scope: &AppliesTo) {
+        self.push(" applies_to { jurisdictions: [");
+        for (i, j) in scope.jurisdictions.iter().enumerate() {
+            if i > 0 {
+                self.push(", ");
+            }
+            match j {
+                JurisdictionScope::All => self.push("*"),
+                JurisdictionScope::Specific(qi) => self.print_qual_ident(qi),
+            }
+        }
+        self.push("]; operation_kinds: [");
+        for (i, k) in scope.operation_kinds.iter().enumerate() {
+            if i > 0 {
+                self.push(", ");
+            }
+            match k {
+                OperationKindScope::All => self.push("*"),
+                OperationKindScope::Specific(qi) => self.print_qual_ident(qi),
+                OperationKindScope::Family(qi) => {
+                    self.print_qual_ident(qi);
+                    self.push(".*");
+                }
+            }
+        }
+        self.push("] }");
     }
 
     fn print_tribunal_ref(&mut self, tref: &TribunalRef) {
@@ -829,6 +859,7 @@ impl PrettyPrinter {
                 base_body,
                 exceptions,
                 lattice: _,
+                applies_to,
             }) => {
                 if needs_parens {
                     self.push("(");
@@ -837,6 +868,9 @@ impl PrettyPrinter {
                 self.push(&name.name);
                 self.push(" : ");
                 self.print_term(base_ty, Prec::Top);
+                if let Some(scope) = applies_to {
+                    self.print_applies_to(scope);
+                }
                 self.push(" with");
                 self.indent();
                 self.newline();
@@ -1171,6 +1205,7 @@ mod tests {
                 authority: Some(AuthorityRef::Named(qi_multi(&["regulator", "sec"]))),
             }],
             lattice: None,
+            applies_to: None,
         });
         let out = pretty_print(&term);
         let expected = "\

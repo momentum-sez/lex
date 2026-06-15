@@ -68,6 +68,7 @@ fn defeasible_with_exceptions(exceptions: Vec<Exception>) -> Term {
         )),
         exceptions,
         lattice: None,
+        applies_to: None,
     })
 }
 

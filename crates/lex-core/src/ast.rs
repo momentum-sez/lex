@@ -54,6 +54,21 @@ impl QualIdent {
             segments: segs.map(|s| s.to_string()).collect(),
         }
     }
+
+    /// Parse a dotted qualified identifier (e.g. `entity.incorporate`) into its
+    /// segments. An empty string yields a single empty segment (the caller is
+    /// responsible for rejecting it where empties are not admissible); a string
+    /// with no dot yields a single segment.
+    pub fn from_dotted(s: &str) -> Self {
+        Self {
+            segments: s.split('.').map(|seg| seg.to_string()).collect(),
+        }
+    }
+
+    /// Render the qualified identifier back to its dotted surface form.
+    pub fn to_dotted(&self) -> String {
+        self.segments.join(".")
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -319,6 +334,111 @@ pub struct Exception {
 }
 
 // ---------------------------------------------------------------------------
+// AppliesTo — rule-level scope declaration (Frontier-09)
+// ---------------------------------------------------------------------------
+
+/// A single jurisdiction in a rule's [`AppliesTo`] scope.
+///
+/// `All` is the explicit `*` wildcard — absence of scope is never silently
+/// treated as "applies everywhere"; see Frontier-09 §2.1.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum JurisdictionScope {
+    /// Specific jurisdiction (e.g. `sc`, `hn-prospera`).
+    Specific(QualIdent),
+    /// Wildcard: rule binds in every jurisdiction (`*`).
+    All,
+}
+
+impl JurisdictionScope {
+    /// Whether this scope element matches the given concrete jurisdiction.
+    pub fn matches(&self, jurisdiction: &QualIdent) -> bool {
+        match self {
+            JurisdictionScope::All => true,
+            JurisdictionScope::Specific(j) => j == jurisdiction,
+        }
+    }
+}
+
+/// A single operation-kind in a rule's [`AppliesTo`] scope.
+///
+/// Operation kind names are canonical Op primitive names (e.g.
+/// `entity.incorporate`, `ownership.issue_shares`). Lex does not invent its
+/// own enum; the canonical list is a host concern (Frontier-09 §2.1, §2.4).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum OperationKindScope {
+    /// Specific operation kind (must be a canonical Op primitive name).
+    Specific(QualIdent),
+    /// Family wildcard: every primitive whose name shares this prefix
+    /// (e.g. `entity.*` matches `entity.incorporate`, `entity.dissolve`).
+    /// The stored `QualIdent` is the family prefix (`entity`).
+    Family(QualIdent),
+    /// Wildcard: rule binds across every operation kind (`*`).
+    All,
+}
+
+impl OperationKindScope {
+    /// Whether this scope element matches the given concrete operation kind.
+    ///
+    /// `All` matches anything. `Specific(k)` matches iff equal. `Family(p)`
+    /// matches iff `operation_kind`'s first segment equals the family prefix's
+    /// first segment (`entity.*` matches `entity.incorporate` but not
+    /// `entityx.incorporate`), so family matching is segment-boundary aware
+    /// rather than a raw string prefix.
+    pub fn matches(&self, operation_kind: &QualIdent) -> bool {
+        match self {
+            OperationKindScope::All => true,
+            OperationKindScope::Specific(k) => k == operation_kind,
+            OperationKindScope::Family(prefix) => {
+                !prefix.segments.is_empty()
+                    && prefix.segments.first() == operation_kind.segments.first()
+            }
+        }
+    }
+}
+
+/// Rule-level scope: declares which jurisdictions and operation kinds this rule
+/// binds to (Frontier-09 §2.1).
+///
+/// Both lists must be non-empty by construction — "applies everywhere" is the
+/// explicit `*` wildcard ([`JurisdictionScope::All`] /
+/// [`OperationKindScope::All`]), never an empty list. The pack compiler and the
+/// parser both reject an empty list fail-loud; there is no default-permissive
+/// `AppliesTo`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AppliesTo {
+    /// Jurisdictions this rule binds to (non-empty).
+    pub jurisdictions: Vec<JurisdictionScope>,
+    /// Operation kinds this rule binds to (non-empty).
+    pub operation_kinds: Vec<OperationKindScope>,
+}
+
+impl AppliesTo {
+    /// Whether this scope binds the given concrete `(jurisdiction,
+    /// operation_kind)` pair: at least one jurisdiction element AND at least
+    /// one operation-kind element must match.
+    pub fn matches(&self, jurisdiction: &QualIdent, operation_kind: &QualIdent) -> bool {
+        self.jurisdictions.iter().any(|j| j.matches(jurisdiction))
+            && self
+                .operation_kinds
+                .iter()
+                .any(|k| k.matches(operation_kind))
+    }
+
+    /// Whether this scope is the universal `[*] × [*]` form. Universal scope is
+    /// admissible but almost always a missing-scope smell; callers surface an
+    /// informational diagnostic rather than rejecting (Frontier-09 §2.1).
+    pub fn is_universal(&self) -> bool {
+        self.jurisdictions
+            .iter()
+            .all(|j| matches!(j, JurisdictionScope::All))
+            && self
+                .operation_kinds
+                .iter()
+                .all(|k| matches!(k, OperationKindScope::All))
+    }
+}
+
+// ---------------------------------------------------------------------------
 // DefeasibleRule — defeasible rule with exceptions (§6)
 // ---------------------------------------------------------------------------
 
@@ -335,6 +455,15 @@ pub struct DefeasibleRule {
     pub exceptions: Vec<Exception>,
     /// Content-addressed reference to the exception lattice (optional).
     pub lattice: Option<ContentRef>,
+    /// Rule-level scope declaration (Frontier-09).
+    ///
+    /// `Option` at the AST level so pre-09 surface terms parse, elaborate, and
+    /// content-address unchanged. The pack compiler ([`crate::lex_pack`] in the
+    /// `lex-pack` crate) **requires** it: a rule without `applies_to` cannot be
+    /// packed and therefore cannot be referenced from an Op program. Scope is
+    /// metadata, not a term-level computation rule, so it is preserved verbatim
+    /// through de Bruijn index assignment, shifting, and substitution.
+    pub applies_to: Option<AppliesTo>,
 }
 
 // ---------------------------------------------------------------------------

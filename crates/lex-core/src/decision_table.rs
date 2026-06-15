@@ -193,6 +193,10 @@ pub fn compile_table(table: &DecisionTable) -> Result<Term, CompileError> {
         base_body: Box::new(base_body),
         exceptions,
         lattice: None,
+        // A decision table does not yet carry a typed scope declaration; the
+        // compiled rule's `applies_to` is None until `DecisionTable` is
+        // extended (out of Frontier-09 scope).
+        applies_to: None,
     }))
 }
 

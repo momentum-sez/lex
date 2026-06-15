@@ -57,6 +57,7 @@ fn ibc_s66_minimum_directors_rule() -> Term {
         )),
         exceptions: Vec::new(),
         lattice: None,
+        applies_to: None,
     })
 }
 

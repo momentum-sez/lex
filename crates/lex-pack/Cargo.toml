@@ -1,0 +1,14 @@
+[package]
+name = "lex-pack"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Content-addressed bundle of admissible compiled Lex predicates, indexed by (jurisdiction, operation_kind). The binding medium between Lex rules and downstream Op hosts (Frontier-09 §3)."
+
+[dependencies]
+lex-core = { workspace = true }
+mez-canonical = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }

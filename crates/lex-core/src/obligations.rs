@@ -936,6 +936,7 @@ mod tests {
                 },
             ],
             lattice: None,
+            applies_to: None,
         })
     }
 

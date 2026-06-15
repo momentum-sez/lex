@@ -618,6 +618,7 @@ mod tests {
             )),
             exceptions: vec![],
             lattice: None,
+            applies_to: None,
         })
     }
 
@@ -820,6 +821,7 @@ mod tests {
                 authority: None,
             }],
             lattice: None,
+            applies_to: None,
         });
 
         let mut ctx = RuntimeContext::new();
@@ -874,6 +876,7 @@ mod tests {
                 authority: None,
             }],
             lattice: None,
+            applies_to: None,
         });
 
         let mut ctx = RuntimeContext::new();
@@ -912,6 +915,7 @@ mod tests {
                 },
             ],
             lattice: None,
+            applies_to: None,
         });
 
         let ctx = RuntimeContext::new();
@@ -1125,6 +1129,7 @@ mod tests {
                 authority: None,
             }],
             lattice: None,
+            applies_to: None,
         });
 
         let ctx = RuntimeContext::new();
@@ -1155,6 +1160,7 @@ mod tests {
                 authority: None,
             }],
             lattice: None,
+            applies_to: None,
         });
 
         let ctx = RuntimeContext::new();

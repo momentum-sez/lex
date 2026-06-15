@@ -694,6 +694,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "lex-pack"
+version = "0.1.0"
+dependencies = [
+ "lex-core",
+ "mez-canonical",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.185"
 source = "registry+https://github.com/rust-lang/crates.io-index"

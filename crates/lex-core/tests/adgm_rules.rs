@@ -86,6 +86,7 @@ fn defeasible(name: &str, ty: Term, body: Term, exceptions: Vec<Exception>) -> T
         base_body: Box::new(body),
         exceptions,
         lattice: None,
+        applies_to: None,
     })
 }
 

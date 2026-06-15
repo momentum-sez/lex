@@ -23,9 +23,10 @@
 //! - Comments are filtered from the token stream before parsing.
 
 use crate::ast::{
-    AuthorityRef, Branch, Constructor, ContentRef, DefeasibleRule, Effect, EffectRow, Exception,
-    Hole, Ident, Level, OracleRef, Pattern, PrecedentRef, PrincipleBalancingStep, PrincipleRef,
-    QualIdent, ScopeConstraint, ScopeField, Sort, Term, TimeTerm, TribunalRef,
+    AppliesTo, AuthorityRef, Branch, Constructor, ContentRef, DefeasibleRule, Effect, EffectRow,
+    Exception, Hole, Ident, JurisdictionScope, Level, OperationKindScope, OracleRef, Pattern,
+    PrecedentRef, PrincipleBalancingStep, PrincipleRef, QualIdent, ScopeConstraint, ScopeField,
+    Sort, Term, TimeTerm, TribunalRef,
 };
 use crate::token::{Span, Spanned, Token};
 use std::fmt;
@@ -1031,6 +1032,9 @@ impl<'a> Parser<'a> {
         self.expect(&Token::Colon)?;
         let next_depth = self.next_depth(depth)?;
         let base_ty = self.parse_term(next_depth)?;
+        // Optional rule-level `applies_to { ... }` scope clause (Frontier-09),
+        // accepted between the signature and the `with` body.
+        let applies_to = self.parse_applies_to_clause()?;
         self.expect(&Token::With)?;
 
         let mut exceptions = Vec::new();
@@ -1053,6 +1057,7 @@ impl<'a> Parser<'a> {
             base_body: Box::new(base_body),
             exceptions,
             lattice: None,
+            applies_to,
         }))
     }
 
@@ -1134,6 +1139,8 @@ impl<'a> Parser<'a> {
             base_body: Box::new(base_body),
             exceptions,
             lattice: None,
+            // Anonymous term-form rules carry no surface scope clause.
+            applies_to: None,
         }))
     }
 
@@ -1488,6 +1495,189 @@ impl<'a> Parser<'a> {
 
         self.expect(&Token::Rbrace)?;
         Ok(ScopeConstraint { fields })
+    }
+
+    /// Parse an optional rule-level `applies_to { ... }` scope clause
+    /// (Frontier-09 §2.3). `applies_to` is its own keyword token (like `with`,
+    /// `unless`, `priority`), so the preceding base-type term parse terminates
+    /// at it rather than absorbing it into an application — and a pre-09 rule
+    /// that never uses the keyword parses unchanged.
+    ///
+    /// Returns `Ok(None)` when no clause is present. When present the clause is
+    /// parsed fail-loud:
+    ///
+    /// ```text
+    /// applies_to {
+    ///   jurisdictions: [ sc, de ]            -- or [*]
+    ///   operation_kinds: [ entity.incorporate, ownership.* ]  -- or [*]
+    /// }
+    /// ```
+    ///
+    /// Both lists MUST be non-empty: `[]` is rejected. "Applies everywhere" is
+    /// the explicit `*` wildcard, never an empty or absent list. There is no
+    /// default-permissive `AppliesTo`.
+    fn parse_applies_to_clause(&mut self) -> Result<Option<AppliesTo>, ParseError> {
+        // Keyword check — do not consume unless it is `applies_to`.
+        if !self.check(&Token::AppliesTo) {
+            return Ok(None);
+        }
+        self.advance(); // consume `applies_to`
+        self.expect(&Token::Lbrace)?;
+
+        let mut jurisdictions: Option<Vec<JurisdictionScope>> = None;
+        let mut operation_kinds: Option<Vec<OperationKindScope>> = None;
+
+        while !self.check(&Token::Rbrace) && !self.check(&Token::Eof) {
+            let (field_name, field_span) = self.expect_ident()?;
+            self.expect(&Token::Colon)?;
+            match field_name.as_str() {
+                "jurisdictions" => {
+                    if jurisdictions.is_some() {
+                        return Err(ParseError {
+                            span: field_span,
+                            expected: "single `jurisdictions:` field".to_string(),
+                            found: "duplicate `jurisdictions`".to_string(),
+                        });
+                    }
+                    jurisdictions = Some(self.parse_jurisdiction_scope_list()?);
+                }
+                "operation_kinds" => {
+                    if operation_kinds.is_some() {
+                        return Err(ParseError {
+                            span: field_span,
+                            expected: "single `operation_kinds:` field".to_string(),
+                            found: "duplicate `operation_kinds`".to_string(),
+                        });
+                    }
+                    operation_kinds = Some(self.parse_operation_kind_scope_list()?);
+                }
+                other => {
+                    return Err(ParseError {
+                        span: field_span,
+                        expected: "applies_to field (`jurisdictions` or `operation_kinds`)"
+                            .to_string(),
+                        found: other.to_string(),
+                    });
+                }
+            }
+            // Field separator: an optional `;` or `,`, else whitespace.
+            let _ = self.eat(&Token::Semicolon) || self.eat(&Token::Comma);
+        }
+
+        let close_span = self.peek_span();
+        self.expect(&Token::Rbrace)?;
+
+        let jurisdictions = jurisdictions.ok_or_else(|| ParseError {
+            span: close_span,
+            expected: "`jurisdictions:` field in applies_to".to_string(),
+            found: "missing jurisdictions".to_string(),
+        })?;
+        let operation_kinds = operation_kinds.ok_or_else(|| ParseError {
+            span: close_span,
+            expected: "`operation_kinds:` field in applies_to".to_string(),
+            found: "missing operation_kinds".to_string(),
+        })?;
+
+        if jurisdictions.is_empty() {
+            return Err(ParseError {
+                span: close_span,
+                expected: "non-empty jurisdictions list (use [*] for all)".to_string(),
+                found: "empty jurisdictions list".to_string(),
+            });
+        }
+        if operation_kinds.is_empty() {
+            return Err(ParseError {
+                span: close_span,
+                expected: "non-empty operation_kinds list (use [*] for all)".to_string(),
+                found: "empty operation_kinds list".to_string(),
+            });
+        }
+
+        Ok(Some(AppliesTo {
+            jurisdictions,
+            operation_kinds,
+        }))
+    }
+
+    /// Parse `[ <jurisdiction-element> (, <jurisdiction-element>)* ]` where each
+    /// element is `*` (wildcard) or a qualified jurisdiction identifier.
+    fn parse_jurisdiction_scope_list(&mut self) -> Result<Vec<JurisdictionScope>, ParseError> {
+        self.expect(&Token::Lbracket)?;
+        let mut elems = Vec::new();
+        if !self.check(&Token::Rbracket) {
+            elems.push(self.parse_jurisdiction_scope_elem()?);
+            while self.check(&Token::Comma) {
+                self.advance();
+                if self.check(&Token::Rbracket) {
+                    break;
+                }
+                elems.push(self.parse_jurisdiction_scope_elem()?);
+            }
+        }
+        self.expect(&Token::Rbracket)?;
+        Ok(elems)
+    }
+
+    fn parse_jurisdiction_scope_elem(&mut self) -> Result<JurisdictionScope, ParseError> {
+        if self.is_wildcard_star() {
+            self.advance();
+            return Ok(JurisdictionScope::All);
+        }
+        let (text, _) = self.expect_ident()?;
+        Ok(JurisdictionScope::Specific(QualIdent::from_dotted(&text)))
+    }
+
+    /// The asterisk wildcard `*` lexes as either [`Token::Star`] (tight) or
+    /// [`Token::Times`] (whitespace-surrounded, the product-type form). Both
+    /// denote the scope wildcard here.
+    fn is_wildcard_star(&self) -> bool {
+        self.check(&Token::Star) || self.check(&Token::Times)
+    }
+
+    fn is_wildcard_star_at(&self, idx: usize) -> bool {
+        matches!(
+            self.tokens.get(idx).map(|(t, _)| t),
+            Some(Token::Star) | Some(Token::Times)
+        )
+    }
+
+    /// Parse `[ <op-kind-element> (, <op-kind-element>)* ]` where each element is
+    /// `*` (All), `family.*` (Family prefix), or a qualified operation kind
+    /// (Specific). The family form lexes as an `Ident` followed by `.` `*`.
+    fn parse_operation_kind_scope_list(&mut self) -> Result<Vec<OperationKindScope>, ParseError> {
+        self.expect(&Token::Lbracket)?;
+        let mut elems = Vec::new();
+        if !self.check(&Token::Rbracket) {
+            elems.push(self.parse_operation_kind_scope_elem()?);
+            while self.check(&Token::Comma) {
+                self.advance();
+                if self.check(&Token::Rbracket) {
+                    break;
+                }
+                elems.push(self.parse_operation_kind_scope_elem()?);
+            }
+        }
+        self.expect(&Token::Rbracket)?;
+        Ok(elems)
+    }
+
+    fn parse_operation_kind_scope_elem(&mut self) -> Result<OperationKindScope, ParseError> {
+        // Bare `*` → All.
+        if self.is_wildcard_star() {
+            self.advance();
+            return Ok(OperationKindScope::All);
+        }
+        let (text, _) = self.expect_ident()?;
+        // Family form `entity.*`: the `.` `*` lex as separate `Dot` then
+        // `Star`/`Times` tokens (`*` is not an identifier-continue char, and it
+        // lexes as `Times` when whitespace-surrounded), so the leading
+        // identifier (`entity`) arrives here unqualified.
+        if self.check(&Token::Dot) && self.is_wildcard_star_at(self.pos + 1) {
+            self.advance(); // `.`
+            self.advance(); // `*`
+            return Ok(OperationKindScope::Family(QualIdent::from_dotted(&text)));
+        }
+        Ok(OperationKindScope::Specific(QualIdent::from_dotted(&text)))
     }
 
     fn parse_principle_balance(&mut self, depth: usize) -> Result<Term, ParseError> {
@@ -2100,6 +2290,7 @@ fn parse_hole_form(parser: &mut Parser<'_>, keyword: &str) -> Result<Term, Parse
     };
     parser.expect(&Token::Colon)?;
     let base_ty = parser.parse_term(0)?;
+    let applies_to = parser.parse_applies_to_clause()?;
     parser.expect(&Token::With)?;
 
     let mut exceptions = Vec::new();
@@ -2118,6 +2309,7 @@ fn parse_hole_form(parser: &mut Parser<'_>, keyword: &str) -> Result<Term, Parse
         }),
         exceptions,
         lattice: None,
+        applies_to,
     }))
 }
 
@@ -2148,6 +2340,7 @@ fn parse_obligation_form(parser: &mut Parser<'_>) -> Result<Term, ParseError> {
     };
     parser.expect(&Token::Colon)?;
     let base_ty = parser.parse_term(0)?;
+    let applies_to = parser.parse_applies_to_clause()?;
     parser.expect(&Token::With)?;
 
     let mut exceptions = Vec::new();
@@ -2166,6 +2359,7 @@ fn parse_obligation_form(parser: &mut Parser<'_>) -> Result<Term, ParseError> {
         }),
         exceptions,
         lattice: None,
+        applies_to,
     }))
 }
 
@@ -2362,6 +2556,7 @@ fn parse_one_top_level(parser: &mut Parser<'_>) -> Result<Term, ParseError> {
             base_body: Box::new(base_body),
             exceptions,
             lattice: None,
+            applies_to: None,
         });
     }
 

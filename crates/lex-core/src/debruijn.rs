@@ -400,6 +400,7 @@ fn assign_inner(term: &Term, ctx: &mut Context, depth: usize) -> Result<Term, De
                 base_body: Box::new(base_body2),
                 exceptions: exceptions2?,
                 lattice: dr.lattice.clone(),
+                applies_to: dr.applies_to.clone(),
             }))
         }
 
@@ -688,6 +689,7 @@ fn shift_inner(term: &Term, cutoff: u32, amount: i32, depth: usize) -> Result<Te
                 base_body: Box::new(shift_inner(&dr.base_body, cutoff, amount, depth + 1)?),
                 exceptions: exceptions2?,
                 lattice: dr.lattice.clone(),
+                applies_to: dr.applies_to.clone(),
             }))
         }
 
@@ -1002,6 +1004,7 @@ fn substitute_inner(
                 )?),
                 exceptions: exceptions2?,
                 lattice: dr.lattice.clone(),
+                applies_to: dr.applies_to.clone(),
             }))
         }
 

@@ -143,6 +143,7 @@ fn ibc_s66_rule() -> Term {
         )),
         exceptions: Vec::new(),
         lattice: None,
+        applies_to: None,
     })
 }
 
