@@ -858,7 +858,17 @@ impl<'a> Parser<'a> {
         ) {
             let (tok, _sp) = self.advance();
             let name = match tok {
-                Token::Nat(n) => format!("__lit_{}__", n),
+                // Natural-number literal patterns (`| 0 =>`, `| 2 =>`) are the
+                // EXACT-COUNT threshold surface (`director_count >= 3` ≡
+                // `| 0 | 1 | 2 => NonCompliant | _ => Compliant`). They lower to
+                // the same constructor names the evaluator produces for a `Nat`
+                // scrutinee — `Zero` for 0, the value-carrying `__NonZeroNat:<n>`
+                // marker for a positive count — so the existing match machinery
+                // matches them by exact constructor-name equality with no
+                // special case in the evaluator or core calculus. See
+                // `crate::prelude::{is_nat_constructor, encode_non_zero_nat_marker}`.
+                Token::Nat(0) => "Zero".to_string(),
+                Token::Nat(n) => crate::prelude::encode_non_zero_nat_marker(n),
                 Token::Int(n) => format!("__lit_{}__", n),
                 Token::Rat(p, q) => format!("__lit_{}_{}__", p, q),
                 Token::StringLit(s) => format!("__lit_str_{}__", s),

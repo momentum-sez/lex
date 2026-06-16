@@ -410,6 +410,16 @@ fn resolve_constructor(
     constructor: &Constructor,
     prelude: &Context,
 ) -> Result<Constructor, ElaborationError> {
+    // A `Nat` value pattern lowered from a numeric literal (`| 0 =>` → `Zero`,
+    // `| <n> =>` → `__NonZeroNat:<n>`) is a literal value, not a name to resolve
+    // against the prelude's named-constant signature. `Zero` happens to be a
+    // registered named constant and resolves normally; the value-carrying
+    // positive-count marker has no named-constant entry by construction, so it
+    // is passed through unchanged. The admissibility checker
+    // (`is_nat_constructor`) validates that it is a well-formed `Nat` member.
+    if crate::prelude::is_non_zero_nat_marker(&constructor.name.segments.join(".")) {
+        return Ok(constructor.clone());
+    }
     Ok(Constructor::new(resolve_global(
         &constructor.name,
         prelude,

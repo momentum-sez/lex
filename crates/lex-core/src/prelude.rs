@@ -31,6 +31,50 @@ const CORE_TYPES: &[&str] = &[
 const VERDICT_CONSTRUCTORS: &[&str] = &["Compliant", "NonCompliant", "Pending"];
 const BOOL_CONSTRUCTORS: &[&str] = &["True", "False"];
 const NAT_CONSTRUCTORS: &[&str] = &["Zero"];
+
+/// Prefix for the value-carrying non-zero-natural marker constructor name.
+///
+/// `Nat` has exactly one *named* prelude constructor, `Zero`. A positive
+/// natural has no peano `Succ` constructor in the surface; instead the runtime
+/// encodes a concrete positive count `n` as the synthetic constructor name
+/// `"<prefix>n"` (e.g. `__NonZeroNat:2`). This is the SAME encoding the
+/// evaluator produces for a positive `Nat` scrutinee
+/// (`crate::evaluate`'s `runtime_value_to_constant_name`), so a Nat-literal
+/// match pattern lowered to this name matches the evaluated scrutinee by exact
+/// constructor-name equality — the existing match machinery, with no special
+/// case. The prefix contains a `:` so it can never collide with an authored
+/// constructor (a single identifier cannot lex with a `:` in it), and it never
+/// equals `Zero`, so a positive natural still falls through `| Zero =>` to a
+/// wildcard exactly as before.
+///
+/// This constant is the single source of truth for the marker shape; it MUST
+/// stay byte-identical to `crate::evaluate`'s `NON_ZERO_NAT_PREFIX` (asserted
+/// by the `nat_marker_prefix_matches_evaluator` test).
+pub(crate) const NON_ZERO_NAT_PREFIX: &str = "__NonZeroNat:";
+
+/// Returns `true` if `name` is a value-carrying non-zero-natural marker
+/// constructor (`__NonZeroNat:<n>` for some natural `n`). Such a name is an
+/// admissible *value pattern* of the `Nat` datatype — the positive-count
+/// counterpart of the named `Zero` constructor.
+pub(crate) fn is_non_zero_nat_marker(name: &str) -> bool {
+    name.strip_prefix(NON_ZERO_NAT_PREFIX)
+        .is_some_and(|rest| !rest.is_empty() && rest.bytes().all(|b| b.is_ascii_digit()))
+}
+
+/// Returns `true` if `name` is an admissible constructor of the `Nat` datatype:
+/// either the named `Zero` constructor or a value-carrying positive-count
+/// marker (`__NonZeroNat:<n>`).
+pub(crate) fn is_nat_constructor(name: &str) -> bool {
+    NAT_CONSTRUCTORS.contains(&name) || is_non_zero_nat_marker(name)
+}
+
+/// Encode a positive natural `n` as its value-carrying `Nat` marker
+/// constructor name. The single canonical producer of the marker shape used by
+/// the parser's Nat-literal pattern lowering, kept in lock-step with the
+/// evaluator via [`NON_ZERO_NAT_PREFIX`].
+pub(crate) fn encode_non_zero_nat_marker(n: u64) -> String {
+    format!("{NON_ZERO_NAT_PREFIX}{n}")
+}
 const SANCTIONS_CONSTRUCTORS: &[&str] = &[
     "Clear",
     // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
@@ -2004,7 +2048,7 @@ fn register_unary_accessors(ctx: Context, names: &[&str], codomain: &str) -> Con
 pub fn is_prelude_constructor(name: &str) -> bool {
     VERDICT_CONSTRUCTORS.contains(&name)
         || BOOL_CONSTRUCTORS.contains(&name)
-        || NAT_CONSTRUCTORS.contains(&name)
+        || is_nat_constructor(name)
         || SANCTIONS_CONSTRUCTORS.contains(&name)
         || TAG_CONSTRUCTORS.contains(&name)
 }
@@ -2064,7 +2108,7 @@ impl PreludeRegistry {
             Some("ComplianceVerdict")
         } else if BOOL_CONSTRUCTORS.contains(&ctor_name) {
             Some("Bool")
-        } else if NAT_CONSTRUCTORS.contains(&ctor_name) {
+        } else if is_nat_constructor(ctor_name) {
             Some("Nat")
         } else if SANCTIONS_CONSTRUCTORS.contains(&ctor_name) {
             Some("SanctionsResult")
@@ -2093,7 +2137,7 @@ impl PreludeRegistry {
         if BOOL_CONSTRUCTORS.contains(&ctor_name) {
             dts.push("Bool");
         }
-        if NAT_CONSTRUCTORS.contains(&ctor_name) {
+        if is_nat_constructor(ctor_name) {
             dts.push("Nat");
         }
         if SANCTIONS_CONSTRUCTORS.contains(&ctor_name) {
@@ -2257,6 +2301,59 @@ pub fn production_prelude() -> Context {
 mod tests {
     use super::*;
     use crate::typecheck::{check, infer};
+
+    // ── Nat-literal value-pattern marker (exact-count thresholds) ──────────
+
+    #[test]
+    fn nat_marker_prefix_matches_evaluator() {
+        // The parser-side marker shape and the evaluator-side encoding MUST be
+        // byte-identical, otherwise a `| <n> =>` pattern would never match the
+        // evaluated scrutinee. `crate::evaluate::NON_ZERO_NAT_PREFIX` aliases
+        // this constant, so the equality is also enforced at compile time; this
+        // test documents the load-bearing invariant explicitly.
+        assert_eq!(NON_ZERO_NAT_PREFIX, "__NonZeroNat:");
+    }
+
+    #[test]
+    fn is_non_zero_nat_marker_recognizes_only_well_formed_markers() {
+        assert!(is_non_zero_nat_marker("__NonZeroNat:1"));
+        assert!(is_non_zero_nat_marker("__NonZeroNat:2"));
+        assert!(is_non_zero_nat_marker("__NonZeroNat:1000"));
+        // Not a marker: empty count, non-digit suffix, missing prefix, `Zero`.
+        assert!(!is_non_zero_nat_marker("__NonZeroNat:"));
+        assert!(!is_non_zero_nat_marker("__NonZeroNat:x"));
+        assert!(!is_non_zero_nat_marker("__NonZeroNat:1a"));
+        assert!(!is_non_zero_nat_marker("Zero"));
+        assert!(!is_non_zero_nat_marker("Compliant"));
+    }
+
+    #[test]
+    fn nat_constructor_admits_zero_and_positive_markers() {
+        assert!(is_nat_constructor("Zero"));
+        assert!(is_nat_constructor("__NonZeroNat:1"));
+        assert!(is_nat_constructor(&encode_non_zero_nat_marker(2)));
+        assert!(is_nat_constructor(&encode_non_zero_nat_marker(42)));
+        assert!(!is_nat_constructor("Compliant"));
+        assert!(!is_nat_constructor("True"));
+    }
+
+    #[test]
+    fn nat_marker_classifies_under_nat_datatype() {
+        // A positive-count marker is a value-member of `Nat` exactly as the
+        // named `Zero` constructor is — this is what lets the match
+        // admissibility checker resolve the scrutinee datatype to `Nat` and
+        // accept the branch.
+        assert_eq!(PreludeRegistry::constructor_datatype("Zero"), Some("Nat"));
+        assert_eq!(
+            PreludeRegistry::constructor_datatype("__NonZeroNat:3"),
+            Some("Nat")
+        );
+        assert_eq!(
+            PreludeRegistry::constructor_datatypes("__NonZeroNat:3"),
+            vec!["Nat"]
+        );
+        assert!(is_prelude_constructor("__NonZeroNat:3"));
+    }
 
     #[test]
     fn structural_prelude_contains_only_structural_symbols() {

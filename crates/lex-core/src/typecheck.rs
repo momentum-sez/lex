@@ -1173,7 +1173,19 @@ fn check_admissibility_hole_extension_inner(
             for branch in branches {
                 if let Pattern::Constructor { constructor, .. } = &branch.pattern {
                     let ctor_name = constructor.name.segments.join(".");
-                    if !expected_constructors.iter().any(|c| *c == ctor_name) {
+                    // A branch constructor belongs to the scrutinee datatype if it
+                    // is one of the finite *named* constructors, OR it is an
+                    // (open) value-member of that datatype. The latter admits a
+                    // `Nat` value pattern (`Zero` / `__NonZeroNat:<n>`): `Nat` is
+                    // an open, infinite datatype whose positive value patterns are
+                    // not enumerable in the finite named list, exactly as an open
+                    // `ComplianceTag` value is admitted via its membership set.
+                    let named_member = expected_constructors.iter().any(|c| *c == ctor_name);
+                    let value_member =
+                        crate::prelude::PreludeRegistry::constructor_datatypes(&ctor_name)
+                            .iter()
+                            .any(|dt| *dt == datatype);
+                    if !named_member && !value_member {
                         let actual_datatype =
                             crate::prelude::PreludeRegistry::constructor_datatype(&ctor_name)
                                 .map(str::to_string);
@@ -1556,7 +1568,19 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
             for branch in branches {
                 if let Pattern::Constructor { constructor, .. } = &branch.pattern {
                     let ctor_name = constructor.name.segments.join(".");
-                    if !expected_constructors.iter().any(|c| *c == ctor_name) {
+                    // A branch constructor belongs to the scrutinee datatype if it
+                    // is one of the finite *named* constructors, OR it is an
+                    // (open) value-member of that datatype. The latter admits a
+                    // `Nat` value pattern (`Zero` / `__NonZeroNat:<n>`): `Nat` is
+                    // an open, infinite datatype whose positive value patterns are
+                    // not enumerable in the finite named list, exactly as an open
+                    // `ComplianceTag` value is admitted via its membership set.
+                    let named_member = expected_constructors.iter().any(|c| *c == ctor_name);
+                    let value_member =
+                        crate::prelude::PreludeRegistry::constructor_datatypes(&ctor_name)
+                            .iter()
+                            .any(|dt| *dt == datatype);
+                    if !named_member && !value_member {
                         let actual_datatype =
                             crate::prelude::PreludeRegistry::constructor_datatype(&ctor_name)
                                 .map(str::to_string);

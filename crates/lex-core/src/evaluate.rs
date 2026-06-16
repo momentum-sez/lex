@@ -476,7 +476,13 @@ fn qual_ident_name(qi: &QualIdent) -> &str {
 /// constructor (it is not lexable as a single identifier) and never matches the
 /// `Zero` constructor, so a positive natural still falls through to wildcard
 /// branches the same way the old single sentinel did.
-const NON_ZERO_NAT_PREFIX: &str = "__NonZeroNat:";
+///
+/// This is the SAME marker the parser's Nat-literal pattern lowering produces
+/// (`crate::prelude::encode_non_zero_nat_marker`) and the admissibility checker
+/// classifies as a `Nat` value-member, so a `| <n> =>` pattern matches the
+/// evaluated scrutinee by exact constructor-name equality. The constant is
+/// re-exported from `crate::prelude` to keep one source of truth for the shape.
+const NON_ZERO_NAT_PREFIX: &str = crate::prelude::NON_ZERO_NAT_PREFIX;
 
 /// Encode a non-zero natural as its value-preserving marker constructor name.
 fn encode_non_zero_nat(n: u64) -> String {
