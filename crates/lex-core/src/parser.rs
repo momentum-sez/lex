@@ -784,7 +784,36 @@ impl<'a> Parser<'a> {
 
         let mut branches = Vec::new();
         while self.check(&Token::Pipe) {
-            branches.push(self.parse_branch(next_depth)?);
+            let branch = self.parse_branch(next_depth)?;
+            let is_wildcard = matches!(branch.pattern, Pattern::Wildcard);
+            branches.push(branch);
+            // A wildcard arm (`| _ =>`) is total: it matches every residual
+            // value, so no later arm of the SAME match can be reached. Stop
+            // consuming arms here. This is also the disambiguator for an
+            // un-`end`-terminated NESTED match in a non-final branch body:
+            //
+            //   match company_class ctx return V with
+            //   | PublicCompany => match shareholder_count ctx return V with
+            //     | 0 => NonCompliant | 1 => NonCompliant | _ => Compliant
+            //   | _ => match shareholder_count ctx return V with
+            //     | 0 => NonCompliant | _ => Compliant
+            //
+            // Without this, the inner `match` (in the `PublicCompany` arm)
+            // greedily swallows the outer `| _ =>` arm as a fourth inner
+            // branch, leaving the OUTER match with only `| PublicCompany`
+            // and no wildcard — which then fails admissibility as a
+            // non-exhaustive match over the open `ComplianceTag` datatype.
+            // Terminating the inner branch list at its own trailing `| _ =>`
+            // returns control to the enclosing match's branch loop, which
+            // then consumes its own `| _ =>` arm. The optional `end`
+            // terminator remains supported for explicit delimiting; this
+            // makes the common indentation-delimited surface form (no `end`)
+            // parse as authored. Any `| <pat> =>` arm a `.lex` author writes
+            // after a wildcard in the same match would be dead/unreachable,
+            // so terminating the loop here loses no admissible program.
+            if is_wildcard {
+                break;
+            }
         }
 
         if branches.is_empty() {
