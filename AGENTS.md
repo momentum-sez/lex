@@ -4,15 +4,34 @@
 >
 > **Mirrors the repo's `CLAUDE.md`** on substance. Before editing code in this repo, read `./CLAUDE.md` — it carries the repo-local layout, commands, doctrine, and conventions. `AGENTS.md` and `CLAUDE.md` must not diverge in facts; they may differ in structure and voice.
 >
-> **Model target.** Use the strongest available coding/reasoning model for non-trivial work. Prefer high reasoning effort where the harness exposes it. Terse, declarative voice. No model or tool attribution in commits or persistent project artifacts.
+> **Model target.** Use the user-selected model and available host settings. Apply reasoning effort in proportion to task complexity. Use plain, direct language. No model or tool attribution in commits or persistent project artifacts.
 
 ---
+
+This public repository carries shared agent rules inline. Local rules follow.
+The paired instruction files have the same repository contract.
 
 <!-- BEGIN INLINED-INVARIANTS (public-safe export from ecosystem invariants) -->
 
 ## I. No Destructive Git
 
-Do not run commands that discard, rewrite, or hide work: no `git reset`, `git checkout`, `git switch`, `git restore`, `git stash`, `git clean`, `git rebase`, forced branch deletion, ref rewriting, or deletion of tracked files. Do not commit or push unless the user explicitly asks for that operation. If a destructive operation appears necessary, stop and ask.
+Do not discard, rewrite, or hide work. The following commands are forbidden:
+
+- `git commit` from a subagent (main thread commits only — subagents stage only)
+- `git push` in any form, any branch (main thread pushes only)
+- `git reset` in any form, including path-only / index-only resets
+- `git checkout`, `git switch`, `git restore` in any form
+- `git commit --amend`
+- `git stash` in any form (including `pop`, `drop`, `apply`, `clear`)
+- `git clean` in any form (`-f`, `-fd`, `-x`, …)
+- `git rebase` in any form (including interactive)
+- `git branch -D`, `git branch --delete --force`
+- `git worktree remove` or `git worktree prune` unless the principal explicitly authorizes cleanup
+- `git update-ref`, `git filter-branch`, `git filter-repo`
+- `rm -rf` on anything git-tracked
+- `--no-verify`, `--no-gpg-sign` on commits unless the principal explicitly requests
+
+Main-thread commits and publication require user authorization. If a forbidden operation appears necessary, stop and report the blocker.
 
 ## II. Multi-Agent Concurrency
 
@@ -22,9 +41,20 @@ Read-only agents may inspect a shared checkout. Write-capable parallel agents mu
 
 External-facing documents must make sense to a cold reader. Remove private paths, private repository names, internal process labels, draft/version chatter, and unsupported claims. State the present mathematical or engineering object and its exact proof or verification status.
 
-## IV. Voice
+## IV. Technical English and Research Voice
 
-Use terse, declarative technical prose. Prefer definitions, lemmas, commands, file references, and exact residual obligations. Avoid marketing language, filler, emojis, and evasive hedging where a precise statement is available.
+All maintained English technical prose must follow ASD-STE100 Simplified Technical English, Issue 9.
+
+- Use approved general words and registered technical terms.
+- Define each term before use.
+- Use active voice.
+- Use one topic in each paragraph.
+- Use no more than 20 words in a procedural sentence.
+- Use no more than 25 words in a descriptive sentence.
+- Do not use contractions or semicolons.
+- Code, identifiers, formulas, quotations, citations, and mandated text are not prose.
+- Apply this rule to the surrounding explanations.
+- Formal research can use accepted subject terms. This rule still controls its English sentence structure.
 
 ## V. Artifact Hygiene
 
@@ -40,7 +70,7 @@ When integrating another branch or generated patch, read each changed hunk and p
 
 ## VIII. Intelligence Propagation
 
-When a new fact changes a downstream claim, update dependent documents, tests, and examples. Do not leave a public artifact stale once the contradiction is known.
+When a new fact changes a downstream claim, update affected documents, tests, and examples within the authorized paths. For unassigned repositories, record the affected artifact, evidence, required change, and next owner. A request to read or open an artifact requires a freshness assessment, not automatic reconstruction. Preparation does not authorize publication.
 
 ## IX. Scope Discipline
 
@@ -52,9 +82,9 @@ If a proof, theorem, formal scaffold, executable semantics claim, or paper claim
 
 ## XI. Code-Writing Discipline
 
-Twelve behavioural rules for code-writing agents (Claude, GPT-5-family, any subagent). Reproduced in their cultural form; sources: Karpathy (January 2026), Forrest Chang's CLAUDE.md (January 2026), thirty-codebase six-week empirical extension (May 2026). Bias: caution over speed on non-trivial work.
+Nineteen rules govern code-writing work. Apply judgment in proportion to risk.
 
-**Rule 1 — Think Before Coding.** State assumptions explicitly. If uncertain, ask rather than guess. Present multiple interpretations when ambiguity exists. Push back when a simpler approach exists. Stop when confused. Name what's unclear.
+**Rule 1 — Think Before Coding.** Inspect evidence and state material assumptions. Resolve routine uncertainty within the authorized scope. Ask when unresolved uncertainty changes authority, correctness, or an irreversible action.
 
 **Rule 2 — Simplicity First.** Minimum code that solves the problem. Nothing speculative. No features beyond what was asked. No abstractions for single-use code. Test: would a senior engineer say this is overcomplicated? If yes, simplify.
 
@@ -64,11 +94,11 @@ Twelve behavioural rules for code-writing agents (Claude, GPT-5-family, any suba
 
 **Rule 5 — Use the model only for judgment calls.** Use the model for classification, drafting, summarization, extraction. Do NOT use the model for routing, retries, deterministic transforms. If code can answer, code answers.
 
-**Rule 6 — Token budgets are not advisory.** Per-task: 4,000 tokens. Per-session: 30,000 tokens. If approaching budget, summarize and start fresh. Surface the breach. Do not silently overrun.
+**Rule 6 — Respect explicit resource limits.** Honor explicit user or host budgets. Do not invent per-task or per-session token caps. Checkpoint verified work and remaining obligations when context is constrained. Continue authorized work while meaningful progress is possible.
 
 **Rule 7 — Surface conflicts, don't average them.** If two patterns contradict, pick one (more recent / more tested). Explain why. Flag the other for cleanup. Don't blend conflicting patterns.
 
-**Rule 8 — Read before you write.** Before adding code, read exports, immediate callers, shared utilities. "Looks orthogonal" is dangerous. If unsure why code is structured a way, ask.
+**Rule 8 — Read before you write.** Read the relevant exports, callers, and shared utilities. Investigate uncertain structure before changing it.
 
 **Rule 9 — Tests verify intent, not just behaviour.** Tests must encode WHY behaviour matters, not just WHAT it does. A test that can't fail when business logic changes is wrong.
 
@@ -77,6 +107,22 @@ Twelve behavioural rules for code-writing agents (Claude, GPT-5-family, any suba
 **Rule 11 — Match the codebase's conventions, even if you disagree.** Conformance > taste inside the codebase. If you genuinely think a convention is harmful, surface it. Don't fork silently.
 
 **Rule 12 — Fail loud.** "Completed" is wrong if anything was skipped silently. "Tests pass" is wrong if any were skipped. Default to surfacing uncertainty, not hiding it.
+
+**Rule 13 — No backward compatibility.** Do not preserve backward compatibility. Remove obsolete paths instead of adding compatibility layers, fallbacks, or migrations.
+
+**Rule 14 — Simplest implementation that fully meets the requirements.** Choose the simplest implementation that fully meets the current requirements. Avoid speculative abstractions, configuration, and indirection.
+
+**Rule 15 — Grow the system in layers.** Start from the smallest version that works end to end, and add each new capability on top of a product that already works. Never trade a working product for unfinished complexity.
+
+**Rule 16 — Modular components, separated concerns.** Keep components modular and concerns clearly separated.
+
+**Rule 17 — Prefer established libraries.** Prefer established, well-maintained libraries when they reduce overall complexity or improve reliability. Do not reimplement common functionality without a clear reason.
+
+**Rule 18 — Lean on the dependencies already present.** Lean on the dependencies already in the project before writing your own implementation or adding packages. Do not assume a library lacks a capability without checking its documentation and types.
+
+**Rule 19 — Architectural decisions for the long term.** Make architectural decisions for the long term. Do not accept a stopgap that only works for now and is meant to be replaced later.
+
+**Boundaries.** Rule 13 is an edit, never a git-history operation: the No Destructive Git rule stands, and the deleted path lives in history. Rule 13 deletes code paths, flags, shims, and dead branches; doctrine, documents, and canonical numbers still retire to `archive/` or `deprecated/` under the repository retention policy. Rule 13 stops at a relied-upon external boundary — a wire object, a published API contract, an executed instrument, or a schema a deployed node depends on changes by a versioned protocol decision, not by cleanup. Rule 14 governs the amount of machinery and Rule 19 governs the shape of the boundary; a small implementation behind a correct boundary satisfies both, and neither licenses a stopgap. Rules 17 and 18 yield to the open-source whitelist and licence review before any new dependency enters a public repository.
 
 <!-- END INLINED-INVARIANTS -->
 
@@ -148,91 +194,71 @@ Stop and report when safety rules, ownership, public/private boundaries, or proo
 
 <!-- END INLINED-AGENTS-HARNESS -->
 
-## Metacognitive Architecture
+## Repository contract
 
-`AGENTS.md` and `CLAUDE.md` are the repo's operating architecture. They must remain public-safe, self-contained, and synchronized with each other. If a rule, command, proof-status boundary, public-reference boundary, or repository layout fact changes in one file, update the paired file in the same change.
+Keep `AGENTS.md` and `CLAUDE.md` consistent on repository facts. Before code edits,
+read `CLAUDE.md` and any closer instruction file for the affected directory.
+Use the local source and tests to resolve factual drift. Read
+`SUPREMUM-DISCIPLINE.md` for architectural or research choices when present.
 
-Before editing any subtree, search for closer `AGENTS.md`, `CLAUDE.md`, or `SUPREMUM*.md`; the closest guidance controls that subtree. If a subtree rule strengthens a repo-wide invariant, reconcile the top-level pair before commit.
+Keep changes within assigned files and repositories. Update affected references
+within that scope. Report downstream work to its owner. Local verification does
+not authorize deployment, signing, sending, committing, or publication.
+Stage only when explicitly asked.
 
-The work loop is inspect -> repair -> verify -> propagate. Verification means running the narrowest relevant executable, proof, formatting, or public-artifact check, then the broader check when shared behavior or published claims changed.
+Public artifacts must remain usable from an external clone. Cite public sources
+and local paths. Keep proprietary content and private repository identities out.
+Repository contributions use Apache-2.0. Preserve dependency license notices.
 
-Lex is a public Apache-2.0 repository. Agent instructions must be
-self-contained for an external clone.
+Distinguish implemented behavior, tested examples, formal scaffolds, proved
+statements, conjectures, and open obligations. Preserve theorem hypotheses and
+proof rigor. Report the exact remaining obligation when an investigation ends
+without a proof. Never claim a build or scaffold proves the full system.
 
-Read `CLAUDE.md` before editing code. It carries the same repo-local facts in
-Claude Code form; this file is the Codex-facing form. The two files must not
-diverge in substance.
+## Purpose and routing
 
-## Non-Negotiable Rules
+Lex implements typed jurisdictional rules and their executable admissible
+fragment. Public companions are `github.com/momentum-sez/op`,
+`github.com/momentum-sez/gstore`, and `github.com/momentum-sez/stack`.
 
-- Do not run destructive git commands: no `git reset`, `git checkout`,
-  `git switch`, `git restore`, `git stash`, `git clean`, `git rebase`,
-  branch deletion, ref rewriting, or forced worktree removal.
-- Do not commit or push from an agent. Stage only when explicitly asked.
-- Do not add LLM attribution to commits, PR text, generated docs, or source.
-- Preserve public-source hygiene. Public artifacts may cite only the public
-  companion repositories `github.com/momentum-sez/lex`,
-  `github.com/momentum-sez/op`, `github.com/momentum-sez/gstore`, and
-  `github.com/momentum-sez/stack`.
-- Distinguish executable, frontier, formal scaffold, paper theorem, conjecture,
-  and open obligation. Do not collapse them into one proof-status claim.
-- If a proof, statement, construction, formal scaffold, or paper claim breaks,
-  repair it. Do not close by deleting, demoting, deferring, or quietly
-  weakening the manuscript; name the exact obstruction if the repair is not
-  closed.
+| Task | Read |
+| --- | --- |
+| Parser, elaboration, checker, certificates | `crates/lex-core/`, `docs/language-reference.md` |
+| CLI authoring | `crates/lex-cli/` |
+| Rule packs | `crates/lex-pack/` |
+| Shared canonical wire types | `crates/mez-canonical/` |
+| Diagnostics | `crates/lex-diag/` |
+| Executable language boundary | `docs/language-reference.md`, affected tests |
+| Frontier calculus | `docs/frontier-work/08-lex-core-calculus.md`, `crates/lex-core/src/core_calculus/` |
+| Formalization and proof scope | `formal/README.md`, `formal/coq/Lex/` |
+| Narrow scaffold | `formal/coq/LexCore.v`, `formal/lean/LexCore.lean` |
 
-## Repo Shape
+The language reference governs documented executable boundaries. Inspect code
+and tests when checking conformance. The explanatory `docs/language-spec.md`
+does not expand the executable fragment. Check current source handling of
+`Hole` and `HoleFill` before asserting support. Preserve the distinction between
+surface syntax, elaboration, frontier semantics, and executable admission.
 
-- `crates/lex-core/` — parser, elaborator, executable admissible checker,
-  obligations, certificate builder, runtime caveat predicate/narrowing
-  primitives, and frontier `core_calculus`.
-- `crates/lex-cli/` — command-line authoring shell.
-- `docs/language-reference.md` — canonical public language reference.
-- `docs/language-spec.md` — explanatory language overview; defer to the
-  reference on executable boundaries.
-- `docs/frontier-work/08-lex-core-calculus.md` — frontier design note.
-- `formal/coq/LexCore.v`, `formal/lean/LexCore.lean` — narrow-waist scaffold.
-- `formal/coq/Lex/` — paper-level Coq/Rocq development.
+## Verification
 
-## Commands
+Run commands from the repository root. Each formal command uses its own shell
+scope, so the second command starts from the same root as the first.
 
 ```bash
 cargo check --workspace
 cargo test --workspace
 cargo clippy --workspace -- -D warnings
-
-cd formal/coq && coqc LexCore.v
-cd formal/lean && lean LexCore.lean
+(cd formal/coq && coqc LexCore.v)
+(cd formal/lean && lean LexCore.lean)
 ```
 
-Run the narrowest relevant check first, then the broader workspace check when
-the change touches shared behavior.
+Start with the affected crate or formal module. Run workspace checks when shared
+behavior changes. For paper-level Coq work, use the project configuration and
+build instructions in `formal/README.md`. The scaffold commands above do not
+check the full paper development.
 
-## Status Doctrine
-
-The shipped checker accepts the executable admissible fragment. It rejects
-surface `Hole` and `HoleFill`; those are preserved through parse/elaboration
-and modeled in the frontier core calculus. The formal scaffold proves
-narrow-waist properties, not the full paper calculus. Paper-level decidability
-for the full admissible fragment is conditional on the stated bounded-reduction
-obligation until that obligation is closed.
-
-Use terse, factual prose. Mark load-bearing statements as proved, tested,
-implemented, scaffolded, conjectural, or open.
-
-## Code-writing discipline — repo application
-
-Per the inlined `## XI. Code-Writing Discipline` block above. Twelve rules instantiated for lex (Lex language reference implementation + Coq/Lean formalization; Apache-2.0 public):
-
-1. **Think Before Coding.** Every change to `formal/coq/Lex/*.v` or `formal/lean/LexCore.lean` names the theorem or admissibility lemma affected. Every change to `crates/lex-core/` names the elaboration / executable / certificate surface touched.
-2. **Simplicity First.** No speculative extensions to the core calculus. No abstractions in `crates/lex-cli/` beyond the documented authoring shell.
-3. **Surgical Changes.** A `lex-cli` change does not touch `lex-core`. An elaboration tweak does not opportunistically refactor the certificate builder.
-4. **Goal-Driven Execution.** Success = `cargo check --workspace && cargo test --workspace && cargo clippy --workspace -- -D warnings` clean, `coqc LexCore.v` and `lean LexCore.lean` clean, paper-level Coq theorems remain `Qed.` (not `Admitted.`), `docs/language-reference.md` matches the executable surface.
-5. **Use the model only for judgment calls.** Admissible-obligation classification, narrowing, certificate construction are deterministic per the calculus. The model drafts documentation and tests; it does not choose which obligation kind applies.
-6. **Token budgets are not advisory.** Standard; checkpoint between Coq lemmas and between Rust crate edits.
-7. **Surface conflicts, don't average them.** If `docs/language-spec.md` and `docs/language-reference.md` disagree, the reference wins on executable boundaries. If Coq formalization and inline Rust doc-comments disagree, the formalization wins.
-8. **Read before you write.** Read `docs/language-reference.md` before editing the parser or elaborator. Read the relevant `formal/coq/Lex/*.v` before editing the corresponding Rust code.
-9. **Tests verify intent.** Paper-level Coq theorems must remain proven (no `Admitted.` reaching a load-bearing surface). Rust property tests assert calculus invariants, not just non-panicking parses.
-10. **Checkpoint after every significant step.** Between Coq lemma edits, summarize what is now proved versus what remains admissible. Between calculus edits, restate impact on the certificate format.
-11. **Match the codebase's conventions, even if you disagree.** Rust snake_case crate names; Coq notation per `formal/coq/Lex/`; documented narrow-waist scaffold in `LexCore.v` / `LexCore.lean`. No parallel formalization style.
-12. **Fail loud.** Never declare a Coq file checked if `Admitted.` is reachable from a load-bearing top-level theorem. Never claim the executable surface matches the spec without a referenced test. Surface every drift.
+Name the affected theorem, admissibility lemma, elaboration rule, or certificate
+boundary. Tests should challenge its invariant. Preserve closed proofs and
+report assumptions or admitted dependencies. Resolve disagreement between formal
+and executable surfaces by checking their scopes and repairing the affected
+contract. Do not treat one surface's passing check as proof of another.
