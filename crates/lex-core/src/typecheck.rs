@@ -492,10 +492,19 @@ fn find_level_var(level: &Level) -> Option<u32> {
 // Substitution and shifting
 // ---------------------------------------------------------------------------
 
+// Keep complete public diagnostics off recursive success-path stack frames.
+// Constructing a large TypeError in each match arm otherwise reserves those
+// temporaries at every level, even when no error occurs.
+#[cold]
+#[inline(never)]
+fn boxed_error(make_error: impl FnOnce() -> TypeError) -> Box<TypeError> {
+    Box::new(make_error())
+}
+
 /// Shift all free variables (De Bruijn indices >= `cutoff`) by `amount`.
-fn shift(term: &Term, cutoff: u32, amount: i64, depth: usize) -> Result<Term, TypeError> {
+fn shift(term: &Term, cutoff: u32, amount: i64, depth: usize) -> Result<Term, Box<TypeError>> {
     if depth > MAX_DEPTH {
-        return Err(TypeError::RecursionLimitExceeded);
+        return Err(boxed_error(|| TypeError::RecursionLimitExceeded));
     }
     match term {
         Term::Var { name, index } => {
@@ -555,9 +564,9 @@ fn shift(term: &Term, cutoff: u32, amount: i64, depth: usize) -> Result<Term, Ty
 }
 
 /// Substitute `replacement` for De Bruijn index `target` in `term`.
-fn subst(term: &Term, target: u32, replacement: &Term, depth: usize) -> Result<Term, TypeError> {
+fn subst(term: &Term, target: u32, replacement: &Term, depth: usize) -> Result<Term, Box<TypeError>> {
     if depth > MAX_DEPTH {
-        return Err(TypeError::RecursionLimitExceeded);
+        return Err(boxed_error(|| TypeError::RecursionLimitExceeded));
     }
     match term {
         Term::Var { name, index } => {
@@ -694,9 +703,9 @@ fn term_size(term: &Term) -> usize {
 /// reaches zero, `TypeError::ReductionLimitExceeded` is returned. This
 /// prevents wide computation (many sequential reductions at shallow depth)
 /// and is complementary to the `depth` limit which prevents deep recursion.
-fn whnf(term: &Term, depth: usize, fuel: &mut usize) -> Result<Term, TypeError> {
+fn whnf(term: &Term, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
     if depth > MAX_DEPTH {
-        return Err(TypeError::RecursionLimitExceeded);
+        return Err(boxed_error(|| TypeError::RecursionLimitExceeded));
     }
     match term {
         Term::App { func, arg } => {
@@ -711,7 +720,7 @@ fn whnf(term: &Term, depth: usize, fuel: &mut usize) -> Result<Term, TypeError> 
                     // Guard against substitution blowup before continuing.
                     let size = term_size(&result);
                     if size > MAX_SUBST_NODES {
-                        return Err(TypeError::SubstitutionBlowup { node_count: size });
+                        return Err(boxed_error(|| TypeError::SubstitutionBlowup { node_count: size }));
                     }
                     whnf(&result, depth + 1, fuel)
                 }
@@ -730,7 +739,7 @@ fn whnf(term: &Term, depth: usize, fuel: &mut usize) -> Result<Term, TypeError> 
             // Guard against substitution blowup before continuing.
             let size = term_size(&result);
             if size > MAX_SUBST_NODES {
-                return Err(TypeError::SubstitutionBlowup { node_count: size });
+                return Err(boxed_error(|| TypeError::SubstitutionBlowup { node_count: size }));
             }
             whnf(&result, depth + 1, fuel)
         }
@@ -812,9 +821,9 @@ fn effect_row_eq(a: &Option<EffectRow>, b: &Option<EffectRow>) -> bool {
 ///
 /// Reduces both to WHNF and compares structurally. For De Bruijn-indexed
 /// terms, structural equality IS alpha-equivalence. Binder names are ignored.
-fn conv_eq(a: &Term, b: &Term, depth: usize, fuel: &mut usize) -> Result<bool, TypeError> {
+fn conv_eq(a: &Term, b: &Term, depth: usize, fuel: &mut usize) -> Result<bool, Box<TypeError>> {
     if depth > MAX_DEPTH {
-        return Err(TypeError::RecursionLimitExceeded);
+        return Err(boxed_error(|| TypeError::RecursionLimitExceeded));
     }
     let a_whnf = whnf(a, depth + 1, fuel)?;
     let b_whnf = whnf(b, depth + 1, fuel)?;
@@ -885,36 +894,36 @@ fn level_eq(a: &Level, b: &Level) -> bool {
 // ---------------------------------------------------------------------------
 
 /// Ensure `ty` reduces to a `Sort` and return the level as `u64`.
-fn ensure_sort(ty: &Term, depth: usize, fuel: &mut usize) -> Result<u64, TypeError> {
+fn ensure_sort(ty: &Term, depth: usize, fuel: &mut usize) -> Result<u64, Box<TypeError>> {
     let n = whnf(ty, depth, fuel)?;
     match &n {
         Term::Sort(Sort::Type(level)) => eval_level(level).ok_or_else(|| TypeError::NotASort {
             term: ty.clone(),
             found: n.clone(),
-        }),
+        }).map_err(Box::new),
         Term::Sort(Sort::Prop) => Ok(0),
         Term::Sort(Sort::Rule(level)) => eval_level(level).ok_or_else(|| TypeError::NotASort {
             term: ty.clone(),
             found: n.clone(),
-        }),
-        _ => Err(TypeError::NotASort {
+        }).map_err(Box::new),
+        _ => Err(boxed_error(|| TypeError::NotASort {
             term: ty.clone(),
             found: n,
-        }),
+        })),
     }
 }
 
 /// Ensure `ty` reduces to a pure `Pi` and return (domain, codomain).
-fn ensure_pi(ty: &Term, depth: usize, fuel: &mut usize) -> Result<(Term, Term), TypeError> {
+fn ensure_pi(ty: &Term, depth: usize, fuel: &mut usize) -> Result<(Term, Term), Box<TypeError>> {
     let n = whnf(ty, depth, fuel)?;
     match n {
         Term::Pi {
             domain, codomain, ..
         } => Ok((*domain, *codomain)),
-        _ => Err(TypeError::NotAFunction {
+        _ => Err(boxed_error(|| TypeError::NotAFunction {
             term: ty.clone(),
             found_type: n,
-        }),
+        })),
     }
 }
 
@@ -941,7 +950,7 @@ fn bind_match_branch_binders(
     binder_count: usize,
     depth: usize,
     fuel: &mut usize,
-) -> Result<Context, TypeError> {
+) -> Result<Context, Box<TypeError>> {
     // The constructor's signature lives in the global constant table; this is
     // the same lookup `Term::Constant` inference uses. Admissibility has
     // already established the name is a prelude constructor, so a missing
@@ -984,7 +993,7 @@ fn weaken_for_branch(
     return_ty: &Term,
     binder_count: usize,
     depth: usize,
-) -> Result<Term, TypeError> {
+) -> Result<Term, Box<TypeError>> {
     if binder_count == 0 {
         return Ok(return_ty.clone());
     }
@@ -1029,7 +1038,7 @@ pub struct AdmissibilityResidual {
 /// Returns `Ok(())` if admissible, or `Err(TypeError::Admissibility)` with
 /// the specific violation.
 pub fn check_admissibility(term: &Term) -> Result<(), TypeError> {
-    check_admissibility_inner(term, 0)
+    check_admissibility_inner(term, 0).map_err(|error| *error)
 }
 
 /// Check admissibility under an explicit public mode.
@@ -1049,7 +1058,7 @@ pub fn check_admissibility_mode(
         }
         AdmissibilityMode::HoleExtension => {
             let mut residuals = Vec::new();
-            check_admissibility_hole_extension_inner(term, &mut residuals, 0)?;
+            check_admissibility_hole_extension_inner(term, &mut residuals, 0).map_err(|error| *error)?;
             Ok(residuals)
         }
     }
@@ -1059,9 +1068,9 @@ fn check_admissibility_hole_extension_inner(
     term: &Term,
     residuals: &mut Vec<AdmissibilityResidual>,
     depth: usize,
-) -> Result<(), TypeError> {
+) -> Result<(), Box<TypeError>> {
     if depth > MAX_DEPTH {
-        return Err(TypeError::RecursionLimitExceeded);
+        return Err(boxed_error(|| TypeError::RecursionLimitExceeded));
     }
     match term {
         Term::Var { .. } | Term::Constant(_) => Ok(()),
@@ -1072,10 +1081,10 @@ fn check_admissibility_hole_extension_inner(
                 Sort::Prop | Sort::Time0 | Sort::Time1 => return Ok(()),
             };
             if let Some(var_idx) = find_level_var(level) {
-                return Err(TypeError::Admissibility {
+                return Err(boxed_error(|| TypeError::Admissibility {
                     violation: AdmissibilityViolation::UnresolvedLevelVar(var_idx),
                     term: term.clone(),
-                });
+                }));
             }
             Ok(())
         }
@@ -1093,10 +1102,10 @@ fn check_admissibility_hole_extension_inner(
         } => {
             if let Some(row) = effect_row {
                 if !matches!(row, EffectRow::Empty) {
-                    return Err(TypeError::Admissibility {
+                    return Err(boxed_error(|| TypeError::Admissibility {
                         violation: AdmissibilityViolation::EffectfulPiNotSupported,
                         term: term.clone(),
-                    });
+                    }));
                 }
             }
             check_admissibility_hole_extension_inner(domain, residuals, depth + 1)?;
@@ -1130,12 +1139,12 @@ fn check_admissibility_hole_extension_inner(
                     Pattern::Constructor { constructor, .. } => {
                         let ctor_name = constructor.name.segments.join(".");
                         if !is_prelude_constructor(&ctor_name) {
-                            return Err(TypeError::Admissibility {
+                            return Err(boxed_error(|| TypeError::Admissibility {
                                 violation: AdmissibilityViolation::MatchOnNonPreludeType {
                                     constructor_name: ctor_name,
                                 },
                                 term: term.clone(),
-                            });
+                            }));
                         }
                     }
                 }
@@ -1160,10 +1169,10 @@ fn check_admissibility_hole_extension_inner(
                         }
                         return Ok(());
                     }
-                    return Err(TypeError::Admissibility {
+                    return Err(boxed_error(|| TypeError::Admissibility {
                         violation: AdmissibilityViolation::MatchScrutineeDatatypeUnresolved,
                         term: term.clone(),
-                    });
+                    }));
                 }
             };
 
@@ -1189,14 +1198,14 @@ fn check_admissibility_hole_extension_inner(
                         let actual_datatype =
                             crate::prelude::PreludeRegistry::constructor_datatype(&ctor_name)
                                 .map(str::to_string);
-                        return Err(TypeError::Admissibility {
+                        return Err(boxed_error(|| TypeError::Admissibility {
                             violation: AdmissibilityViolation::MatchBranchConstructorMismatch {
                                 scrutinee_datatype: datatype.clone(),
                                 branch_constructor: ctor_name,
                                 branch_constructor_datatype: actual_datatype,
                             },
                             term: term.clone(),
-                        });
+                        }));
                     }
                 }
             }
@@ -1220,13 +1229,13 @@ fn check_admissibility_hole_extension_inner(
                     .map(|c| (*c).to_string())
                     .collect();
                 if !missing.is_empty() {
-                    return Err(TypeError::Admissibility {
+                    return Err(boxed_error(|| TypeError::Admissibility {
                         violation: AdmissibilityViolation::MatchNonExhaustive {
                             scrutinee_datatype: datatype.clone(),
                             missing_constructors: missing,
                         },
                         term: term.clone(),
-                    });
+                    }));
                 }
             }
 
@@ -1245,12 +1254,12 @@ fn check_admissibility_hole_extension_inner(
             prios.sort_unstable();
             for w in prios.windows(2) {
                 if w[0] == w[1] {
-                    return Err(TypeError::Admissibility {
+                    return Err(boxed_error(|| TypeError::Admissibility {
                         violation: AdmissibilityViolation::DefeasibleOrderNotTotal {
                             priority: w[0],
                         },
                         term: term.clone(),
-                    });
+                    }));
                 }
             }
             for exception in &rule.exceptions {
@@ -1384,46 +1393,46 @@ fn check_admissibility_hole_extension_inner(
             check_admissibility_hole_extension_inner(witness, residuals, depth + 1)
         }
 
-        Term::Rec { .. } => Err(TypeError::Admissibility {
+        Term::Rec { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::RecNotSupported,
             term: term.clone(),
-        }),
-        Term::Sigma { .. } => Err(TypeError::Admissibility {
+        })),
+        Term::Sigma { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::SigmaNotSupported,
             term: term.clone(),
-        }),
-        Term::Pair { .. } => Err(TypeError::Admissibility {
+        })),
+        Term::Pair { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::PairNotSupported,
             term: term.clone(),
-        }),
-        Term::Proj { .. } => Err(TypeError::Admissibility {
+        })),
+        Term::Proj { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::ProjectionNotSupported,
             term: term.clone(),
-        }),
-        Term::AxiomUse { .. } => Err(TypeError::Admissibility {
+        })),
+        Term::AxiomUse { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::AxiomNotSupported,
             term: term.clone(),
-        }),
-        Term::InductiveIntro { .. } => Err(TypeError::Admissibility {
+        })),
+        Term::InductiveIntro { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::InductiveIntroNotSupported,
             term: term.clone(),
-        }),
-        Term::ContentRefTerm(_) => Err(TypeError::Admissibility {
+        })),
+        Term::ContentRefTerm(_) => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::ContentRefNotSupported,
             term: term.clone(),
-        }),
+        })),
         Term::IntLit(_) | Term::RatLit(_, _) | Term::StringLit(_) => {
-            Err(TypeError::Admissibility {
+            Err(boxed_error(|| TypeError::Admissibility {
                 violation: AdmissibilityViolation::LiteralNotSupported,
                 term: term.clone(),
-            })
+            }))
         }
     }
 }
 
-fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError> {
+fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), Box<TypeError>> {
     if depth > MAX_DEPTH {
-        return Err(TypeError::RecursionLimitExceeded);
+        return Err(boxed_error(|| TypeError::RecursionLimitExceeded));
     }
     match term {
         Term::Var { .. } => Ok(()),
@@ -1434,10 +1443,10 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
                 Sort::Prop | Sort::Time0 | Sort::Time1 => return Ok(()),
             };
             if let Some(var_idx) = find_level_var(level) {
-                return Err(TypeError::Admissibility {
+                return Err(boxed_error(|| TypeError::Admissibility {
                     violation: AdmissibilityViolation::UnresolvedLevelVar(var_idx),
                     term: term.clone(),
-                });
+                }));
             }
             Ok(())
         }
@@ -1455,10 +1464,10 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
         } => {
             if let Some(row) = effect_row {
                 if !matches!(row, EffectRow::Empty) {
-                    return Err(TypeError::Admissibility {
+                    return Err(boxed_error(|| TypeError::Admissibility {
                         violation: AdmissibilityViolation::EffectfulPiNotSupported,
                         term: term.clone(),
-                    });
+                    }));
                 }
             }
             check_admissibility_inner(domain, depth + 1)?;
@@ -1482,18 +1491,18 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
         }
 
         // -- Non-admissible forms --
-        Term::Rec { .. } => Err(TypeError::Admissibility {
+        Term::Rec { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::RecNotSupported,
             term: term.clone(),
-        }),
-        Term::Hole(_) => Err(TypeError::Admissibility {
+        })),
+        Term::Hole(_) => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::UnfilledHole,
             term: term.clone(),
-        }),
-        Term::Sigma { .. } => Err(TypeError::Admissibility {
+        })),
+        Term::Sigma { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::SigmaNotSupported,
             term: term.clone(),
-        }),
+        })),
         Term::Match {
             scrutinee,
             return_ty,
@@ -1507,12 +1516,12 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
                     Pattern::Constructor { constructor, .. } => {
                         let ctor_name = constructor.name.segments.join(".");
                         if !is_prelude_constructor(&ctor_name) {
-                            return Err(TypeError::Admissibility {
+                            return Err(boxed_error(|| TypeError::Admissibility {
                                 violation: AdmissibilityViolation::MatchOnNonPreludeType {
                                     constructor_name: ctor_name,
                                 },
                                 term: term.clone(),
-                            });
+                            }));
                         }
                     }
                 }
@@ -1553,10 +1562,10 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
                         }
                         return Ok(());
                     }
-                    return Err(TypeError::Admissibility {
+                    return Err(boxed_error(|| TypeError::Admissibility {
                         violation: AdmissibilityViolation::MatchScrutineeDatatypeUnresolved,
                         term: term.clone(),
-                    });
+                    }));
                 }
             };
 
@@ -1584,14 +1593,14 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
                         let actual_datatype =
                             crate::prelude::PreludeRegistry::constructor_datatype(&ctor_name)
                                 .map(str::to_string);
-                        return Err(TypeError::Admissibility {
+                        return Err(boxed_error(|| TypeError::Admissibility {
                             violation: AdmissibilityViolation::MatchBranchConstructorMismatch {
                                 scrutinee_datatype: datatype.clone(),
                                 branch_constructor: ctor_name,
                                 branch_constructor_datatype: actual_datatype,
                             },
                             term: term.clone(),
-                        });
+                        }));
                     }
                 }
             }
@@ -1616,13 +1625,13 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
                     .map(|c| (*c).to_string())
                     .collect();
                 if !missing.is_empty() {
-                    return Err(TypeError::Admissibility {
+                    return Err(boxed_error(|| TypeError::Admissibility {
                         violation: AdmissibilityViolation::MatchNonExhaustive {
                             scrutinee_datatype: datatype.clone(),
                             missing_constructors: missing,
                         },
                         term: term.clone(),
-                    });
+                    }));
                 }
             }
 
@@ -1634,27 +1643,27 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
             }
             Ok(())
         }
-        Term::Pair { .. } => Err(TypeError::Admissibility {
+        Term::Pair { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::PairNotSupported,
             term: term.clone(),
-        }),
-        Term::Proj { .. } => Err(TypeError::Admissibility {
+        })),
+        Term::Proj { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::ProjectionNotSupported,
             term: term.clone(),
-        }),
+        })),
         Term::Constant(_) => Ok(()),
-        Term::AxiomUse { .. } => Err(TypeError::Admissibility {
+        Term::AxiomUse { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::AxiomNotSupported,
             term: term.clone(),
-        }),
-        Term::InductiveIntro { .. } => Err(TypeError::Admissibility {
+        })),
+        Term::InductiveIntro { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::InductiveIntroNotSupported,
             term: term.clone(),
-        }),
-        Term::HoleFill { .. } => Err(TypeError::Admissibility {
+        })),
+        Term::HoleFill { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::HoleFillNotSupported,
             term: term.clone(),
-        }),
+        })),
         Term::Defeasible(rule) => {
             check_admissibility_inner(&rule.base_ty, depth + 1)?;
             check_admissibility_inner(&rule.base_body, depth + 1)?;
@@ -1671,12 +1680,12 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
             prios.sort_unstable();
             for w in prios.windows(2) {
                 if w[0] == w[1] {
-                    return Err(TypeError::Admissibility {
+                    return Err(boxed_error(|| TypeError::Admissibility {
                         violation: AdmissibilityViolation::DefeasibleOrderNotTotal {
                             priority: w[0],
                         },
                         term: term.clone(),
-                    });
+                    }));
                 }
             }
             for exception in &rule.exceptions {
@@ -1685,43 +1694,43 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), TypeError>
             }
             Ok(())
         }
-        Term::DefeatElim { .. } => Err(TypeError::Admissibility {
+        Term::DefeatElim { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::DefeatElimNotSupported,
             term: term.clone(),
-        }),
+        })),
         Term::ModalAt { .. }
         | Term::ModalEventually { .. }
         | Term::ModalAlways { .. }
         | Term::ModalIntro { .. }
-        | Term::ModalElim { .. } => Err(TypeError::Admissibility {
+        | Term::ModalElim { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::ModalNotSupported,
             term: term.clone(),
-        }),
-        Term::SanctionsDominance { .. } => Err(TypeError::Admissibility {
+        })),
+        Term::SanctionsDominance { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::SanctionsDominanceNotSupported,
             term: term.clone(),
-        }),
-        Term::PrincipleBalance(_) => Err(TypeError::Admissibility {
+        })),
+        Term::PrincipleBalance(_) => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::PrincipleBalanceNotSupported,
             term: term.clone(),
-        }),
-        Term::Unlock { .. } => Err(TypeError::Admissibility {
+        })),
+        Term::Unlock { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::UnlockNotSupported,
             term: term.clone(),
-        }),
-        Term::Lift0 { .. } | Term::Derive1 { .. } => Err(TypeError::Admissibility {
+        })),
+        Term::Lift0 { .. } | Term::Derive1 { .. } => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::TemporalCoercionNotSupported,
             term: term.clone(),
-        }),
-        Term::ContentRefTerm(_) => Err(TypeError::Admissibility {
+        })),
+        Term::ContentRefTerm(_) => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::ContentRefNotSupported,
             term: term.clone(),
-        }),
+        })),
         Term::IntLit(_) | Term::RatLit(_, _) | Term::StringLit(_) => {
-            Err(TypeError::Admissibility {
+            Err(boxed_error(|| TypeError::Admissibility {
                 violation: AdmissibilityViolation::LiteralNotSupported,
                 term: term.clone(),
-            })
+            }))
         }
     }
 }
@@ -1841,7 +1850,7 @@ fn resolve_match_scrutinee_datatype(
 /// | `Lambda` | Cannot infer -- requires annotation |
 pub fn infer(ctx: &Context, term: &Term) -> Result<Term, TypeError> {
     let mut fuel = MAX_WHNF_FUEL;
-    infer_inner(ctx, term, 0, &mut fuel)
+    infer_inner(ctx, term, 0, &mut fuel).map_err(|error| *error)
 }
 
 /// Inner inference with shared fuel counter and depth tracking.
@@ -1850,11 +1859,11 @@ fn infer_inner(
     term: &Term,
     depth: usize,
     fuel: &mut usize,
-) -> Result<Term, TypeError> {
+) -> Result<Term, Box<TypeError>> {
     if depth > MAX_DEPTH {
-        return Err(TypeError::RecursionLimitExceeded);
+        return Err(boxed_error(|| TypeError::RecursionLimitExceeded));
     }
-    check_admissibility(term)?;
+    check_admissibility_inner(term, 0)?;
 
     match term {
         // -- Var --
@@ -1865,7 +1874,7 @@ fn infer_inner(
                     name: name.name.clone(),
                     index: *index,
                     ctx_len: ctx.len(),
-                })
+                }).map_err(Box::new)
         }
 
         // -- Constant --
@@ -1875,7 +1884,7 @@ fn infer_inner(
                 .ok_or_else(|| TypeError::Admissibility {
                     violation: AdmissibilityViolation::ConstantNotSupported,
                     term: term.clone(),
-                })
+                }).map_err(Box::new)
         }
 
         // -- Sort --
@@ -1895,120 +1904,134 @@ fn infer_inner(
         },
 
         Term::IntLit(_) | Term::RatLit(_, _) | Term::StringLit(_) => {
-            Err(TypeError::Admissibility {
+            Err(boxed_error(|| TypeError::Admissibility {
                 violation: AdmissibilityViolation::LiteralNotSupported,
                 term: term.clone(),
-            })
+            }))
         }
 
-        // -- Pi --
-        Term::Pi {
-            domain, codomain, ..
-        } => {
-            let i = infer_sort(ctx, domain, depth + 1, fuel)?;
-            let ext_ctx = ctx.extend((**domain).clone());
-            let j = infer_sort(&ext_ctx, codomain, depth + 1, fuel)?;
-            Ok(type_level(i.max(j)))
-        }
+        Term::Pi { domain, codomain, .. } => infer_pi(ctx, domain, codomain, depth, fuel),
 
-        // -- App --
-        Term::App { func, arg } => {
-            let func_ty = infer_inner(ctx, func, depth + 1, fuel)?;
-            let (domain, codomain) = ensure_pi(&func_ty, depth + 1, fuel)?;
-            check_inner(ctx, arg, &domain, depth + 1, fuel)?;
-            subst(&codomain, 0, arg, depth + 1)
-        }
+        Term::App { func, arg } => infer_app(ctx, func, arg, depth, fuel),
 
-        // -- Annot --
-        Term::Annot { term: inner, ty } => {
-            let _ = infer_sort(ctx, ty, depth + 1, fuel)?;
-            check_inner(ctx, inner, ty, depth + 1, fuel)?;
-            Ok((**ty).clone())
-        }
+        Term::Annot { term: inner, ty } => infer_annotation(ctx, inner, ty, depth, fuel),
 
-        // -- Let --
-        Term::Let { ty, val, body, .. } => {
-            let _ = infer_sort(ctx, ty, depth + 1, fuel)?;
-            check_inner(ctx, val, ty, depth + 1, fuel)?;
-            let ext_ctx = ctx.extend((**ty).clone());
-            let body_ty = infer_inner(&ext_ctx, body, depth + 1, fuel)?;
-            subst(&body_ty, 0, val, depth + 1)
-        }
+        Term::Let { ty, val, body, .. } => infer_let(ctx, ty, val, body, depth, fuel),
 
-        // -- Defeasible --
-        // A defeasible rule has the same type as its base_ty annotation.
-        // We verify that base_ty is a valid type (inhabits some sort),
-        // then check that base_body inhabits base_ty, and that each
-        // exception body also inhabits base_ty.
-        Term::Defeasible(rule) => {
-            let _ = infer_sort(ctx, &rule.base_ty, depth + 1, fuel)?;
-            check_inner(ctx, &rule.base_body, &rule.base_ty, depth + 1, fuel)?;
-            for exception in &rule.exceptions {
-                // Guards must be propositions (inhabit some sort).
-                let _ = infer_inner(ctx, &exception.guard, depth + 1, fuel)?;
-                check_inner(ctx, &exception.body, &rule.base_ty, depth + 1, fuel)?;
-            }
-            Ok((*rule.base_ty).clone())
-        }
+        Term::Defeasible(rule) => infer_defeasible(ctx, rule, depth, fuel),
 
-        // -- Match on prelude types --
-        // Admissibility already verified that all patterns are prelude
-        // constructors or wildcards.  The return_ty (motive) gives the
-        // result type.  We verify the scrutinee type-checks, then check
-        // each branch body under the context extended with the pattern's
-        // binder types.
-        Term::Match {
-            scrutinee,
-            return_ty,
-            branches,
-        } => {
-            // Scrutinee must be well-typed.
-            let _scrutinee_ty = infer_inner(ctx, scrutinee, depth + 1, fuel)?;
-            // Return type must inhabit a sort.
-            let _ = infer_sort(ctx, return_ty, depth + 1, fuel)?;
-            // Each branch body must check against the return type, under the
-            // context extended with the pattern's binders. A constructor
-            // pattern `C x₁ … xₙ` binds `n` variables whose types are the
-            // first `n` argument (domain) types of the constructor's
-            // signature; a wildcard binds nothing. The motive `return_ty`
-            // does not depend on the scrutinee in the admissible fragment, so
-            // it is checked once outside the branch context and weakened into
-            // the extended context (see `weaken_for_branch`).
-            for branch in branches {
-                let (branch_ctx, binder_count) = match &branch.pattern {
-                    Pattern::Constructor {
-                        constructor,
-                        binders,
-                    } if !binders.is_empty() => {
-                        let ext =
-                            bind_match_branch_binders(ctx, constructor, binders.len(), depth, fuel)?;
-                        (ext, binders.len())
-                    }
-                    // Nullary constructor or wildcard: no new binders.
-                    _ => (ctx.clone(), 0),
-                };
-                let branch_return_ty = weaken_for_branch(return_ty, binder_count, depth)?;
-                check_inner(&branch_ctx, &branch.body, &branch_return_ty, depth + 1, fuel)?;
-            }
-            Ok((**return_ty).clone())
-        }
+        Term::Match { scrutinee, return_ty, branches } => infer_match(ctx, scrutinee, return_ty, branches, depth, fuel),
 
         // -- Lambda --
-        Term::Lambda { .. } => Err(TypeError::CannotInfer { term: term.clone() }),
+        Term::Lambda { .. } => Err(boxed_error(|| TypeError::CannotInfer { term: term.clone() })),
 
         // All other forms rejected by admissibility (unreachable after
         // the check_admissibility call at the top of this function).
-        _ => Err(TypeError::Admissibility {
+        _ => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::RecNotSupported,
             term: term.clone(),
-        }),
+        })),
     }
+}
+
+// Separate inference rules keep unrelated branch temporaries out of each
+// recursive frame, including unoptimized builds on ordinary caller stacks.
+// -- Pi --
+#[inline(never)]
+fn infer_pi(ctx: &Context, domain: &Term, codomain: &Term, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
+    let i = infer_sort(ctx, domain, depth + 1, fuel)?;
+    let ext_ctx = ctx.extend(domain.clone());
+    let j = infer_sort(&ext_ctx, codomain, depth + 1, fuel)?;
+    Ok(type_level(i.max(j)))
+}
+
+// -- App --
+#[inline(never)]
+fn infer_app(ctx: &Context, func: &Term, arg: &Term, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
+    let func_ty = infer_inner(ctx, func, depth + 1, fuel)?;
+    let (domain, codomain) = ensure_pi(&func_ty, depth + 1, fuel)?;
+    check_inner(ctx, arg, &domain, depth + 1, fuel)?;
+    subst(&codomain, 0, arg, depth + 1)
+}
+
+// -- Annot --
+#[inline(never)]
+fn infer_annotation(ctx: &Context, inner: &Term, ty: &Term, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
+    let _ = infer_sort(ctx, ty, depth + 1, fuel)?;
+    check_inner(ctx, inner, ty, depth + 1, fuel)?;
+    Ok(ty.clone())
+}
+
+// -- Let --
+#[inline(never)]
+fn infer_let(ctx: &Context, ty: &Term, val: &Term, body: &Term, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
+    let _ = infer_sort(ctx, ty, depth + 1, fuel)?;
+    check_inner(ctx, val, ty, depth + 1, fuel)?;
+    let ext_ctx = ctx.extend(ty.clone());
+    let body_ty = infer_inner(&ext_ctx, body, depth + 1, fuel)?;
+    subst(&body_ty, 0, val, depth + 1)
+}
+
+// -- Defeasible --
+// A defeasible rule has the same type as its base_ty annotation.
+// We verify that base_ty is a valid type (inhabits some sort),
+// then check that base_body inhabits base_ty, and that each
+// exception body also inhabits base_ty.
+#[inline(never)]
+fn infer_defeasible(ctx: &Context, rule: &crate::ast::DefeasibleRule, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
+    let _ = infer_sort(ctx, &rule.base_ty, depth + 1, fuel)?;
+    check_inner(ctx, &rule.base_body, &rule.base_ty, depth + 1, fuel)?;
+    for exception in &rule.exceptions {
+        // Guards must be propositions (inhabit some sort).
+        let _ = infer_inner(ctx, &exception.guard, depth + 1, fuel)?;
+        check_inner(ctx, &exception.body, &rule.base_ty, depth + 1, fuel)?;
+    }
+    Ok((*rule.base_ty).clone())
+}
+
+// -- Match on prelude types --
+// Admissibility already verified that all patterns are prelude
+// constructors or wildcards.  The return_ty (motive) gives the
+// result type.  We verify the scrutinee type-checks, then check
+// each branch body under the context extended with the pattern's
+// binder types.
+#[inline(never)]
+fn infer_match(ctx: &Context, scrutinee: &Term, return_ty: &Term, branches: &[crate::ast::Branch], depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
+    // Scrutinee must be well-typed.
+    let _scrutinee_ty = infer_inner(ctx, scrutinee, depth + 1, fuel)?;
+    // Return type must inhabit a sort.
+    let _ = infer_sort(ctx, return_ty, depth + 1, fuel)?;
+    // Each branch body must check against the return type, under the
+    // context extended with the pattern's binders. A constructor
+    // pattern `C x₁ … xₙ` binds `n` variables whose types are the
+    // first `n` argument (domain) types of the constructor's
+    // signature; a wildcard binds nothing. The motive `return_ty`
+    // does not depend on the scrutinee in the admissible fragment, so
+    // it is checked once outside the branch context and weakened into
+    // the extended context (see `weaken_for_branch`).
+    for branch in branches {
+        let (branch_ctx, binder_count) = match &branch.pattern {
+            Pattern::Constructor {
+                constructor,
+                binders,
+            } if !binders.is_empty() => {
+                let ext =
+                    bind_match_branch_binders(ctx, constructor, binders.len(), depth, fuel)?;
+                (ext, binders.len())
+            }
+            // Nullary constructor or wildcard: no new binders.
+            _ => (ctx.clone(), 0),
+        };
+        let branch_return_ty = weaken_for_branch(return_ty, binder_count, depth)?;
+        check_inner(&branch_ctx, &branch.body, &branch_return_ty, depth + 1, fuel)?;
+    }
+    Ok(return_ty.clone())
 }
 
 /// **Checking mode** -- verify that `term` has type `expected_type` under `ctx`.
 pub fn check(ctx: &Context, term: &Term, expected_type: &Term) -> Result<(), TypeError> {
     let mut fuel = MAX_WHNF_FUEL;
-    check_inner(ctx, term, expected_type, 0, &mut fuel)
+    check_inner(ctx, term, expected_type, 0, &mut fuel).map_err(|error| *error)
 }
 
 /// Inner checking with shared fuel counter and depth tracking.
@@ -2018,11 +2041,11 @@ fn check_inner(
     expected_type: &Term,
     depth: usize,
     fuel: &mut usize,
-) -> Result<(), TypeError> {
+) -> Result<(), Box<TypeError>> {
     if depth > MAX_DEPTH {
-        return Err(TypeError::RecursionLimitExceeded);
+        return Err(boxed_error(|| TypeError::RecursionLimitExceeded));
     }
-    check_admissibility(term)?;
+    check_admissibility_inner(term, 0)?;
 
     match term {
         // -- Lambda (checking mode) --
@@ -2036,12 +2059,12 @@ fn check_inner(
                 })?;
 
             if !conv_eq(domain, &pi_domain, depth, fuel)? {
-                return Err(TypeError::Mismatch {
+                return Err(boxed_error(|| TypeError::Mismatch {
                     ctx_len: ctx.len(),
                     term: (**domain).clone(),
                     expected: pi_domain,
                     found: (**domain).clone(),
-                });
+                }));
             }
 
             let ext_ctx = ctx.extend(pi_domain);
@@ -2054,12 +2077,12 @@ fn check_inner(
             if conv_eq(&inferred, expected_type, depth, fuel)? {
                 Ok(())
             } else {
-                Err(TypeError::Mismatch {
+                Err(boxed_error(|| TypeError::Mismatch {
                     ctx_len: ctx.len(),
                     term: term.clone(),
                     expected: expected_type.clone(),
                     found: inferred,
-                })
+                }))
             }
         }
     }
@@ -2071,7 +2094,7 @@ fn infer_sort(
     term: &Term,
     depth: usize,
     fuel: &mut usize,
-) -> Result<u64, TypeError> {
+) -> Result<u64, Box<TypeError>> {
     let ty = infer_inner(ctx, term, depth, fuel)?;
     ensure_sort(&ty, depth, fuel)
 }
@@ -2611,7 +2634,7 @@ mod tests {
             .join()
             .expect("thread join");
         assert!(result.is_err());
-        match result.unwrap_err() {
+        match *result.unwrap_err() {
             TypeError::RecursionLimitExceeded => {}
             other => panic!("expected RecursionLimitExceeded, got: {:?}", other),
         }
@@ -2662,7 +2685,7 @@ mod tests {
         let mut fuel: usize = 10;
         let result = whnf(&term, 0, &mut fuel);
         assert!(result.is_err());
-        match result.unwrap_err() {
+        match *result.unwrap_err() {
             TypeError::ReductionLimitExceeded => {}
             other => panic!("expected ReductionLimitExceeded, got: {:?}", other),
         }
@@ -2681,7 +2704,7 @@ mod tests {
         let mut fuel: usize = 5;
         let result = whnf(&term, 0, &mut fuel);
         assert!(result.is_err());
-        match result.unwrap_err() {
+        match *result.unwrap_err() {
             TypeError::ReductionLimitExceeded => {}
             other => panic!("expected ReductionLimitExceeded, got: {:?}", other),
         }

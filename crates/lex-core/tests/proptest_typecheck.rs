@@ -100,13 +100,13 @@ fn arb_term(depth: u32) -> impl Strategy<Value = Term> {
 fn arb_effect() -> impl Strategy<Value = Effect> {
     prop_oneof![
         Just(Effect::Read),
-        "[a-z]{1,8}".prop_map(|s| Effect::Write(s)),
-        "[a-z]{1,8}".prop_map(|s| Effect::Attest(s)),
-        "[a-z]{1,8}".prop_map(|s| Effect::Authority(s)),
-        "[a-z]{1,8}".prop_map(|s| Effect::Oracle(s)),
+        "[a-z]{1,8}".prop_map(Effect::Write),
+        "[a-z]{1,8}".prop_map(Effect::Attest),
+        "[a-z]{1,8}".prop_map(Effect::Authority),
+        "[a-z]{1,8}".prop_map(Effect::Oracle),
         (0u32..5, 1u64..1000).prop_map(|(l, a)| Effect::Fuel(l, a)),
         Just(Effect::SanctionsQuery),
-        "[a-z]{1,8}".prop_map(|s| Effect::Discretion(s)),
+        "[a-z]{1,8}".prop_map(Effect::Discretion),
     ]
 }
 
@@ -224,9 +224,89 @@ fn deep_pi_chain(depth: usize) -> Term {
 
 #[test]
 fn depth_safety_smoke() {
-    let ctx = Context::empty();
-    let term = deep_pi_chain(48);
-    let _ = infer(&ctx, &term);
+    // Fix the stack budget so a caller's RUST_MIN_STACK cannot hide regressions.
+    std::thread::Builder::new()
+        .stack_size(2 * 1024 * 1024)
+        .spawn(|| {
+            let ctx = Context::empty();
+            for depth in [48, 128] {
+                let term = deep_pi_chain(depth);
+                let expected = Term::Sort(Sort::Type(Level::Nat(1)));
+                assert_eq!(infer(&ctx, &term), Ok(expected.clone()));
+                assert_eq!(check(&ctx, &term, &expected), Ok(()));
+                assert_eq!(
+                    lex_core::typecheck::check_admissibility_mode(
+                        &term,
+                        lex_core::typecheck::AdmissibilityMode::HoleExtension,
+                    ),
+                    Ok(Vec::new())
+                );
+            }
+        })
+        .expect("spawn bounded-stack checker")
+        .join()
+        .expect("inference must preserve the caller's stack");
+}
+
+#[test]
+fn depth_limit_reports_error_on_bounded_stack() {
+    std::thread::Builder::new()
+        .stack_size(2 * 1024 * 1024)
+        .spawn(|| {
+            let ctx = Context::empty();
+            let term = deep_pi_chain(256);
+            assert_eq!(
+                infer(&ctx, &term),
+                Err(lex_core::typecheck::TypeError::RecursionLimitExceeded)
+            );
+        })
+        .expect("spawn bounded-stack checker")
+        .join()
+        .expect("the depth guard must return an error before stack exhaustion");
+}
+
+#[test]
+fn nested_inference_rules_preserve_bounded_stack() {
+    std::thread::Builder::new()
+        .stack_size(2 * 1024 * 1024)
+        .spawn(|| {
+            let type0 = Term::Sort(Sort::Type(Level::Nat(0)));
+            let type1 = Term::Sort(Sort::Type(Level::Nat(1)));
+            let ctx = Context::empty();
+            let mut annotated = type0.clone();
+            let mut let_bound = type0.clone();
+            let mut lambda = Term::Var { name: Ident::new("x"), index: 0 };
+            let mut lambda_type = type0.clone();
+            for _ in 0..48 {
+                annotated = Term::Annot {
+                    term: Box::new(annotated),
+                    ty: Box::new(type1.clone()),
+                };
+                let_bound = Term::Let {
+                    binder: Ident::new("x"),
+                    ty: Box::new(type1.clone()),
+                    val: Box::new(type0.clone()),
+                    body: Box::new(let_bound),
+                };
+                lambda = Term::Lambda {
+                    binder: Ident::new("x"),
+                    domain: Box::new(type0.clone()),
+                    body: Box::new(lambda),
+                };
+                lambda_type = Term::Pi {
+                    binder: Ident::new("x"),
+                    domain: Box::new(type0.clone()),
+                    effect_row: None,
+                    codomain: Box::new(lambda_type),
+                };
+            }
+            assert_eq!(infer(&ctx, &annotated), Ok(type1.clone()));
+            assert_eq!(infer(&ctx, &let_bound), Ok(type1));
+            assert_eq!(check(&ctx, &lambda, &lambda_type), Ok(()));
+        })
+        .expect("spawn bounded-stack checker")
+        .join()
+        .expect("nested checking must preserve the caller's stack");
 }
 
 // ---------------------------------------------------------------------------
