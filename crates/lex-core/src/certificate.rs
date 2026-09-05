@@ -68,7 +68,7 @@ pub struct LexCertificate {
     /// `certificate_digest`.
     #[serde(default)]
     pub applies_to: Option<AppliesTo>,
-    /// Legal basis citation (e.g., "IBC Act 2016 s.66").
+    /// Legal basis citation (e.g., "IBC Act 2016 s.130(1)").
     pub legal_basis: String,
     /// The compliance verdict produced by evaluating the rule.
     pub verdict: ComplianceVerdict,
@@ -420,7 +420,7 @@ mod tests {
         let cert = build_certificate(
             "abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234",
             "SC",
-            "IBC Act 2016 s.66",
+            "IBC Act 2016 s.130(1)",
             ComplianceVerdict::Compliant,
             std::slice::from_ref(&obl),
             discharged,
@@ -429,7 +429,7 @@ mod tests {
 
         assert_eq!(cert.certificate_digest.len(), 64, "digest should be 64 hex chars");
         assert_eq!(cert.jurisdiction, "SC");
-        assert_eq!(cert.legal_basis, "IBC Act 2016 s.66");
+        assert_eq!(cert.legal_basis, "IBC Act 2016 s.130(1)");
         assert_eq!(cert.verdict, ComplianceVerdict::Compliant);
         assert_eq!(cert.obligations.len(), 1);
         assert!(
@@ -490,7 +490,7 @@ mod tests {
         let err = build_certificate(
             &"ab".repeat(32),
             "SC",
-            "IBC Act 2016 s.66",
+            "IBC Act 2016 s.130(1)",
             ComplianceVerdict::Compliant,
             &[covered, uncovered],
             discharged,
@@ -512,7 +512,7 @@ mod tests {
         let cert = build_certificate(
             &"ab".repeat(32),
             "SC",
-            "IBC Act 2016 s.66",
+            "IBC Act 2016 s.130(1)",
             ComplianceVerdict::Compliant,
             &[a, b],
             discharged,
@@ -527,7 +527,7 @@ mod tests {
         let cert = build_certificate(
             &"ff".repeat(32),
             "SC",
-            "IBC Act 2016 s.66",
+            "IBC Act 2016 s.130(1)",
             ComplianceVerdict::NonCompliant,
             &[],
             vec![],
@@ -553,7 +553,7 @@ mod tests {
         let cert = build_certificate(
             &"ab".repeat(32),
             "SC",
-            "IBC Act 2016 s.66",
+            "IBC Act 2016 s.130(1)",
             ComplianceVerdict::Compliant,
             &[],
             vec![],
@@ -569,7 +569,7 @@ mod tests {
             &"ab".repeat(32),
             "SC",
             Some(scope.clone()),
-            "IBC Act 2016 s.66",
+            "IBC Act 2016 s.130(1)",
             ComplianceVerdict::Compliant,
             &[],
             vec![],
@@ -591,7 +591,7 @@ mod tests {
         let no_scope = build_certificate(
             &"cd".repeat(32),
             "SC",
-            "IBC Act 2016 s.66",
+            "IBC Act 2016 s.130(1)",
             ComplianceVerdict::Compliant,
             &[],
             vec![],
@@ -601,7 +601,7 @@ mod tests {
             &"cd".repeat(32),
             "SC",
             Some(scope_sc_incorporate()),
-            "IBC Act 2016 s.66",
+            "IBC Act 2016 s.130(1)",
             ComplianceVerdict::Compliant,
             &[],
             vec![],
@@ -629,7 +629,7 @@ mod tests {
             fiber_id: None,
             jurisdiction: "SC".to_string(),
             applies_to: None,
-            legal_basis: "IBC Act 2016 s.66".to_string(),
+            legal_basis: "IBC Act 2016 s.130(1)".to_string(),
             verdict: ComplianceVerdict::Compliant,
             obligations: obligations.clone(),
             certificate_digest: String::new(),
@@ -714,14 +714,14 @@ mod tests {
         let mut cert = build_certificate(
             &"ff".repeat(32),
             "SC",
-            "IBC Act 2016 s.66",
+            "IBC Act 2016 s.130(1)",
             ComplianceVerdict::NonCompliant,
             &[],
             vec![],
         )
         .unwrap();
         cert.entity_id = Some("ent-12345".to_string());
-        cert.fiber_id = Some("fiber-ibc-s66-min-directors".to_string());
+        cert.fiber_id = Some("fiber-ibc-s130-min-directors".to_string());
 
         let json = serde_json::to_string(&cert).expect("serialize");
         let deserialized: LexCertificate = serde_json::from_str(&json).expect("deserialize");
@@ -729,7 +729,7 @@ mod tests {
         assert_eq!(deserialized.entity_id, Some("ent-12345".to_string()));
         assert_eq!(
             deserialized.fiber_id,
-            Some("fiber-ibc-s66-min-directors".to_string())
+            Some("fiber-ibc-s130-min-directors".to_string())
         );
         assert_eq!(deserialized.verdict, ComplianceVerdict::NonCompliant);
     }
@@ -744,7 +744,7 @@ mod tests {
             fiber_id: None,
             jurisdiction: "SC".to_string(),
             applies_to: None,
-            legal_basis: "IBC Act 2016 s.66".to_string(),
+            legal_basis: "IBC Act 2016 s.130(1)".to_string(),
             verdict: ComplianceVerdict::Compliant,
             obligations: obligations.clone(),
             certificate_digest: String::new(),

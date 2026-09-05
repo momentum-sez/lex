@@ -9,7 +9,7 @@ sovereign-kernel authors
 
 Canonical public reference: `docs/language-reference.md`
 
-Companion proposal: `~/op/docs/proposal-lex-rule-contract-and-pack-binding.md`
+Companion proposal: [Op rule contracts and pack binding](https://github.com/momentum-sez/op/blob/frontier/lex-rule-contracts/docs/proposal-lex-rule-contract-and-pack-binding.md)
 (extends `Contract` with a `LexRule(LexRuleRef)` variant; specifies pack
 consumption from Op's side; the two proposals must land together).
 
@@ -143,7 +143,7 @@ applies_to {
 }
 =
   if EntityFacts.beneficial_owners.any(is_sanctioned)
-  then NonCompliant(reason = "BO sanctioned, IBC Act 2016 s.66")
+  then NonCompliant(reason = "beneficial owner sanctioned")
   else Pending  -- requires further BO traversal
 unless EntityFacts.exempt_under_treaty
 ```

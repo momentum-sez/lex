@@ -535,7 +535,7 @@ mod tests {
     }
 
     #[test]
-    fn elaborates_ibc_s66_minimum_directors_rule() {
+    fn elaborates_ibc_s130_minimum_directors_rule() {
         let rule = defeasible(
             "min_directors",
             pi("ctx", surface("IncorporationContext"), surface("ComplianceVerdict")),

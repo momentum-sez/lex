@@ -38,8 +38,11 @@ fragments. The admissible-fragment soundness proofs are mechanized in
 cargo run --example hello-lex -p lex-core
 ```
 
-The example walks the Seychelles International Business Companies Act 2016
-section 66 rule (minimum directors) end to end:
+The example runs a director-count model through the pipeline. Seychelles
+International Business Companies Act 2016 section 130(1) motivates the example.
+The Rust model checks only a supplied count, not appointment validity or
+statutory applicability. The separate Coq example models those additional facts.
+The pipeline:
 
 1. constructs the defeasible rule as an AST,
 2. assigns De Bruijn indices and verifies temporal stratification,

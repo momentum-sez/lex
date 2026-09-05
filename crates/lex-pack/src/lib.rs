@@ -633,7 +633,7 @@ mod tests {
     fn admitted(name: &str, applies_to: Option<AppliesTo>, body: Term) -> AdmittedRule {
         AdmittedRule {
             name: name.to_string(),
-            legal_basis: "IBC Act 2016 s.66".to_string(),
+            legal_basis: "IBC Act 2016 s.130(1)".to_string(),
             applies_to,
             body,
         }

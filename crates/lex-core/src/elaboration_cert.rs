@@ -368,7 +368,7 @@ mod tests {
     #[test]
     fn scope_closure_certificate_construction() {
         let cert = ScopeClosureCertificate {
-            fiber_id: "fiber-ibc-s66-min-directors".to_string(),
+            fiber_id: "fiber-ibc-s130-min-directors".to_string(),
             free_identifiers: vec![
                 FreeIdentifierBinding {
                     name: "is_sanctioned".to_string(),
@@ -382,7 +382,7 @@ mod tests {
             capture_free: true,
         };
 
-        assert_eq!(cert.fiber_id, "fiber-ibc-s66-min-directors");
+        assert_eq!(cert.fiber_id, "fiber-ibc-s130-min-directors");
         assert_eq!(cert.free_identifiers.len(), 2);
         assert!(cert.capture_free);
 

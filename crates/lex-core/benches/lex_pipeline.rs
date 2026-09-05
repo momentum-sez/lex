@@ -4,13 +4,13 @@ use lex_core::{
     debruijn, elaborate, lexer, obligations, parser, prelude, typecheck,
 };
 
-const IBC_S66_RULE_BODY_SOURCE: &str = r#"lambda(ctx : IncorporationContext).
+const IBC_S130_RULE_BODY_SOURCE: &str = r#"lambda(ctx : IncorporationContext).
   match director_count ctx return ComplianceVerdict with
   | Zero => NonCompliant
   | _ => Compliant
 end"#;
 
-const IBC_S66_ACCESSOR_SOURCE: &str =
+const IBC_S130_ACCESSOR_SOURCE: &str =
     "lambda(ctx : IncorporationContext). director_count ctx";
 
 fn parse_source(source: &str) -> Term {
@@ -35,7 +35,7 @@ fn wildcard_branch(body: Term) -> Branch {
     }
 }
 
-fn ibc_s66_minimum_directors_rule() -> Term {
+fn ibc_s130_minimum_directors_rule() -> Term {
     Term::Defeasible(DefeasibleRule {
         name: Ident::new("min_directors"),
         base_ty: Box::new(Term::pi(
@@ -62,18 +62,18 @@ fn ibc_s66_minimum_directors_rule() -> Term {
 }
 
 fn lex_pipeline_benchmark(c: &mut Criterion) {
-    let source = IBC_S66_RULE_BODY_SOURCE;
+    let source = IBC_S130_RULE_BODY_SOURCE;
     let lexed_tokens = lexer::lex(source).expect("benchmark source should lex");
     let token_count = lexed_tokens.len() as u64;
     let prelude_ctx = prelude::compliance_prelude();
 
-    let core_rule = ibc_s66_minimum_directors_rule();
+    let core_rule = ibc_s130_minimum_directors_rule();
     let indexed_rule = debruijn::assign_indices(&core_rule).expect("rule should index");
     let obligation_count = obligations::extract_obligations(&indexed_rule).len() as u64;
 
-    // The full s.66 rule body uses Match/Defeasible, which the current
-    // admissible checker rejects. Benchmark the admissible accessor subterm.
-    let accessor_surface = parse_source(IBC_S66_ACCESSOR_SOURCE);
+    // Isolate accessor elaboration and checking from the rule-body benchmarks.
+    // The checker also accepts this rule's Match and Defeasible constructs.
+    let accessor_surface = parse_source(IBC_S130_ACCESSOR_SOURCE);
     let accessor_core =
         elaborate::elaborate(&accessor_surface, &prelude_ctx).expect("accessor should elaborate");
     let accessor_type = Term::pi(

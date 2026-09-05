@@ -117,7 +117,7 @@ impl Asof<1> {
 pub struct RewriteWitness {
     /// The kind of rewrite (tolling, savings, etc.).
     pub kind: RewriteKind,
-    /// Legal basis citation for the rewrite (e.g., "IBC Act 2016 s.66").
+    /// Legal basis citation for the rewrite (e.g., "IBC Act 2016 s.130(1)").
     pub legal_basis: String,
     /// Stratum-0 source time. Populated by [`Asof::lift0`]; callers
     /// constructing a witness directly may leave this `None` and rely on

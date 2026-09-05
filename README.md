@@ -100,7 +100,7 @@ cd lex
 cargo run --example hello-lex -p lex-core
 ```
 
-The example walks the Seychelles International Business Companies Act 2016 s.66 - first-shareholder-meeting requirement - through the full Lex pipeline: AST construction, De Bruijn indexing, temporal stratification, type inference, proof-obligation extraction and discharge, certificate issuance. It then constructs a typed discretion hole for `fit_and_proper : Prop @ regulator` and extracts its scope obligations, demonstrating the judgment-boundary primitive that makes Lex distinct from other rule engines.
+The example passes a director-count model, motivated by Seychelles International Business Companies Act 2016 section 130(1), through the Lex pipeline. It demonstrates AST construction, De Bruijn indexing, temporal stratification, type inference, obligation discharge, and certificate issuance. The model tests only whether the supplied director count is positive. It does not establish appointment validity or statutory applicability. The separate [`Coq example`](formal/coq/Lex/Examples/SeychellesS130.v) models those facts and exceptions explicitly. These models do not have equivalent inputs or verdicts. The Rust example also constructs a typed discretion hole for `fit_and_proper : Prop @ regulator` and extracts its scope obligations.
 
 Further reading: [`docs/getting-started.md`](docs/getting-started.md) for a five-minute cold-reader walk; [`docs/language-spec.md`](docs/language-spec.md) for the language reference; the paper *Lex: A Logic for Jurisdictional Rules* (research.momentum.inc) for formal treatment.
 

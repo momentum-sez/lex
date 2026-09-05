@@ -7,11 +7,12 @@
 //! cargo run --example hello-lex -p lex-core
 //! ```
 //!
-//! The program walks the full Lex proof pipeline on a real statute
-//! (Seychelles International Business Companies Act 2016, section 66 -
-//! "A company shall have at least one director who is a natural person"),
-//! then illustrates the typed discretion hole - the primitive that makes
-//! Lex distinct from every other rule engine.
+//! The program walks the Lex pipeline on a director-count model motivated by
+//! Seychelles International Business Companies Act 2016, section 130(1).
+//! It tests the supplied count, not appointment validity or applicability.
+//! The separate Coq example models appointment facts and statutory exceptions.
+//! Its inputs and verdicts are not equivalent to this Rust example.
+//! The program then illustrates a typed discretion hole.
 //!
 //! Output layout:
 //!   1. The rule, as an AST constructed in Rust.
@@ -107,9 +108,11 @@ fn branch_wildcard(body: Term) -> Branch {
     }
 }
 
-// ── The rule: IBC Act 2016 s.66 (minimum directors) ────────────────────────
+// ── The rule: IBC Act 2016 s.130(1) (minimum directors) ─────────────────────
 
-/// Construct the defeasible Lex rule for IBC Act 2016 s.66.
+/// Construct the director-count model motivated by IBC Act 2016 s.130(1).
+/// The caller supplies the count. This example does not verify appointments
+/// or whether the statutory requirement applies to the company.
 ///
 /// Surface form:
 ///
@@ -121,7 +124,7 @@ fn branch_wildcard(body: Term) -> Branch {
 ///     | _    => Compliant
 ///   priority 0
 /// ```
-fn ibc_s66_rule() -> Term {
+fn ibc_s130_rule() -> Term {
     Term::Defeasible(DefeasibleRule {
         name: Ident::new("min_directors"),
         base_ty: Box::new(pi(
@@ -222,12 +225,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("hello-lex");
     println!("========");
     println!();
-    println!("Rule: Seychelles IBC Act 2016 s.66");
-    println!("  \"A company shall have at least one director who is a natural person.\"");
+    println!("Model: director count, motivated by Seychelles IBC Act 2016 s.130(1)");
+    println!("  \"A company shall at all times have at least one director appointed");
+    println!("   in accordance with this Act ...\"");
     println!();
 
     // 1. Construct the AST.
-    let rule = ibc_s66_rule();
+    let rule = ibc_s130_rule();
     println!("[1] AST constructed - Term::Defeasible(min_directors).");
 
     // 2. Assign De Bruijn indices, then run the temporal-stratification check.
@@ -298,7 +302,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cert = certificate::build_certificate(
         &rule_digest,
         facts.jurisdiction,
-        "IBC Act 2016 s.66",
+        "IBC Act 2016 s.130(1)",
         ComplianceVerdict::Compliant,
         &extracted,
         discharged,

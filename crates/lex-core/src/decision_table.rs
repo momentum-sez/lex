@@ -24,7 +24,7 @@ pub struct DecisionTable {
     pub name: String,
     /// Jurisdiction code (e.g., "sc" for Seychelles).
     pub jurisdiction: String,
-    /// Legal citation (e.g., "IBC Act 2016 s.66").
+    /// Legal citation (e.g., "IBC Act 2016 s.130(1)").
     pub legal_basis: String,
     /// The context type the lambda binds (e.g., "IncorporationContext").
     pub context_type: String,
@@ -693,7 +693,7 @@ mod tests {
         DecisionTable {
             name: "minimum_directors".to_string(),
             jurisdiction: "sc".to_string(),
-            legal_basis: "IBC Act 2016 s.66".to_string(),
+            legal_basis: "IBC Act 2016 s.130(1)".to_string(),
             context_type: "IncorporationContext".to_string(),
             rules: vec![
                 DecisionRule {

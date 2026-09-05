@@ -4,13 +4,16 @@
 //! obligation extraction. The admissible type checker accepts `Defeasible`
 //! rules and `Match` on prelude constructor types (ComplianceVerdict,
 //! ComplianceTag, Bool, Nat, SanctionsResult). This test:
-//! 1. pushes the full IBC Act s.66 rule through AST construction, De Bruijn
+//! 1. pushes the IBC Act s.130(1) director-count model through AST construction, De Bruijn
 //!    assignment, and temporal stratification;
 //! 2. uses the compliance prelude to type-check the full rule (including
 //!    its Match on Nat constructors);
 //! 3. extracts proof obligations via `extract_obligations()`, discharges them
 //!    with the exported decision procedures, then assembles a compliance
 //!    certificate.
+//!
+//! This fixture checks only the supplied director count. It does not model
+//! appointment validity or the applicability exceptions in the Coq example.
 
 use mez_canonical::canonical::CanonicalBytes;
 use mez_canonical::digest::sha256_digest;
@@ -117,7 +120,7 @@ fn defeasible(name: &str, ty: Term, body: Term, exceptions: Vec<Exception>) -> T
     })
 }
 
-fn ibc_s66_minimum_directors_rule() -> Term {
+fn ibc_s130_minimum_directors_rule() -> Term {
     defeasible(
         "min_directors",
         pi(
@@ -192,8 +195,8 @@ fn discharge_extracted_obligation(
 }
 
 #[test]
-fn ibc_s66_full_proof_pipeline_produces_certificate() {
-    let rule = ibc_s66_minimum_directors_rule();
+fn ibc_s130_full_proof_pipeline_produces_certificate() {
+    let rule = ibc_s130_minimum_directors_rule();
 
     let indexed_rule = debruijn::assign_indices(&rule).expect("index assignment should succeed");
     temporal::check_temporal_stratification(&indexed_rule)
@@ -240,7 +243,7 @@ fn ibc_s66_full_proof_pipeline_produces_certificate() {
     let extracted = obligations::extract_obligations(&indexed_rule);
     assert!(
         !extracted.is_empty(),
-        "extract_obligations should produce at least one obligation from the IBC s.66 rule"
+        "extract_obligations should produce at least one obligation from the IBC s.130(1) rule"
     );
 
     let facts = IncorporationFacts {
@@ -281,7 +284,7 @@ fn ibc_s66_full_proof_pipeline_produces_certificate() {
     let certificate: LexCertificate = certificate::build_certificate(
         &rule_content_hash(&indexed_rule),
         facts.jurisdiction,
-        "IBC Act 2016 s.66",
+        "IBC Act 2016 s.130(1)",
         ComplianceVerdict::Compliant,
         &extracted,
         discharged,
@@ -290,7 +293,7 @@ fn ibc_s66_full_proof_pipeline_produces_certificate() {
 
     assert_eq!(certificate.rule_digest.len(), 64);
     assert_eq!(certificate.jurisdiction, "SC");
-    assert_eq!(certificate.legal_basis, "IBC Act 2016 s.66");
+    assert_eq!(certificate.legal_basis, "IBC Act 2016 s.130(1)");
     assert_eq!(certificate.verdict, ComplianceVerdict::Compliant);
     assert!(!certificate.issued_at.is_empty());
     assert_eq!(certificate.certificate_digest.len(), 64);

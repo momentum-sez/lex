@@ -93,10 +93,13 @@ fn defeasible(name: &str, ty: Term, body: Term, exceptions: Vec<Exception>) -> T
 }
 
 // ---------------------------------------------------------------------------
-// IBC Act s.66 - Minimum directors
+// IBC Act s.130(1) - Minimum directors
 // ---------------------------------------------------------------------------
 
-/// IBC Act s.66: Every IBC shall have at least one director.
+/// IBC Act s.130(1): a company shall at all times have at least one
+/// director appointed in accordance with the Act.
+/// This fixture tests only director count. Appointment validity and statutory
+/// applicability are separate inputs in the Coq example, not checked here.
 ///
 /// ```lex
 /// defeasible min_directors : IncorporationContext → ComplianceVerdict
@@ -107,7 +110,7 @@ fn defeasible(name: &str, ty: Term, body: Term, exceptions: Vec<Exception>) -> T
 /// end
 /// ```
 #[test]
-fn ibc_s66_minimum_directors() {
+fn ibc_s130_minimum_directors() {
     let rule = defeasible(
         "min_directors",
         pi(
@@ -447,7 +450,7 @@ fn beneficial_ownership_filing() {
 #[test]
 fn all_rules_serde_roundtrip() {
     let rules: Vec<Term> = vec![
-        // s.66 minimum directors
+        // s.130(1) minimum directors
         defeasible(
             "min_directors",
             pi(
