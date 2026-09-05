@@ -402,14 +402,8 @@ fn attack4_succ_level_overflow() {
         Ok(ty) => {
             // Check if the type is correct (Type_{u64::MAX + 1})
             // If u64::MAX + 1 overflowed to 0, that's Type_0 — WRONG
-            match &ty {
-                Term::Sort(Sort::Type(Level::Nat(n))) => {
-                    if *n == 0 {
-                        panic!("VULNERABILITY: Level overflow! Type_{{u64::MAX}} : Type_0 (wrapped around!)");
-                    }
-                    // If n == 0, that's the overflow bug. If panic doesn't trigger, it's ok.
-                }
-                _ => {}
+            if let Term::Sort(Sort::Type(Level::Nat(n))) = &ty {
+                assert_ne!(*n, 0, "VULNERABILITY: Level overflow! Type_{{u64::MAX}} : Type_0 (wrapped around!)");
             }
         }
         Err(_) => { /* error is fine */ }
@@ -427,14 +421,9 @@ fn attack4_succ_deliberate_wrap() {
     // With checked/wrapping arithmetic, this either panics or wraps
     match result {
         Ok(ty) => {
-            match &ty {
-                Term::Sort(Sort::Type(Level::Nat(n))) => {
-                    // If this wrapped around to a small number, it's a vulnerability
-                    if *n < 100 {
-                        panic!("VULNERABILITY: Level arithmetic overflow, got Type_{}", n);
-                    }
-                }
-                _ => {}
+            if let Term::Sort(Sort::Type(Level::Nat(n))) = &ty {
+                // If this wrapped around to a small number, it's a vulnerability.
+                assert!(*n >= 100, "VULNERABILITY: Level arithmetic overflow, got Type_{}", n);
             }
         }
         Err(_) => { /* fine */ }
@@ -825,4 +814,3 @@ fn attack9_omega_combinator_rejected() {
     // ensure_pi(Type_0) => fails (Type_0 is not a Pi)
     assert!(result.is_err(), "VULNERABILITY: omega combinator body accepted!");
 }
-

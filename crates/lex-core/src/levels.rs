@@ -1070,7 +1070,7 @@ mod tests {
         let solution = solve_levels(&constraints).unwrap();
         let l0 = solution.assignment[&v(0)];
         let l1 = solution.assignment[&v(1)];
-        assert!(l0 + 1 <= l1);
+        assert!(l0 < l1);
         assert!(l1 <= 3);
     }
 

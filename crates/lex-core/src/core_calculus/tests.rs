@@ -286,12 +286,12 @@ fn summary_round_trip_through_certificate() {
 
 #[test]
 fn four_tuple_proof_composes_within_scope() {
-    struct ADGM;
+    struct Adgm;
     struct V1;
     struct T2026;
-    struct FSRA;
-    let p: Proof<T2026, ADGM, V1, FSRA, u32> = Proof::axiom(1);
-    let q: Proof<T2026, ADGM, V1, FSRA, u32> = Proof::axiom(2);
+    struct Fsra;
+    let p: Proof<T2026, Adgm, V1, Fsra, u32> = Proof::axiom(1);
+    let q: Proof<T2026, Adgm, V1, Fsra, u32> = Proof::axiom(2);
     let r = p.and(q);
     assert_eq!(r.witness(), &(1, 2));
 }

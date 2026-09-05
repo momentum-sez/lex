@@ -17,13 +17,13 @@
 //! use lex_core::core_calculus::monotone::{FourTuple, Proof};
 //!
 //! // Phantom jurisdictions/tribunals/versions are zero-sized markers.
-//! struct ADGM; struct FSRA;
+//! struct Adgm; struct Fsra;
 //! struct V3;
 //! #[derive(Debug, Clone, Copy)]
 //! struct T2026;
 //!
-//! let p: Proof<T2026, ADGM, V3, FSRA, ()> = Proof::axiom(());
-//! let q: Proof<T2026, ADGM, V3, FSRA, ()> = Proof::axiom(());
+//! let p: Proof<T2026, Adgm, V3, Fsra, ()> = Proof::axiom(());
+//! let q: Proof<T2026, Adgm, V3, Fsra, ()> = Proof::axiom(());
 //! let r = p.and(q);  // Same 4-tuple: composes.
 //! assert_eq!(r.witness(), &((), ()));
 //! ```
@@ -175,23 +175,23 @@ impl<From, To> TribunalCoercion<From, To> for NoBridge {
 mod tests {
     use super::*;
 
-    struct ADGM;
+    struct Adgm;
     struct V1;
     struct T2026;
-    struct FSRA;
-    struct FSA;
+    struct Fsra;
+    struct Fsa;
 
     #[test]
     fn proof_composes_within_four_tuple() {
-        let p: Proof<T2026, ADGM, V1, FSRA, u32> = Proof::axiom(3);
-        let q: Proof<T2026, ADGM, V1, FSRA, u32> = Proof::axiom(4);
+        let p: Proof<T2026, Adgm, V1, Fsra, u32> = Proof::axiom(3);
+        let q: Proof<T2026, Adgm, V1, Fsra, u32> = Proof::axiom(4);
         let r = p.and(q);
         assert_eq!(r.witness(), &(3, 4));
     }
 
     #[test]
     fn identity_coercion_roundtrips() {
-        let p: Proof<T2026, ADGM, V1, FSRA, u32> = Proof::axiom(42);
+        let p: Proof<T2026, Adgm, V1, Fsra, u32> = Proof::axiom(42);
         let c = IdentityCoercion;
         let q = c.coerce(p).expect("identity coercion never None");
         assert_eq!(q.witness().0, 42);
@@ -199,15 +199,15 @@ mod tests {
 
     #[test]
     fn no_bridge_always_returns_none() {
-        let p: Proof<T2026, ADGM, V1, FSRA, u32> = Proof::axiom(7);
+        let p: Proof<T2026, Adgm, V1, Fsra, u32> = Proof::axiom(7);
         let c = NoBridge;
-        let q: Option<Proof<T2026, ADGM, V1, FSA, _>> = c.coerce(p);
+        let q: Option<Proof<T2026, Adgm, V1, Fsa, _>> = c.coerce(p);
         assert!(q.is_none());
     }
 
     #[test]
     fn witness_is_preserved_by_map() {
-        let p: Proof<T2026, ADGM, V1, FSRA, u32> = Proof::axiom(10);
+        let p: Proof<T2026, Adgm, V1, Fsra, u32> = Proof::axiom(10);
         let q = p.map(|w| w * 2);
         assert_eq!(q.witness(), &20);
     }
