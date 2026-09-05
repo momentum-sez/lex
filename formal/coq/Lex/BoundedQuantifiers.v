@@ -312,20 +312,24 @@ Proof.
     apply H. right. exact Hin.
 Qed.
 
-(** Worked example: Seychelles IBC Act s.66 says a company shall
-    have at least one director who is a natural person.  We model
-    directors as a list and the predicate as a decidable check. *)
+(** Worked example: Seychelles IBC Act 2016 s.130(1) requires a
+    company at all times to have at least one director appointed in
+    accordance with the Act.  We model directors as a list and
+    appointment under the Act as a decidable check; the statutory
+    predicate is exactly a bounded existential.  (The input model, with
+    the s.130(2) window and the other-written-law carve-out, is
+    mechanized in Examples/SeychellesS130.v.) *)
 Section WorkedExample.
   Variable director : Type.
-  Variable is_natural : director -> bool.
+  Variable appointed_under_act : director -> bool.
 
-  Definition seychelles_s66_satisfied (directors : list director) : bool :=
-    bexists is_natural directors.
+  Definition seychelles_s130_satisfied (directors : list director) : bool :=
+    bexists appointed_under_act directors.
 
-  Theorem seychelles_s66_correct :
+  Theorem seychelles_s130_correct :
     forall directors,
-      seychelles_s66_satisfied directors = true <->
-      (exists d, In d directors /\ is_natural d = true).
+      seychelles_s130_satisfied directors = true <->
+      (exists d, In d directors /\ appointed_under_act d = true).
   Proof.
     intros directors. apply bexists_correct.
   Qed.

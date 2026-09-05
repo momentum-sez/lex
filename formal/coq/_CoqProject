@@ -39,7 +39,7 @@ Lex/PropagationAlignment.v
 Lex/Preservation.v
 
 # Worked case-study examples (paper §7)
-Lex/Examples/SeychellesS66.v
+Lex/Examples/SeychellesS130.v
 Lex/Examples/ADGMFitAndProper.v
 Lex/Examples/PakistanDirectorsReportTolling.v
 Lex/Examples/ADGMDIFCMutualRecognition.v
