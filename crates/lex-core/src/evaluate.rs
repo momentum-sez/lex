@@ -100,19 +100,22 @@ impl Default for RuntimeContext {
 // ---------------------------------------------------------------------------
 
 /// Errors produced during runtime evaluation.
+///
+/// Term payloads are owned `Box<Term>` values. Dereference a payload to recover
+/// its complete term. Boxing keeps error returns small without discarding evidence.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EvalError {
     /// An accessor referenced by the rule is not present in the RuntimeContext.
     UnknownAccessor { name: String },
 
     /// The term reduced to a form that is not a recognized verdict constant.
-    NotAVerdict { term: Term },
+    NotAVerdict { term: Box<Term> },
 
     /// Match expression had no matching branch for the scrutinee value.
-    NoMatchingBranch { scrutinee: Term },
+    NoMatchingBranch { scrutinee: Box<Term> },
 
     /// The rule is not a lambda abstraction at the top level.
-    NotALambda { term: Term },
+    NotALambda { term: Box<Term> },
 
     /// Evaluation recursion depth exceeded.
     RecursionLimitExceeded,
@@ -194,7 +197,9 @@ fn eval_term(
                 "Compliant" => Ok(ComplianceVerdict::Compliant),
                 "NonCompliant" => Ok(ComplianceVerdict::NonCompliant),
                 "Pending" => Ok(ComplianceVerdict::Pending),
-                _ => Err(EvalError::NotAVerdict { term: term.clone() }),
+                _ => Err(EvalError::NotAVerdict {
+                    term: Box::new(term.clone()),
+                }),
             }
         }
 
@@ -233,7 +238,7 @@ fn eval_term(
                 }
             }
             Err(EvalError::NoMatchingBranch {
-                scrutinee: scrutinee.as_ref().clone(),
+                scrutinee: scrutinee.clone(),
             })
         }
 
@@ -304,10 +309,14 @@ fn eval_term(
         // ── Var(0) at the top level means the context itself ───────────
         // This shouldn't normally appear as a final result, but if a rule
         // is just `λctx. ctx` it would reduce here.
-        Term::Var { .. } => Err(EvalError::NotAVerdict { term: term.clone() }),
+        Term::Var { .. } => Err(EvalError::NotAVerdict {
+            term: Box::new(term.clone()),
+        }),
 
         // ── Everything else is not evaluable ───────────────────────────
-        _ => Err(EvalError::NotAVerdict { term: term.clone() }),
+        _ => Err(EvalError::NotAVerdict {
+            term: Box::new(term.clone()),
+        }),
     }
 }
 
@@ -362,10 +371,10 @@ fn eval_app(
     }
 
     Err(EvalError::NotAVerdict {
-        term: Term::App {
+        term: Box::new(Term::App {
             func: Box::new(func.clone()),
             arg: Box::new(arg.clone()),
-        },
+        }),
     })
 }
 
@@ -399,14 +408,18 @@ fn eval_to_constant(
                     name: accessor_name.to_string(),
                 });
             }
-            Err(EvalError::NotAVerdict { term: term.clone() })
+            Err(EvalError::NotAVerdict {
+                term: Box::new(term.clone()),
+            })
         }
 
         // Annotation: strip
         Term::Annot { term: inner, .. } => eval_to_constant(inner, ctx, depth + 1, fuel),
 
         // Var(0) in a lambda body — this IS the context, can't resolve to a constant
-        _ => Err(EvalError::NotAVerdict { term: term.clone() }),
+        _ => Err(EvalError::NotAVerdict {
+            term: Box::new(term.clone()),
+        }),
     }
 }
 
@@ -956,12 +969,67 @@ mod tests {
     #[test]
     fn evaluate_non_verdict_constant_is_error() {
         let ctx = RuntimeContext::new();
-        let result = evaluate(&constant("SomeRandomConstant"), &ctx);
-        assert!(result.is_err());
-        match result.unwrap_err() {
-            EvalError::NotAVerdict { .. } => {}
+        let input = constant("SomeRandomConstant");
+        let error = evaluate(&input, &ctx).unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "term did not reduce to a compliance verdict"
+        );
+        match error {
+            EvalError::NotAVerdict { term } => assert_eq!(*term, input),
             other => panic!("expected NotAVerdict, got: {:?}", other),
         }
+    }
+
+    #[test]
+    fn missing_branch_preserves_original_scrutinee() {
+        let scrutinee = app(constant("audit_status"), var("ctx", 0));
+        let rule = match_expr(scrutinee.clone(), constant("ComplianceVerdict"), vec![]);
+        let mut ctx = RuntimeContext::new();
+        ctx.insert("audit_status", RuntimeValue::Tag("AuditComplete".into()));
+        let error = evaluate(&rule, &ctx).unwrap_err();
+        assert_eq!(error.to_string(), "no matching branch in match expression");
+        match error {
+            EvalError::NoMatchingBranch { scrutinee: actual } => {
+                assert_eq!(*actual, scrutinee);
+            }
+            other => panic!("expected NoMatchingBranch, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn term_errors_preserve_owned_payloads_and_clone_equality() {
+        let input = constant("RetainedEvidence");
+        let errors = [
+            EvalError::NotAVerdict {
+                term: Box::new(input.clone()),
+            },
+            EvalError::NoMatchingBranch {
+                scrutinee: Box::new(input.clone()),
+            },
+            EvalError::NotALambda {
+                term: Box::new(input.clone()),
+            },
+        ];
+        let messages = [
+            "term did not reduce to a compliance verdict",
+            "no matching branch in match expression",
+            "rule is not a lambda abstraction",
+        ];
+        for (error, message) in errors.into_iter().zip(messages) {
+            let cloned = error.clone();
+            assert_eq!(error, cloned);
+            assert_eq!(error.to_string(), message);
+            drop(error);
+            match cloned {
+                EvalError::NotAVerdict { term } | EvalError::NotALambda { term } => {
+                    assert_eq!(*term, input);
+                }
+                EvalError::NoMatchingBranch { scrutinee } => assert_eq!(*scrutinee, input),
+                other => panic!("unexpected error: {:?}", other),
+            }
+        }
+        assert!(std::mem::size_of::<EvalError>() <= 64);
     }
 
     // ── Sanctions accessor ─────────────────────────────────────────────
