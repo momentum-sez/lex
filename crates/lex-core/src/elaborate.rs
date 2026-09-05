@@ -8,8 +8,7 @@ use std::fmt;
 
 use crate::ast::{
     Branch, Constructor, DefeasibleRule, Effect, EffectRow, Exception, Hole, Pattern,
-    PrincipleBalancingStep, QualIdent, RewriteWitness, ScopeConstraint, ScopeField, Term,
-    TimeTerm,
+    PrincipleBalancingStep, QualIdent, RewriteWitness, ScopeConstraint, ScopeField, Term, TimeTerm,
 };
 use crate::debruijn;
 use crate::typecheck::Context;
@@ -248,14 +247,12 @@ fn resolve_names_inner(
             filler: Box::new(resolve_names_inner(filler, prelude, locals)?),
             pcauth: Box::new(resolve_names_inner(pcauth, prelude, locals)?),
         }),
-        Term::PrincipleBalance(balance) => Ok(Term::PrincipleBalance(
-            PrincipleBalancingStep {
-                principles: balance.principles.clone(),
-                precedents: balance.precedents.clone(),
-                verdict: Box::new(resolve_names_inner(&balance.verdict, prelude, locals)?),
-                rationale: Box::new(resolve_names_inner(&balance.rationale, prelude, locals)?),
-            },
-        )),
+        Term::PrincipleBalance(balance) => Ok(Term::PrincipleBalance(PrincipleBalancingStep {
+            principles: balance.principles.clone(),
+            precedents: balance.precedents.clone(),
+            verdict: Box::new(resolve_names_inner(&balance.verdict, prelude, locals)?),
+            rationale: Box::new(resolve_names_inner(&balance.rationale, prelude, locals)?),
+        })),
         Term::Unlock { effect_row, body } => Ok(Term::Unlock {
             effect_row: Box::new(resolve_names_inner(effect_row, prelude, locals)?),
             body: Box::new(resolve_names_inner(body, prelude, locals)?),
@@ -273,7 +270,8 @@ fn resolve_branch(
             constructor,
             binders,
         } => {
-            let branch_locals = locals_with_many(locals, binders.iter().map(|binder| binder.name.clone()));
+            let branch_locals =
+                locals_with_many(locals, binders.iter().map(|binder| binder.name.clone()));
             Ok(Branch {
                 pattern: Pattern::Constructor {
                     constructor: resolve_constructor(constructor, prelude)?,
@@ -450,10 +448,7 @@ fn locals_with(locals: &[String], name: &str) -> Vec<String> {
     locals_with_many(locals, [name.to_owned()])
 }
 
-fn locals_with_many(
-    locals: &[String],
-    names: impl IntoIterator<Item = String>,
-) -> Vec<String> {
+fn locals_with_many(locals: &[String], names: impl IntoIterator<Item = String>) -> Vec<String> {
     let mut extended = locals.to_vec();
     extended.extend(names);
     extended
@@ -538,7 +533,11 @@ mod tests {
     fn elaborates_ibc_s130_minimum_directors_rule() {
         let rule = defeasible(
             "min_directors",
-            pi("ctx", surface("IncorporationContext"), surface("ComplianceVerdict")),
+            pi(
+                "ctx",
+                surface("IncorporationContext"),
+                surface("ComplianceVerdict"),
+            ),
             lam(
                 "ctx",
                 surface("IncorporationContext"),
@@ -586,7 +585,11 @@ mod tests {
     fn elaborates_ibc_s92_registered_agent_rule() {
         let rule = defeasible(
             "registered_agent",
-            pi("ctx", surface("IncorporationContext"), surface("ComplianceVerdict")),
+            pi(
+                "ctx",
+                surface("IncorporationContext"),
+                surface("ComplianceVerdict"),
+            ),
             lam(
                 "ctx",
                 surface("IncorporationContext"),
@@ -660,7 +663,11 @@ mod tests {
     fn elaborates_ibc_s12_name_ending_rule() {
         let rule = defeasible(
             "name_ending",
-            pi("ctx", surface("IncorporationContext"), surface("ComplianceVerdict")),
+            pi(
+                "ctx",
+                surface("IncorporationContext"),
+                surface("ComplianceVerdict"),
+            ),
             lam(
                 "ctx",
                 surface("IncorporationContext"),
@@ -712,7 +719,11 @@ mod tests {
     fn elaborates_ibc_s55_registered_office_rule() {
         let rule = defeasible(
             "registered_office_sc",
-            pi("ctx", surface("IncorporationContext"), surface("ComplianceVerdict")),
+            pi(
+                "ctx",
+                surface("IncorporationContext"),
+                surface("ComplianceVerdict"),
+            ),
             lam(
                 "ctx",
                 surface("IncorporationContext"),
@@ -760,7 +771,11 @@ mod tests {
     fn elaborates_ibc_entity_type_restriction_rule() {
         let rule = defeasible(
             "entity_type_restriction",
-            pi("ctx", surface("IncorporationContext"), surface("ComplianceVerdict")),
+            pi(
+                "ctx",
+                surface("IncorporationContext"),
+                surface("ComplianceVerdict"),
+            ),
             lam(
                 "ctx",
                 surface("IncorporationContext"),
@@ -812,7 +827,11 @@ mod tests {
     fn elaborates_aml_kyc_exception_rule() {
         let rule = defeasible(
             "aml_kyc_identification",
-            pi("ctx", surface("IncorporationContext"), surface("ComplianceVerdict")),
+            pi(
+                "ctx",
+                surface("IncorporationContext"),
+                surface("ComplianceVerdict"),
+            ),
             lam(
                 "ctx",
                 surface("IncorporationContext"),
@@ -934,7 +953,11 @@ mod tests {
     fn elaborates_beneficial_ownership_rule() {
         let rule = defeasible(
             "ubo_filing",
-            pi("ctx", surface("IncorporationContext"), surface("ComplianceVerdict")),
+            pi(
+                "ctx",
+                surface("IncorporationContext"),
+                surface("ComplianceVerdict"),
+            ),
             lam(
                 "ctx",
                 surface("IncorporationContext"),
@@ -1013,7 +1036,11 @@ mod tests {
     fn elaborates_ibc_s135_annual_return_rule() {
         let rule = defeasible(
             "annual_return_deadline",
-            pi("ctx", surface("IncorporationContext"), surface("ComplianceVerdict")),
+            pi(
+                "ctx",
+                surface("IncorporationContext"),
+                surface("ComplianceVerdict"),
+            ),
             lam(
                 "ctx",
                 surface("IncorporationContext"),
@@ -1063,12 +1090,19 @@ mod tests {
     fn elaborates_ibc_s94_registered_agent_change_notice_rule() {
         let rule = defeasible(
             "registered_agent_change_notice",
-            pi("ctx", surface("IncorporationContext"), surface("ComplianceVerdict")),
+            pi(
+                "ctx",
+                surface("IncorporationContext"),
+                surface("ComplianceVerdict"),
+            ),
             lam(
                 "ctx",
                 surface("IncorporationContext"),
                 match_expr(
-                    app(surface("registered_agent_change_notice_status"), surface("ctx")),
+                    app(
+                        surface("registered_agent_change_notice_status"),
+                        surface("ctx"),
+                    ),
                     surface("ComplianceVerdict"),
                     vec![
                         branch("Within14Days", &[], surface("Compliant")),
@@ -1117,10 +1151,12 @@ mod tests {
         let rule = Term::Pi {
             binder: Ident::new("ctx"),
             domain: Box::new(surface("IncorporationContext")),
-            effect_row: Some(EffectRow::BranchSensitive(Box::new(EffectRow::Effects(vec![
-                Effect::Write(Box::new(surface("ComplianceVerdict"))),
-                Effect::SanctionsQuery,
-            ])))),
+            effect_row: Some(EffectRow::BranchSensitive(Box::new(EffectRow::Effects(
+                vec![
+                    Effect::Write(Box::new(surface("ComplianceVerdict"))),
+                    Effect::SanctionsQuery,
+                ],
+            )))),
             codomain: Box::new(Term::ModalAt {
                 time: TimeTerm::AsOf0(Box::new(surface("ctx"))),
                 body: Box::new(Term::Unlock {
@@ -1137,10 +1173,12 @@ mod tests {
             Term::Pi {
                 binder: Ident::new("ctx"),
                 domain: Box::new(constant("IncorporationContext")),
-                effect_row: Some(EffectRow::BranchSensitive(Box::new(EffectRow::Effects(vec![
-                    Effect::Write(Box::new(constant("ComplianceVerdict"))),
-                    Effect::SanctionsQuery,
-                ])))),
+                effect_row: Some(EffectRow::BranchSensitive(Box::new(EffectRow::Effects(
+                    vec![
+                        Effect::Write(Box::new(constant("ComplianceVerdict"))),
+                        Effect::SanctionsQuery,
+                    ]
+                )))),
                 codomain: Box::new(Term::ModalAt {
                     time: TimeTerm::AsOf0(Box::new(indexed("ctx", 0))),
                     body: Box::new(Term::Unlock {
@@ -1234,13 +1272,21 @@ mod tests {
 
     #[test]
     fn keeps_shadowing_local_names_as_variables() {
-        let term = lam("Compliant", surface("IncorporationContext"), surface("Compliant"));
+        let term = lam(
+            "Compliant",
+            surface("IncorporationContext"),
+            surface("Compliant"),
+        );
 
         let elaborated = elaborate(&term, &prelude()).unwrap();
 
         assert_eq!(
             elaborated,
-            lam("Compliant", constant("IncorporationContext"), indexed("Compliant", 0))
+            lam(
+                "Compliant",
+                constant("IncorporationContext"),
+                indexed("Compliant", 0)
+            )
         );
     }
 

@@ -1827,10 +1827,7 @@ fn unwrap_lambda_body(term: &Term) -> &Term {
 ///
 /// `context` names the surrounding rule/table for diagnostics and is used
 /// as the `table` field of an [`SmtTranslationError::InvalidVerdict`].
-fn extract_verdict_from_body(
-    term: &Term,
-    context: &str,
-) -> Result<String, SmtTranslationError> {
+fn extract_verdict_from_body(term: &Term, context: &str) -> Result<String, SmtTranslationError> {
     let name = match term {
         Term::Lambda { body, .. } => return extract_verdict_from_body(body, context),
         Term::Match { branches, .. } => {
@@ -2462,8 +2459,15 @@ mod tests {
 
     #[test]
     fn extract_verdict_unwraps_lambda() {
-        let body = Term::lam("ctx", Term::constant("Context"), Term::constant("Compliant"));
-        assert_eq!(extract_verdict_from_body(&body, "t"), Ok("Compliant".to_string()));
+        let body = Term::lam(
+            "ctx",
+            Term::constant("Context"),
+            Term::constant("Compliant"),
+        );
+        assert_eq!(
+            extract_verdict_from_body(&body, "t"),
+            Ok("Compliant".to_string())
+        );
     }
 
     #[test]
@@ -2492,10 +2496,7 @@ mod tests {
         // An integer-literal body is not an admissible verdict body. Before
         // the fix this silently returned "Pending"; now it is a hard error.
         let r = extract_verdict_from_body(&Term::IntLit(42), "t");
-        assert!(matches!(
-            r,
-            Err(SmtTranslationError::Unsupported { .. })
-        ));
+        assert!(matches!(r, Err(SmtTranslationError::Unsupported { .. })));
     }
 
     #[test]
@@ -2504,10 +2505,7 @@ mod tests {
         // no verdict constant → unsupported, not a silent Pending.
         let body = verdict_match(Term::IntLit(0));
         let r = extract_verdict_from_body(&body, "t");
-        assert!(matches!(
-            r,
-            Err(SmtTranslationError::Unsupported { .. })
-        ));
+        assert!(matches!(r, Err(SmtTranslationError::Unsupported { .. })));
     }
 
     #[test]

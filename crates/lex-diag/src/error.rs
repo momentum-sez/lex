@@ -187,7 +187,9 @@ impl DiagnosticReport {
 
     /// Returns true if the report contains any error-severity diagnostics.
     pub fn has_errors(&self) -> bool {
-        self.diagnostics.iter().any(|d| d.severity == Severity::Error)
+        self.diagnostics
+            .iter()
+            .any(|d| d.severity == Severity::Error)
     }
 
     /// Returns true if the report is empty (no diagnostics at all).

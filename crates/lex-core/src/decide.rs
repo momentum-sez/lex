@@ -415,7 +415,11 @@ mod tests {
 
     #[test]
     fn temporal_tableau_empty_before_is_undecidable() {
-        let reason = expect_undecidable(temporal_tableau("", "2025-01-01T12:00:00Z", "strict_before"));
+        let reason = expect_undecidable(temporal_tableau(
+            "",
+            "2025-01-01T12:00:00Z",
+            "strict_before",
+        ));
         assert!(reason.contains("non-empty"));
     }
 
@@ -490,7 +494,11 @@ mod tests {
 
     #[test]
     fn temporal_tableau_date_only_values_compare() {
-        let witness = expect_proved(temporal_tableau("2025-01-01", "2025-01-02", "strict_before"));
+        let witness = expect_proved(temporal_tableau(
+            "2025-01-01",
+            "2025-01-02",
+            "strict_before",
+        ));
 
         assert_eq!(witness.evidence["before"], "2025-01-01");
         assert_eq!(witness.evidence["after"], "2025-01-02");
@@ -553,9 +561,8 @@ pub fn boolean_compliance_check(
 
 pub fn defeasible_search(guards_satisfied: &[(u32, bool)], max_fuel: usize) -> DecisionResult {
     let mut ordered_guards = guards_satisfied.to_vec();
-    ordered_guards.sort_by(|(left_priority, _), (right_priority, _)| {
-        right_priority.cmp(left_priority)
-    });
+    ordered_guards
+        .sort_by(|(left_priority, _), (right_priority, _)| right_priority.cmp(left_priority));
 
     let ordered_evidence = ordered_guards
         .iter()
@@ -838,7 +845,8 @@ pub fn temporal_tableau(before: &str, after: &str, ordering: &str) -> DecisionRe
 
     if before.trim().is_empty() || after.trim().is_empty() {
         return DecisionResult::Undecidable {
-            reason: "temporal_tableau requires non-empty `before` and `after` ISO 8601 timestamps".to_string(),
+            reason: "temporal_tableau requires non-empty `before` and `after` ISO 8601 timestamps"
+                .to_string(),
         };
     }
 
@@ -904,8 +912,7 @@ fn parse_iso8601_timestamp(input: &str) -> Result<i128, String> {
 
     if let Some(time_part) = time_part {
         let (clock, offset) = split_time_and_offset(time_part)?;
-        let (parsed_hour, parsed_minute, parsed_second, parsed_nanos) =
-            parse_iso8601_clock(clock)?;
+        let (parsed_hour, parsed_minute, parsed_second, parsed_nanos) = parse_iso8601_clock(clock)?;
         hour = parsed_hour;
         minute = parsed_minute;
         second = parsed_second;
@@ -936,7 +943,9 @@ fn parse_iso8601_date(input: &str) -> Result<(i32, u32, u32), String> {
 
     let max_day = days_in_month(year, month);
     if day == 0 || day > max_day {
-        return Err(format!("day `{day}` is out of range for {year:04}-{month:02}"));
+        return Err(format!(
+            "day `{day}` is out of range for {year:04}-{month:02}"
+        ));
     }
 
     Ok((year, month, day))

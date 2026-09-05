@@ -29,8 +29,8 @@
 //! formal scaffolds, but the shipped admissible checker in `typecheck.rs`
 //! still rejects `Term::Hole` and `Term::HoleFill`.
 
-pub(crate) mod digest;
 pub mod cert;
+pub(crate) mod digest;
 pub mod hole;
 pub mod level;
 pub mod monotone;

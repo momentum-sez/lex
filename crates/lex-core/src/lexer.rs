@@ -73,9 +73,9 @@ impl<'a> Lexer<'a> {
         let start = self.pos;
         let line = self.line;
         let col = self.col;
-        let ch = self
-            .peek_char()
-            .ok_or_else(|| LexError::InternalError("lexer position must be valid before tokenization".into()))?;
+        let ch = self.peek_char().ok_or_else(|| {
+            LexError::InternalError("lexer position must be valid before tokenization".into())
+        })?;
 
         if self.starts_with("lex://blake3:") {
             return self.lex_content_ref(start, line, col);
@@ -110,8 +110,7 @@ impl<'a> Lexer<'a> {
                 col,
             );
         }
-        if self.starts_with("meta-tribunal")
-            && self.has_identifier_boundary_after("meta-tribunal")
+        if self.starts_with("meta-tribunal") && self.has_identifier_boundary_after("meta-tribunal")
         {
             return self.lex_reserved_identifier("meta-tribunal", start, line, col);
         }
@@ -270,19 +269,17 @@ impl<'a> Lexer<'a> {
         col: u32,
     ) -> Result<Spanned<Token>, LexError> {
         let mut text = String::new();
-        text.push(
-            self.bump_char()
-                .ok_or_else(|| LexError::InternalError("identifier lexing requires an initial character".into()))?,
-        );
+        text.push(self.bump_char().ok_or_else(|| {
+            LexError::InternalError("identifier lexing requires an initial character".into())
+        })?);
         while let Some(ch) = self.peek_char() {
             if is_identifier_continue(ch) {
                 if ch == '_' && should_split_sort_level_suffix(&text, self.peek_next_char()) {
                     break;
                 }
-                text.push(
-                    self.bump_char()
-                        .ok_or_else(|| LexError::InternalError("identifier continuation must exist once peeked".into()))?,
-                );
+                text.push(self.bump_char().ok_or_else(|| {
+                    LexError::InternalError("identifier continuation must exist once peeked".into())
+                })?);
                 if text.len() > MAX_TOKEN_LENGTH {
                     return Err(TokenError::TokenTooLong(
                         "identifier".to_owned(),
@@ -301,20 +298,21 @@ impl<'a> Lexer<'a> {
                 .is_some_and(is_identifier_start)
         {
             qualified = true;
-            text.push(
-                self.bump_char()
-                    .ok_or_else(|| LexError::InternalError("qualified identifier dot must exist once peeked".into()))?,
-            );
-            text.push(
-                self.bump_char()
-                    .ok_or_else(|| LexError::InternalError("qualified identifier segment must exist once peeked".into()))?,
-            );
+            text.push(self.bump_char().ok_or_else(|| {
+                LexError::InternalError("qualified identifier dot must exist once peeked".into())
+            })?);
+            text.push(self.bump_char().ok_or_else(|| {
+                LexError::InternalError(
+                    "qualified identifier segment must exist once peeked".into(),
+                )
+            })?);
             while let Some(ch) = self.peek_char() {
                 if is_identifier_continue(ch) {
-                    text.push(
-                        self.bump_char()
-                            .ok_or_else(|| LexError::InternalError("qualified identifier continuation must exist once peeked".into()))?,
-                    );
+                    text.push(self.bump_char().ok_or_else(|| {
+                        LexError::InternalError(
+                            "qualified identifier continuation must exist once peeked".into(),
+                        )
+                    })?);
                     if text.len() > MAX_TOKEN_LENGTH {
                         return Err(TokenError::TokenTooLong(
                             "identifier".to_owned(),
@@ -366,20 +364,21 @@ impl<'a> Lexer<'a> {
                 .peek_char_after_current()
                 .is_some_and(is_identifier_start)
         {
-            text.push(
-                self.bump_char()
-                    .ok_or_else(|| LexError::InternalError("qualified identifier dot must exist once peeked".into()))?,
-            );
-            text.push(
-                self.bump_char()
-                    .ok_or_else(|| LexError::InternalError("qualified identifier segment must exist once peeked".into()))?,
-            );
+            text.push(self.bump_char().ok_or_else(|| {
+                LexError::InternalError("qualified identifier dot must exist once peeked".into())
+            })?);
+            text.push(self.bump_char().ok_or_else(|| {
+                LexError::InternalError(
+                    "qualified identifier segment must exist once peeked".into(),
+                )
+            })?);
             while let Some(ch) = self.peek_char() {
                 if is_identifier_continue(ch) {
-                    text.push(
-                        self.bump_char()
-                            .ok_or_else(|| LexError::InternalError("qualified identifier continuation must exist once peeked".into()))?,
-                    );
+                    text.push(self.bump_char().ok_or_else(|| {
+                        LexError::InternalError(
+                            "qualified identifier continuation must exist once peeked".into(),
+                        )
+                    })?);
                     if text.len() > MAX_TOKEN_LENGTH {
                         return Err(TokenError::TokenTooLong(
                             "identifier".to_owned(),
@@ -405,18 +404,16 @@ impl<'a> Lexer<'a> {
         let mut text = String::new();
         let negative = self.peek_char() == Some('-');
         if negative {
-            text.push(
-                self.bump_char()
-                    .ok_or_else(|| LexError::InternalError("negative number lexing requires a minus sign".into()))?,
-            );
+            text.push(self.bump_char().ok_or_else(|| {
+                LexError::InternalError("negative number lexing requires a minus sign".into())
+            })?);
         }
 
         while let Some(ch) = self.peek_char() {
             if ch.is_ascii_digit() {
-                text.push(
-                    self.bump_char()
-                        .ok_or_else(|| LexError::InternalError("numeric continuation must exist once peeked".into()))?,
-                );
+                text.push(self.bump_char().ok_or_else(|| {
+                    LexError::InternalError("numeric continuation must exist once peeked".into())
+                })?);
             } else {
                 break;
             }
@@ -427,17 +424,17 @@ impl<'a> Lexer<'a> {
                 .peek_char_after_current()
                 .is_some_and(|ch| ch.is_ascii_digit())
         {
-            text.push(
-                self.bump_char()
-                    .ok_or_else(|| LexError::InternalError("rational literal slash must exist once peeked".into()))?,
-            );
+            text.push(self.bump_char().ok_or_else(|| {
+                LexError::InternalError("rational literal slash must exist once peeked".into())
+            })?);
             let mut denom = String::new();
             while let Some(ch) = self.peek_char() {
                 if ch.is_ascii_digit() {
-                    denom.push(
-                        self.bump_char()
-                            .ok_or_else(|| LexError::InternalError("denominator continuation must exist once peeked".into()))?,
-                    );
+                    denom.push(self.bump_char().ok_or_else(|| {
+                        LexError::InternalError(
+                            "denominator continuation must exist once peeked".into(),
+                        )
+                    })?);
                 } else {
                     break;
                 }
@@ -528,10 +525,9 @@ impl<'a> Lexer<'a> {
                     value.push(escaped);
                 }
                 _ => {
-                    value.push(
-                        self.bump_char()
-                            .ok_or_else(|| LexError::InternalError("string character must exist once peeked".into()))?,
-                    );
+                    value.push(self.bump_char().ok_or_else(|| {
+                        LexError::InternalError("string character must exist once peeked".into())
+                    })?);
                 }
             }
             if value.len() > MAX_TOKEN_LENGTH {
@@ -576,10 +572,9 @@ impl<'a> Lexer<'a> {
         let mut body = String::new();
         while let Some(ch) = self.peek_char() {
             if is_hash_digit(ch) && body.len() < 64 {
-                body.push(
-                    self.bump_char()
-                        .ok_or_else(|| LexError::InternalError("hash continuation must exist once peeked".into()))?,
-                );
+                body.push(self.bump_char().ok_or_else(|| {
+                    LexError::InternalError("hash continuation must exist once peeked".into())
+                })?);
             } else {
                 break;
             }
@@ -593,10 +588,9 @@ impl<'a> Lexer<'a> {
                 .peek_char()
                 .is_some_and(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '\'')
             {
-                body.push(
-                    self.bump_char()
-                        .ok_or_else(|| LexError::InternalError("malformed hash trailer must exist once peeked".into()))?,
-                );
+                body.push(self.bump_char().ok_or_else(|| {
+                    LexError::InternalError("malformed hash trailer must exist once peeked".into())
+                })?);
             }
             let span = self.span_from(start, line, col);
             let literal = if content_ref {
@@ -619,18 +613,23 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn lex_level_var(&mut self, start: usize, line: u32, col: u32) -> Result<Spanned<Token>, LexError> {
+    fn lex_level_var(
+        &mut self,
+        start: usize,
+        line: u32,
+        col: u32,
+    ) -> Result<Spanned<Token>, LexError> {
         let mut text = String::new();
-        text.push(
-            self.bump_char()
-                .ok_or_else(|| LexError::InternalError("level variable lexing requires the leading ℓ".into()))?,
-        );
+        text.push(self.bump_char().ok_or_else(|| {
+            LexError::InternalError("level variable lexing requires the leading ℓ".into())
+        })?);
         while let Some(ch) = self.peek_char() {
             if ch.is_ascii_digit() {
-                text.push(
-                    self.bump_char()
-                        .ok_or_else(|| LexError::InternalError("level variable continuation must exist once peeked".into()))?,
-                );
+                text.push(self.bump_char().ok_or_else(|| {
+                    LexError::InternalError(
+                        "level variable continuation must exist once peeked".into(),
+                    )
+                })?);
             } else {
                 break;
             }
@@ -649,10 +648,9 @@ impl<'a> Lexer<'a> {
             if ch == '\n' {
                 break;
             }
-            text.push(
-                self.bump_char()
-                    .ok_or_else(|| LexError::InternalError("line comment continuation must exist once peeked".into()))?,
-            );
+            text.push(self.bump_char().ok_or_else(|| {
+                LexError::InternalError("line comment continuation must exist once peeked".into())
+            })?);
             if text.len() > MAX_TOKEN_LENGTH {
                 return Err(TokenError::TokenTooLong(
                     "line comment".to_owned(),
@@ -696,10 +694,9 @@ impl<'a> Lexer<'a> {
                 text.push_str("-}");
                 continue;
             }
-            text.push(
-                self.bump_char()
-                    .ok_or_else(|| LexError::InternalError("block comment continuation must exist before EOF".into()))?,
-            );
+            text.push(self.bump_char().ok_or_else(|| {
+                LexError::InternalError("block comment continuation must exist before EOF".into())
+            })?);
             if text.len() > MAX_TOKEN_LENGTH {
                 return Err(TokenError::TokenTooLong(
                     "block comment".to_owned(),
@@ -753,9 +750,12 @@ impl<'a> Lexer<'a> {
 
     fn consume_exact(&mut self, text: &str) -> Result<(), LexError> {
         for expected in text.chars() {
-            let ch = self
-                .bump_char()
-                .ok_or_else(|| LexError::InternalError(format!("consume_exact: expected '{}' but reached end of input", expected)))?;
+            let ch = self.bump_char().ok_or_else(|| {
+                LexError::InternalError(format!(
+                    "consume_exact: expected '{}' but reached end of input",
+                    expected
+                ))
+            })?;
             debug_assert_eq!(ch, expected);
         }
         Ok(())

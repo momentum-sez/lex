@@ -345,9 +345,7 @@ pub fn build_certificate_with_scope(
     // Coverage check: every extracted obligation must have a matching sealed
     // discharge. Match on the structural obligation id bound at seal time.
     for obligation in extracted {
-        let covered = discharged
-            .iter()
-            .any(|d| d.obligation_id == obligation.id);
+        let covered = discharged.iter().any(|d| d.obligation_id == obligation.id);
         if !covered {
             return Err(CertificateError::UndischargedObligation {
                 obligation_id: obligation.id.clone(),
@@ -409,8 +407,7 @@ mod tests {
 
     /// Seal a discharge from a genuine `boolean_check(true)` proof witness.
     fn seal_proved(obl: &ProofObligation) -> DischargedObligation {
-        DischargedObligation::seal(obl, &boolean_check(true))
-            .expect("Proved result must seal")
+        DischargedObligation::seal(obl, &boolean_check(true)).expect("Proved result must seal")
     }
 
     #[test]
@@ -427,7 +424,11 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(cert.certificate_digest.len(), 64, "digest should be 64 hex chars");
+        assert_eq!(
+            cert.certificate_digest.len(),
+            64,
+            "digest should be 64 hex chars"
+        );
         assert_eq!(cert.jurisdiction, "SC");
         assert_eq!(cert.legal_basis, "IBC Act 2016 s.130(1)");
         assert_eq!(cert.verdict, ComplianceVerdict::Compliant);
@@ -700,12 +701,14 @@ mod tests {
         let obligation = seal_proved(&obl);
 
         let json = serde_json::to_string(&obligation).expect("serialize");
-        let deserialized: DischargedObligation =
-            serde_json::from_str(&json).expect("deserialize");
+        let deserialized: DischargedObligation = serde_json::from_str(&json).expect("deserialize");
 
         assert_eq!(deserialized.category(), obligation.category());
         assert_eq!(deserialized.witness(), obligation.witness());
-        assert_eq!(deserialized.decision_procedure(), obligation.decision_procedure());
+        assert_eq!(
+            deserialized.decision_procedure(),
+            obligation.decision_procedure()
+        );
         assert_eq!(deserialized.obligation_id(), obligation.obligation_id());
     }
 
@@ -755,17 +758,14 @@ mod tests {
         let mut cert_non_compliant = cert_compliant.clone();
         cert_non_compliant.verdict = ComplianceVerdict::NonCompliant;
 
-        let canonical_c =
-            CanonicalBytes::new(&cert_compliant).expect("canonicalize");
+        let canonical_c = CanonicalBytes::new(&cert_compliant).expect("canonicalize");
         cert_compliant.certificate_digest = sha256_digest(&canonical_c).to_hex();
 
-        let canonical_nc =
-            CanonicalBytes::new(&cert_non_compliant).expect("canonicalize");
+        let canonical_nc = CanonicalBytes::new(&cert_non_compliant).expect("canonicalize");
         cert_non_compliant.certificate_digest = sha256_digest(&canonical_nc).to_hex();
 
         assert_ne!(
-            cert_compliant.certificate_digest,
-            cert_non_compliant.certificate_digest,
+            cert_compliant.certificate_digest, cert_non_compliant.certificate_digest,
             "different verdicts must produce different digests"
         );
     }

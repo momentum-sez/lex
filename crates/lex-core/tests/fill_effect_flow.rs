@@ -143,8 +143,14 @@ fn fill_effect_row_composition_is_monotone_in_filler_row() {
     let r1 = flow_through_fill(&one_effect, &hole_context);
     let r2 = flow_through_fill(&two_effects, &hole_context);
 
-    assert!(r0.len() <= r1.len(), "adding a filler effect shrank the row: {r0:?} vs {r1:?}");
-    assert!(r1.len() <= r2.len(), "adding another filler effect shrank the row: {r1:?} vs {r2:?}");
+    assert!(
+        r0.len() <= r1.len(),
+        "adding a filler effect shrank the row: {r0:?} vs {r1:?}"
+    );
+    assert!(
+        r1.len() <= r2.len(),
+        "adding another filler effect shrank the row: {r1:?} vs {r2:?}"
+    );
 
     // Spot check each effect appears at the fill site.
     assert!(r1.contains(&Effect::Read));
@@ -221,7 +227,11 @@ fn fill_flow_through_respects_pre_existing_hole_context() {
     let filler_row = EffectRow::from_effects([oracle_effect()]);
     let joined = flow_through_fill(&filler_row, &context_row);
 
-    assert_eq!(joined.len(), 2, "context effect + filler effect must both be visible");
+    assert_eq!(
+        joined.len(),
+        2,
+        "context effect + filler effect must both be visible"
+    );
     assert!(joined.contains(&Effect::Read));
     assert!(joined.contains(&oracle_effect()));
 }

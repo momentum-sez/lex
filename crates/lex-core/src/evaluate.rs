@@ -283,8 +283,7 @@ fn eval_term(
                 let guard_satisfied = eval_guard(&exception.guard, ctx, depth + 1, fuel)?;
 
                 if guard_satisfied {
-                    let exception_verdict =
-                        eval_term(&exception.body, ctx, depth + 1, fuel)?;
+                    let exception_verdict = eval_term(&exception.body, ctx, depth + 1, fuel)?;
                     let priority = exception.priority.unwrap_or(0);
 
                     match &best_exception {
@@ -351,10 +350,7 @@ fn eval_app(
     // Evaluate the argument to a RuntimeValue, extend the context with the
     // binder name mapped to that value, and evaluate the body. If the
     // argument cannot be resolved, fall through to structural evaluation.
-    if let Term::Lambda {
-        binder, body, ..
-    } = func
-    {
+    if let Term::Lambda { binder, body, .. } = func {
         let resolved = eval_to_constant(arg, ctx, depth + 1, fuel)
             .ok()
             .and_then(|name| constant_name_to_runtime_value(&name));
@@ -473,10 +469,7 @@ fn eval_guard(
 
 /// Extract the simple name from a QualIdent.
 fn qual_ident_name(qi: &QualIdent) -> &str {
-    qi.segments
-        .last()
-        .map(|s| s.as_str())
-        .unwrap_or("")
+    qi.segments.last().map(|s| s.as_str()).unwrap_or("")
 }
 
 /// Prefix for the non-zero-natural marker constructor name.
@@ -1087,10 +1080,7 @@ mod tests {
             ctx.get("audit_status"),
             Some(&RuntimeValue::Tag("AuditComplete".into()))
         );
-        assert_eq!(
-            ctx.get("all_identified"),
-            Some(&RuntimeValue::Bool(true))
-        );
+        assert_eq!(ctx.get("all_identified"), Some(&RuntimeValue::Bool(true)));
         assert_eq!(ctx.get("nonexistent"), None);
     }
 
@@ -1121,7 +1111,10 @@ mod tests {
     fn non_zero_nat_marker_never_matches_zero() {
         // The value-carrying marker must still NOT equal the `Zero`
         // constructor, so positive naturals fall through to wildcard branches.
-        assert_ne!(runtime_value_to_constant_name(&RuntimeValue::Nat(7)), "Zero");
+        assert_ne!(
+            runtime_value_to_constant_name(&RuntimeValue::Nat(7)),
+            "Zero"
+        );
     }
 
     #[test]
@@ -1238,9 +1231,6 @@ mod tests {
         });
 
         let ctx = RuntimeContext::new();
-        assert_eq!(
-            evaluate(&rule, &ctx).unwrap(),
-            ComplianceVerdict::Compliant,
-        );
+        assert_eq!(evaluate(&rule, &ctx).unwrap(), ComplianceVerdict::Compliant,);
     }
 }

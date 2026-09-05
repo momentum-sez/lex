@@ -228,19 +228,33 @@ mod tests {
 
     #[test]
     fn verdict_rank_ordering() {
-        assert!(verdict_rank(ComplianceVerdict::NonCompliant) < verdict_rank(ComplianceVerdict::Pending));
-        assert!(verdict_rank(ComplianceVerdict::Pending) < verdict_rank(ComplianceVerdict::Compliant));
-        assert!(verdict_rank(ComplianceVerdict::NonCompliant) < verdict_rank(ComplianceVerdict::Compliant));
+        assert!(
+            verdict_rank(ComplianceVerdict::NonCompliant)
+                < verdict_rank(ComplianceVerdict::Pending)
+        );
+        assert!(
+            verdict_rank(ComplianceVerdict::Pending) < verdict_rank(ComplianceVerdict::Compliant)
+        );
+        assert!(
+            verdict_rank(ComplianceVerdict::NonCompliant)
+                < verdict_rank(ComplianceVerdict::Compliant)
+        );
     }
 
     #[test]
     fn meet_noncompliant_absorbs() {
         assert_eq!(
-            verdict_meet(ComplianceVerdict::Compliant, ComplianceVerdict::NonCompliant),
+            verdict_meet(
+                ComplianceVerdict::Compliant,
+                ComplianceVerdict::NonCompliant
+            ),
             ComplianceVerdict::NonCompliant,
         );
         assert_eq!(
-            verdict_meet(ComplianceVerdict::NonCompliant, ComplianceVerdict::Compliant),
+            verdict_meet(
+                ComplianceVerdict::NonCompliant,
+                ComplianceVerdict::Compliant
+            ),
             ComplianceVerdict::NonCompliant,
         );
         assert_eq!(
@@ -248,7 +262,10 @@ mod tests {
             ComplianceVerdict::NonCompliant,
         );
         assert_eq!(
-            verdict_meet(ComplianceVerdict::NonCompliant, ComplianceVerdict::NonCompliant),
+            verdict_meet(
+                ComplianceVerdict::NonCompliant,
+                ComplianceVerdict::NonCompliant
+            ),
             ComplianceVerdict::NonCompliant,
         );
     }
@@ -277,7 +294,10 @@ mod tests {
     fn meet_is_commutative() {
         let pairs = [
             (ComplianceVerdict::Compliant, ComplianceVerdict::Pending),
-            (ComplianceVerdict::Compliant, ComplianceVerdict::NonCompliant),
+            (
+                ComplianceVerdict::Compliant,
+                ComplianceVerdict::NonCompliant,
+            ),
             (ComplianceVerdict::Pending, ComplianceVerdict::NonCompliant),
         ];
         for (a, b) in pairs {
@@ -324,11 +344,18 @@ mod tests {
 
     #[test]
     fn single_fiber_compliant() {
-        let results = vec![fiber("f1", ComplianceDomain::Aml, ComplianceVerdict::Compliant)];
+        let results = vec![fiber(
+            "f1",
+            ComplianceDomain::Aml,
+            ComplianceVerdict::Compliant,
+        )];
         let composed = compose_fiber_results(&results);
 
         assert_eq!(composed.len(), 1);
-        assert_eq!(composed[&ComplianceDomain::Aml], ComplianceVerdict::Compliant);
+        assert_eq!(
+            composed[&ComplianceDomain::Aml],
+            ComplianceVerdict::Compliant
+        );
     }
 
     #[test]
@@ -349,7 +376,11 @@ mod tests {
 
     #[test]
     fn single_fiber_pending() {
-        let results = vec![fiber("f1", ComplianceDomain::Kyc, ComplianceVerdict::Pending)];
+        let results = vec![fiber(
+            "f1",
+            ComplianceDomain::Kyc,
+            ComplianceVerdict::Pending,
+        )];
         let composed = compose_fiber_results(&results);
 
         assert_eq!(composed.len(), 1);
@@ -370,7 +401,10 @@ mod tests {
         let composed = compose_fiber_results(&results);
 
         assert_eq!(composed.len(), 1);
-        assert_eq!(composed[&ComplianceDomain::Aml], ComplianceVerdict::NonCompliant);
+        assert_eq!(
+            composed[&ComplianceDomain::Aml],
+            ComplianceVerdict::NonCompliant
+        );
     }
 
     #[test]
@@ -395,7 +429,10 @@ mod tests {
         let composed = compose_fiber_results(&results);
 
         assert_eq!(composed.len(), 1);
-        assert_eq!(composed[&ComplianceDomain::Tax], ComplianceVerdict::Compliant);
+        assert_eq!(
+            composed[&ComplianceDomain::Tax],
+            ComplianceVerdict::Compliant
+        );
     }
 
     #[test]
@@ -413,13 +450,19 @@ mod tests {
         let composed = compose_fiber_results(&results);
 
         assert_eq!(composed.len(), 4);
-        assert_eq!(composed[&ComplianceDomain::Aml], ComplianceVerdict::Compliant);
+        assert_eq!(
+            composed[&ComplianceDomain::Aml],
+            ComplianceVerdict::Compliant
+        );
         assert_eq!(
             composed[&ComplianceDomain::Sanctions],
             ComplianceVerdict::NonCompliant,
         );
         assert_eq!(composed[&ComplianceDomain::Kyc], ComplianceVerdict::Pending);
-        assert_eq!(composed[&ComplianceDomain::Tax], ComplianceVerdict::Compliant);
+        assert_eq!(
+            composed[&ComplianceDomain::Tax],
+            ComplianceVerdict::Compliant
+        );
     }
 
     #[test]
@@ -446,7 +489,10 @@ mod tests {
         let composed = compose_fiber_results(&results);
 
         assert_eq!(composed.len(), 3);
-        assert_eq!(composed[&ComplianceDomain::Aml], ComplianceVerdict::Compliant);
+        assert_eq!(
+            composed[&ComplianceDomain::Aml],
+            ComplianceVerdict::Compliant
+        );
         assert_eq!(
             composed[&ComplianceDomain::Sanctions],
             ComplianceVerdict::NonCompliant,
@@ -464,11 +510,7 @@ mod tests {
     fn noncompliant_dominates_pending_in_same_domain() {
         let results = vec![
             fiber("f1", ComplianceDomain::Tax, ComplianceVerdict::Pending),
-            fiber(
-                "f2",
-                ComplianceDomain::Tax,
-                ComplianceVerdict::NonCompliant,
-            ),
+            fiber("f2", ComplianceDomain::Tax, ComplianceVerdict::NonCompliant),
             fiber("f3", ComplianceDomain::Tax, ComplianceVerdict::Compliant),
         ];
         let composed = compose_fiber_results(&results);
@@ -518,13 +560,22 @@ mod tests {
 
     #[test]
     fn domain_from_fiber_id_parses_known_domains() {
-        assert_eq!(domain_from_fiber_id("sc_aml_001"), Some(ComplianceDomain::Aml));
-        assert_eq!(domain_from_fiber_id("sc_kyc_001"), Some(ComplianceDomain::Kyc));
+        assert_eq!(
+            domain_from_fiber_id("sc_aml_001"),
+            Some(ComplianceDomain::Aml)
+        );
+        assert_eq!(
+            domain_from_fiber_id("sc_kyc_001"),
+            Some(ComplianceDomain::Kyc)
+        );
         assert_eq!(
             domain_from_fiber_id("adgm_sanctions_001"),
             Some(ComplianceDomain::Sanctions),
         );
-        assert_eq!(domain_from_fiber_id("pk_tax_001"), Some(ComplianceDomain::Tax));
+        assert_eq!(
+            domain_from_fiber_id("pk_tax_001"),
+            Some(ComplianceDomain::Tax)
+        );
     }
 
     #[test]
@@ -571,7 +622,11 @@ mod tests {
 
     #[test]
     fn fiber_result_serde_roundtrip() {
-        let result = fiber("sc_aml_001", ComplianceDomain::Aml, ComplianceVerdict::Compliant);
+        let result = fiber(
+            "sc_aml_001",
+            ComplianceDomain::Aml,
+            ComplianceVerdict::Compliant,
+        );
         let json = serde_json::to_string(&result).unwrap();
         let parsed: FiberResult = serde_json::from_str(&json).unwrap();
         assert_eq!(parsed.fiber_id, "sc_aml_001");
@@ -582,8 +637,10 @@ mod tests {
     #[test]
     fn runtime_context_serde_roundtrip() {
         let mut ctx = context("entity-42", "sc");
-        ctx.facts.insert("entity_type".to_string(), "IBC".to_string());
-        ctx.facts.insert("registered_agent".to_string(), "true".to_string());
+        ctx.facts
+            .insert("entity_type".to_string(), "IBC".to_string());
+        ctx.facts
+            .insert("registered_agent".to_string(), "true".to_string());
 
         let json = serde_json::to_string(&ctx).unwrap();
         let parsed: FiberContext = serde_json::from_str(&json).unwrap();

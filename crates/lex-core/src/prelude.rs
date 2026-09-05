@@ -464,71 +464,71 @@ const TAG_CONSTRUCTORS: &[&str] = &[
     // programs that don't fit Reg D / existing families. Most are
     // pass-through ladder rungs (Compliant / NonCompliant / Pending
     // bucket-shaping) on bespoke accessors.
-    "Appointed",                     // mlro_appointment_status — MLRO designated under reg.5
-    "NotAppointed",                  // mlro_appointment_status — designation absent
-    "AuditCurrent",                  // aml_audit_status — independent annual review current
-    "Breached",                      // recordkeeping_status — five-year retention failed
-    "NoMatchReportingNotRequired",   // fiu_report_status — no STR matter to report
-    "MatchReportedToFiu",            // fiu_report_status — STR filed with FIU
-    "MatchPendingReport",            // fiu_report_status — STR matter pending filing
-    "MatchUnreported",               // fiu_report_status — STR matter unfiled (breach)
-    "OfacClear",                     // ofac_sdn_screening_status — no SDN match
-    "OfacMatch",                     // ofac_sdn_screening_status — confirmed SDN hit
-    "OfacPotentialMatch",            // ofac_sdn_screening_status — name-similarity hit pending review
-    "OfacNotApplicable",             // ofac_sdn_screening_status — counterparty outside OFAC nexus
-    "FreshWithin24h",                // screening_freshness_status — sanctions-list cache <24h
-    "ExpiredBeyond24h",              // screening_freshness_status — cache expired beyond TTL
+    "Appointed",    // mlro_appointment_status — MLRO designated under reg.5
+    "NotAppointed", // mlro_appointment_status — designation absent
+    "AuditCurrent", // aml_audit_status — independent annual review current
+    "Breached",     // recordkeeping_status — five-year retention failed
+    "NoMatchReportingNotRequired", // fiu_report_status — no STR matter to report
+    "MatchReportedToFiu", // fiu_report_status — STR filed with FIU
+    "MatchPendingReport", // fiu_report_status — STR matter pending filing
+    "MatchUnreported", // fiu_report_status — STR matter unfiled (breach)
+    "OfacClear",    // ofac_sdn_screening_status — no SDN match
+    "OfacMatch",    // ofac_sdn_screening_status — confirmed SDN hit
+    "OfacPotentialMatch", // ofac_sdn_screening_status — name-similarity hit pending review
+    "OfacNotApplicable", // ofac_sdn_screening_status — counterparty outside OFAC nexus
+    "FreshWithin24h", // screening_freshness_status — sanctions-list cache <24h
+    "ExpiredBeyond24h", // screening_freshness_status — cache expired beyond TTL
     // (`Adequate` is already declared above (line 48) in the JurisdictionAdequacy
     // family; the adequate_employees_and_premises_status / adequate_opex_status
     // accessors accept both JurisdictionAdequacy and Status.)
-    "Inadequate",                    // adequate_employees_and_premises_status / adequate_opex_status
-    "ReducedSubstanceMet",           // holding_company_reduced_substance_status — pure-equity test met
-    "ReducedSubstanceNotMet",        // holding_company_reduced_substance_status — pure-equity test failed
-    "CigaPerformedLocally",          // ciga_status — CIGA in Cayman
-    "CigaOutsourcedExternally",      // ciga_status — CIGA outsourced offshore (breach)
-    "CigaNotPerformed",              // ciga_status — CIGA absent
-    "TravelRuleImplemented",         // travel_rule_status — VARA/FATF Rec 16 implemented
-    "TravelRuleMissing",             // travel_rule_status — implementation absent
-    "TravelRulePartial",             // travel_rule_status — partial coverage
-    "TechAuditPassed",               // technology_audit_status — third-party tech audit current
-    "TechAuditFailed",               // technology_audit_status — audit failure recorded
-    "TechAuditPending",              // technology_audit_status — audit underway
-    "ProgramApproved",               // aml_program_status — programme attested by MLRO
-    "ProgramRejected",               // aml_program_status — programme rejected
-    "AssessmentPending",             // aml_program_status — review pending
-    "ClassificationFiled",           // token_classification_status — VASP token-class declaration filed
-    "ClassificationMissing",         // token_classification_status — declaration absent
-    "ClassificationDisputed",        // token_classification_status — regulator-disputed classification
+    "Inadequate", // adequate_employees_and_premises_status / adequate_opex_status
+    "ReducedSubstanceMet", // holding_company_reduced_substance_status — pure-equity test met
+    "ReducedSubstanceNotMet", // holding_company_reduced_substance_status — pure-equity test failed
+    "CigaPerformedLocally", // ciga_status — CIGA in Cayman
+    "CigaOutsourcedExternally", // ciga_status — CIGA outsourced offshore (breach)
+    "CigaNotPerformed", // ciga_status — CIGA absent
+    "TravelRuleImplemented", // travel_rule_status — VARA/FATF Rec 16 implemented
+    "TravelRuleMissing", // travel_rule_status — implementation absent
+    "TravelRulePartial", // travel_rule_status — partial coverage
+    "TechAuditPassed", // technology_audit_status — third-party tech audit current
+    "TechAuditFailed", // technology_audit_status — audit failure recorded
+    "TechAuditPending", // technology_audit_status — audit underway
+    "ProgramApproved", // aml_program_status — programme attested by MLRO
+    "ProgramRejected", // aml_program_status — programme rejected
+    "AssessmentPending", // aml_program_status — review pending
+    "ClassificationFiled", // token_classification_status — VASP token-class declaration filed
+    "ClassificationMissing", // token_classification_status — declaration absent
+    "ClassificationDisputed", // token_classification_status — regulator-disputed classification
     // (`Segregated` already declared above in the original Status block.)
-    "NotSegregated",                 // segregation_status — client/firm assets co-mingled
-    "AllPrincipalsClear",            // pep_screening_status — all principals OFAC/PEP clear
-    "AnyPrincipalFailed",            // pep_screening_status — at least one principal failed
-    "NoPepIdentified",               // pep_screening_status — no PEP among principals
-    "PepIdentifiedEddCurrent",       // pep_screening_status — PEP identified, EDD current
-    "Current",                       // ongoing_monitoring_status — monitoring current
-    "Lapsed",                        // ongoing_monitoring_status — monitoring lapsed
-    "CapitalMet",                    // vasp_capital_adequacy — minimum-capital test met
-    "CapitalShortfall",              // vasp_capital_adequacy — shortfall recorded
-    "SupervisionCurrent",            // vasp_supervision_status — VASP supervision active
-    "SupervisionInProgress",         // vasp_supervision_status — supervision in progress
-    "SupervisionOverdue",            // vasp_supervision_status — supervision lapsed
-    "FsraAuthorized",                // fsra_authorization_status — FSRA authorisation granted (Prospera)
-    "FsraSubmitted",                 // fsra_authorization_status — application submitted
-    "FsraRejected",                  // fsra_authorization_status — application rejected
-    "KycApproved",                   // kyc_status — investor KYC cleared
-    "KycPending",                    // kyc_status — investor KYC pending
-    "KycFailed",                     // kyc_status — investor KYC failed
+    "NotSegregated",           // segregation_status — client/firm assets co-mingled
+    "AllPrincipalsClear",      // pep_screening_status — all principals OFAC/PEP clear
+    "AnyPrincipalFailed",      // pep_screening_status — at least one principal failed
+    "NoPepIdentified",         // pep_screening_status — no PEP among principals
+    "PepIdentifiedEddCurrent", // pep_screening_status — PEP identified, EDD current
+    "Current",                 // ongoing_monitoring_status — monitoring current
+    "Lapsed",                  // ongoing_monitoring_status — monitoring lapsed
+    "CapitalMet",              // vasp_capital_adequacy — minimum-capital test met
+    "CapitalShortfall",        // vasp_capital_adequacy — shortfall recorded
+    "SupervisionCurrent",      // vasp_supervision_status — VASP supervision active
+    "SupervisionInProgress",   // vasp_supervision_status — supervision in progress
+    "SupervisionOverdue",      // vasp_supervision_status — supervision lapsed
+    "FsraAuthorized",          // fsra_authorization_status — FSRA authorisation granted (Prospera)
+    "FsraSubmitted",           // fsra_authorization_status — application submitted
+    "FsraRejected",            // fsra_authorization_status — application rejected
+    "KycApproved",             // kyc_status — investor KYC cleared
+    "KycPending",              // kyc_status — investor KYC pending
+    "KycFailed",               // kyc_status — investor KYC failed
     // ── Family: VaspLicenseCategory ─────────────────────────────────
     // Cayman VASP Act 2020 license-category classifier scrutinised by
     // `vasp_license_category` accessor matches in
     // `modules/lex/cayman/vasp_act.lex`.
-    "VaspLicenseCustodian",      // Custodian-only VASP license
+    "VaspLicenseCustodian",       // Custodian-only VASP license
     "VaspLicenseTradingPlatform", // Trading-platform VASP license
-    "VaspRegistrationOnly",      // Registration without full license (transitional)
-    // (Note: `Match` / `PotentialMatch` are SanctionsResult constructors,
-    // registered above in SANCTIONS_CONSTRUCTORS, not TAG_CONSTRUCTORS —
-    // they are scrutinised against SanctionsResult-typed accessors like
-    // `ctx.sanctions_check` per modules/lex/cayman/sanctions_screening_loop.lex.)
+    "VaspRegistrationOnly",       // Registration without full license (transitional)
+                                  // (Note: `Match` / `PotentialMatch` are SanctionsResult constructors,
+                                  // registered above in SANCTIONS_CONSTRUCTORS, not TAG_CONSTRUCTORS —
+                                  // they are scrutinised against SanctionsResult-typed accessors like
+                                  // `ctx.sanctions_check` per modules/lex/cayman/sanctions_screening_loop.lex.)
 ];
 
 const NAT_ACCESSORS: &[&str] = &[
@@ -2143,8 +2143,7 @@ impl PreludeRegistry {
         if SANCTIONS_CONSTRUCTORS.contains(&ctor_name) {
             dts.push("SanctionsResult");
         }
-        if TAG_CONSTRUCTORS.contains(&ctor_name)
-            || TAG_OVERLOADED_CONSTRUCTORS.contains(&ctor_name)
+        if TAG_CONSTRUCTORS.contains(&ctor_name) || TAG_OVERLOADED_CONSTRUCTORS.contains(&ctor_name)
         {
             dts.push("ComplianceTag");
         }
@@ -2261,18 +2260,18 @@ pub fn legacy_fixture_prelude() -> Context {
         // at runtime; the prelude resolves the name so elaboration
         // succeeds. Closure to first-class typed-discretion-hole terms
         // is tracked in the F51-LEX-COVERAGE follow-up frontier.
-        "DitcPenaltyAssessment",                  // cayman/tax_neutrality.lex
-        "HmrcEnquiryDiscretion",                  // uk/tax_corporation_tax.lex
-        "DiscoveryAssessment",                    // uk/tax_corporation_tax.lex
-        "ComptrollerDiscretion",                  // singapore/tax_treaties.lex
-        "GeneralAntiAvoidanceRule",               // singapore/tax_treaties.lex
-        "ArbitralMeritDetermination",             // prospera/arbitration.lex
-        "CouncilResolutionIssuance",              // prospera/authority_council_approval.lex
-        "USPersonDetermination",                  // prospera/investor_classification.lex
-        "AccreditedInvestorVerification",         // prospera/investor_classification.lex
-        "RegimeAvailabilityDetermination",        // prospera/regime_selector.lex
-        "HondurasLMVDigitalAssetClassification",  // prospera/fundraising_regime_classifier.lex
-        "AdequateProceduresDetermination",        // uk/bribery_act_2010.lex
+        "DitcPenaltyAssessment",                 // cayman/tax_neutrality.lex
+        "HmrcEnquiryDiscretion",                 // uk/tax_corporation_tax.lex
+        "DiscoveryAssessment",                   // uk/tax_corporation_tax.lex
+        "ComptrollerDiscretion",                 // singapore/tax_treaties.lex
+        "GeneralAntiAvoidanceRule",              // singapore/tax_treaties.lex
+        "ArbitralMeritDetermination",            // prospera/arbitration.lex
+        "CouncilResolutionIssuance",             // prospera/authority_council_approval.lex
+        "USPersonDetermination",                 // prospera/investor_classification.lex
+        "AccreditedInvestorVerification",        // prospera/investor_classification.lex
+        "RegimeAvailabilityDetermination",       // prospera/regime_selector.lex
+        "HondurasLMVDigitalAssetClassification", // prospera/fundraising_regime_classifier.lex
+        "AdequateProceduresDetermination",       // uk/bribery_act_2010.lex
     ] {
         ctx = ctx.with_named_constant(authority_ref, constant("ComplianceTag"));
     }
@@ -3174,8 +3173,7 @@ mod tests {
         let ctx = legacy_fixture_prelude();
 
         // 9 new Jurisdiction codes (USDE Delaware + 8 harbor markers).
-        let g2_jurisdictions: &[&str] =
-            &["USDE", "BM", "JE", "GG", "IM", "DE", "EU", "AE", "BV"];
+        let g2_jurisdictions: &[&str] = &["USDE", "BM", "JE", "GG", "IM", "DE", "EU", "AE", "BV"];
 
         // 22 AmlCddRegime constructors (per-jurisdiction AML/CDD rule-sets).
         let g2_aml_cdd_regimes: &[&str] = &[
@@ -3459,7 +3457,10 @@ mod tests {
     /// typecheck without re-authoring.
     #[test]
     fn g2_es_adequacy_admits_jurisdictionadequacy_and_status() {
-        for accessor in &["adequate_employees_and_premises_status", "adequate_opex_status"] {
+        for accessor in &[
+            "adequate_employees_and_premises_status",
+            "adequate_opex_status",
+        ] {
             assert!(validate_match_family(accessor, "Adequate"));
             assert!(validate_match_family(accessor, "Inadequate"));
             // Status family pass-through verdicts.
@@ -3498,7 +3499,10 @@ mod tests {
     /// rules scrutinise them as `Jurisdiction` returning Bool.
     #[test]
     fn g2_aifm_location_admits_jurisdiction_only() {
-        for accessor in &["aifm_portfolio_manager_location", "aifm_risk_manager_location"] {
+        for accessor in &[
+            "aifm_portfolio_manager_location",
+            "aifm_risk_manager_location",
+        ] {
             assert!(validate_match_family(accessor, "LU"));
             assert!(validate_match_family(accessor, "GB"));
             assert!(!validate_match_family(accessor, "Active"));

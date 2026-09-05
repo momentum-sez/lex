@@ -319,10 +319,7 @@ mod tests {
 
     #[test]
     fn indeterminate_with_custom_reason() {
-        let verdict = Indeterminate::with_reason(
-            "oracle timeout during sanctions screening",
-            42,
-        );
+        let verdict = Indeterminate::with_reason("oracle timeout during sanctions screening", 42);
         assert_eq!(verdict.remaining_fuel_needed, 42);
         assert!(verdict.reason.contains("oracle timeout"));
         assert_eq!(verdict.rule_id, None);

@@ -215,9 +215,11 @@ mod tests {
         // If these were the same type, we could assign one to the other.
         // This test just asserts both constructors work.
         let _t0: Asof<0> = Asof::<0>::freeze("2026-01-01T00:00:00Z");
-        let _t1: Asof<1> = Asof::<0>::freeze("2026-01-01T00:00:00Z").lift0(
-            RewriteWitness::new(RewriteKind::Savings, "basis", "2026-02-01T00:00:00Z"),
-        );
+        let _t1: Asof<1> = Asof::<0>::freeze("2026-01-01T00:00:00Z").lift0(RewriteWitness::new(
+            RewriteKind::Savings,
+            "basis",
+            "2026-02-01T00:00:00Z",
+        ));
     }
 
     #[test]

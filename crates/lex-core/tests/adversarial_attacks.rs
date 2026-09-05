@@ -5,23 +5,37 @@
 //! Tests that expose vulnerabilities are documented.
 
 use lex_core::ast::*;
-use lex_core::typecheck::{check, check_admissibility, infer, Context, TypeError, AdmissibilityViolation};
 use lex_core::debruijn::{assign_indices, shift, substitute, DebruijnError};
+use lex_core::typecheck::{
+    check, check_admissibility, infer, AdmissibilityViolation, Context, TypeError,
+};
 
 // ============================================================
 // Helpers
 // ============================================================
 
-fn type0() -> Term { Term::Sort(Sort::Type(Level::Nat(0))) }
-fn type1() -> Term { Term::Sort(Sort::Type(Level::Nat(1))) }
-fn prop() -> Term { Term::Sort(Sort::Prop) }
+fn type0() -> Term {
+    Term::Sort(Sort::Type(Level::Nat(0)))
+}
+fn type1() -> Term {
+    Term::Sort(Sort::Type(Level::Nat(1)))
+}
+fn prop() -> Term {
+    Term::Sort(Sort::Prop)
+}
 
 fn var(i: u32) -> Term {
-    Term::Var { name: Ident::new(&format!("v{}", i)), index: i }
+    Term::Var {
+        name: Ident::new(&format!("v{}", i)),
+        index: i,
+    }
 }
 
 fn named_var(name: &str) -> Term {
-    Term::Var { name: Ident::new(name), index: 0 }
+    Term::Var {
+        name: Ident::new(name),
+        index: 0,
+    }
 }
 
 fn lam(param_type: Term, body: Term) -> Term {
@@ -42,11 +56,17 @@ fn pi(domain: Term, codomain: Term) -> Term {
 }
 
 fn app(func: Term, arg: Term) -> Term {
-    Term::App { func: Box::new(func), arg: Box::new(arg) }
+    Term::App {
+        func: Box::new(func),
+        arg: Box::new(arg),
+    }
 }
 
 fn annot(term: Term, ty: Term) -> Term {
-    Term::Annot { term: Box::new(term), ty: Box::new(ty) }
+    Term::Annot {
+        term: Box::new(term),
+        ty: Box::new(ty),
+    }
 }
 
 fn let_(def_type: Term, def_val: Term, body: Term) -> Term {
@@ -70,7 +90,10 @@ fn attack1_apply_non_function() {
     // Applying Type_0 to Type_0 should fail with NotAFunction.
     let term = app(type0(), type0());
     let result = infer(&ctx, &term);
-    assert!(result.is_err(), "VULNERABILITY: applying non-function succeeded!");
+    assert!(
+        result.is_err(),
+        "VULNERABILITY: applying non-function succeeded!"
+    );
     match result.unwrap_err() {
         TypeError::NotAFunction { .. } => { /* sound */ }
         other => panic!("Wrong error kind: {:?}", other),
@@ -90,7 +113,10 @@ fn attack1_lambda_body_type_mismatch() {
     let expected = pi(type0(), type0());
     let term = lam(type0(), type1());
     let result = check(&ctx, &term, &expected);
-    assert!(result.is_err(), "VULNERABILITY: body type mismatch passed check!");
+    assert!(
+        result.is_err(),
+        "VULNERABILITY: body type mismatch passed check!"
+    );
 }
 
 /// Attack: Use universe polymorphism-like trick — check if Type_0 can be
@@ -123,11 +149,15 @@ fn attack2_rec_inside_annot() {
     };
     let sneaky = annot(rec, type0());
     let result = infer(&ctx, &sneaky);
-    assert!(result.is_err(), "VULNERABILITY: Rec sneaked past admissibility via Annot!");
+    assert!(
+        result.is_err(),
+        "VULNERABILITY: Rec sneaked past admissibility via Annot!"
+    );
     match result.unwrap_err() {
-        TypeError::Admissibility { violation: AdmissibilityViolation::RecNotSupported, .. } => {
-            /* sound */
-        }
+        TypeError::Admissibility {
+            violation: AdmissibilityViolation::RecNotSupported,
+            ..
+        } => { /* sound */ }
         other => panic!("Wrong error: {:?}", other),
     }
 }
@@ -144,7 +174,10 @@ fn attack2_hole_inside_let() {
     });
     let term = let_(type0(), type0(), hole);
     let result = infer(&ctx, &term);
-    assert!(result.is_err(), "VULNERABILITY: Hole sneaked through via Let body!");
+    assert!(
+        result.is_err(),
+        "VULNERABILITY: Hole sneaked through via Let body!"
+    );
 }
 
 /// Attack: Nest Sigma inside Lambda body (deeply nested non-admissible).
@@ -160,7 +193,10 @@ fn attack2_sigma_inside_lambda() {
     let sneaky_lam = lam(type0(), sigma);
     let expected = pi(type0(), type0()); // wrong type but we want admissibility check first
     let result = check(&ctx, &sneaky_lam, &expected);
-    assert!(result.is_err(), "VULNERABILITY: Sigma sneaked past admissibility in Lambda body!");
+    assert!(
+        result.is_err(),
+        "VULNERABILITY: Sigma sneaked past admissibility in Lambda body!"
+    );
 }
 
 /// Attack: EffectRow::Empty in Pi should pass, but EffectRow::Var(0) should fail.
@@ -178,7 +214,10 @@ fn attack2_effectful_pi_as_domain_of_another_pi() {
     };
     let outer_pi = pi(inner_pi, type0());
     let result = infer(&ctx, &outer_pi);
-    assert!(result.is_err(), "VULNERABILITY: effectful Pi sneaked past as domain!");
+    assert!(
+        result.is_err(),
+        "VULNERABILITY: effectful Pi sneaked past as domain!"
+    );
 }
 
 /// Attack: Pi with EffectRow::Empty (which is Some(Empty), not None)
@@ -194,7 +233,11 @@ fn attack2_pi_with_explicit_empty_effect_row() {
     };
     let result = infer(&ctx, &term);
     // EffectRow::Empty is explicitly accepted by the admissibility checker
-    assert!(result.is_ok(), "EffectRow::Empty Pi rejected incorrectly: {:?}", result.unwrap_err());
+    assert!(
+        result.is_ok(),
+        "EffectRow::Empty Pi rejected incorrectly: {:?}",
+        result.unwrap_err()
+    );
 }
 
 /// Attack: Constant without signature entry — admissibility says OK,
@@ -207,11 +250,15 @@ fn attack2_constant_without_signature() {
     assert!(check_admissibility(&term).is_ok());
     // But infer should fail because no signature entry
     let result = infer(&ctx, &term);
-    assert!(result.is_err(), "VULNERABILITY: Constant without signature was accepted!");
+    assert!(
+        result.is_err(),
+        "VULNERABILITY: Constant without signature was accepted!"
+    );
     match result.unwrap_err() {
-        TypeError::Admissibility { violation: AdmissibilityViolation::ConstantNotSupported, .. } => {
-            /* sound: the constant is not in the global signature */
-        }
+        TypeError::Admissibility {
+            violation: AdmissibilityViolation::ConstantNotSupported,
+            ..
+        } => { /* sound: the constant is not in the global signature */ }
         other => panic!("Wrong error: {:?}", other),
     }
 }
@@ -237,7 +284,10 @@ fn attack3_deep_shift_overflow() {
                 };
             }
             let result = shift(&term, 0, 1);
-            assert!(result.is_err(), "VULNERABILITY: shift did not hit depth limit at 300 levels!");
+            assert!(
+                result.is_err(),
+                "VULNERABILITY: shift did not hit depth limit at 300 levels!"
+            );
             match result.unwrap_err() {
                 DebruijnError::RecursionLimit { .. } => { /* sound */ }
                 other => panic!("Wrong error: {:?}", other),
@@ -264,7 +314,10 @@ fn attack3_deep_assign_indices_overflow() {
                 };
             }
             let result = assign_indices(&term);
-            assert!(result.is_err(), "VULNERABILITY: assign_indices did not hit depth limit!");
+            assert!(
+                result.is_err(),
+                "VULNERABILITY: assign_indices did not hit depth limit!"
+            );
             match result.unwrap_err() {
                 DebruijnError::RecursionLimit { .. } => { /* sound */ }
                 other => panic!("Wrong error: {:?}", other),
@@ -291,7 +344,10 @@ fn attack3_deep_substitute_overflow() {
                 };
             }
             let result = substitute(&term, 0, &prop());
-            assert!(result.is_err(), "VULNERABILITY: substitute did not hit depth limit!");
+            assert!(
+                result.is_err(),
+                "VULNERABILITY: substitute did not hit depth limit!"
+            );
             match result.unwrap_err() {
                 DebruijnError::RecursionLimit { .. } => { /* sound */ }
                 other => panic!("Wrong error: {:?}", other),
@@ -366,7 +422,10 @@ fn attack4_type_in_type_direct() {
     let ctx = Context::empty();
     // Type_0 : Type_1, never Type_0 : Type_0
     let result = check(&ctx, &type0(), &type0());
-    assert!(result.is_err(), "VULNERABILITY: Type_0 : Type_0 accepted! Type-in-Type!");
+    assert!(
+        result.is_err(),
+        "VULNERABILITY: Type_0 : Type_0 accepted! Type-in-Type!"
+    );
 }
 
 /// Attack: Use Level::Max to try to fool level computation.
@@ -403,7 +462,10 @@ fn attack4_succ_level_overflow() {
             // Check if the type is correct (Type_{u64::MAX + 1})
             // If u64::MAX + 1 overflowed to 0, that's Type_0 — WRONG
             if let Term::Sort(Sort::Type(Level::Nat(n))) = &ty {
-                assert_ne!(*n, 0, "VULNERABILITY: Level overflow! Type_{{u64::MAX}} : Type_0 (wrapped around!)");
+                assert_ne!(
+                    *n, 0,
+                    "VULNERABILITY: Level overflow! Type_{{u64::MAX}} : Type_0 (wrapped around!)"
+                );
             }
         }
         Err(_) => { /* error is fine */ }
@@ -415,7 +477,10 @@ fn attack4_succ_level_overflow() {
 #[test]
 fn attack4_succ_deliberate_wrap() {
     let ctx = Context::empty();
-    let sort = Term::Sort(Sort::Type(Level::Succ(Box::new(Level::Nat(5)), u64::MAX - 3)));
+    let sort = Term::Sort(Sort::Type(Level::Succ(
+        Box::new(Level::Nat(5)),
+        u64::MAX - 3,
+    )));
     let result = infer(&ctx, &sort);
     // eval_level: 5 + (u64::MAX - 3) = u64::MAX + 2 => overflow
     // With checked/wrapping arithmetic, this either panics or wraps
@@ -423,7 +488,11 @@ fn attack4_succ_deliberate_wrap() {
         Ok(ty) => {
             if let Term::Sort(Sort::Type(Level::Nat(n))) = &ty {
                 // If this wrapped around to a small number, it's a vulnerability.
-                assert!(*n >= 100, "VULNERABILITY: Level arithmetic overflow, got Type_{}", n);
+                assert!(
+                    *n >= 100,
+                    "VULNERABILITY: Level arithmetic overflow, got Type_{}",
+                    n
+                );
             }
         }
         Err(_) => { /* fine */ }
@@ -454,14 +523,16 @@ fn attack5_basic_capture_avoidance() {
     let replacement = var(0); // z@0
     let result = substitute(&term, 0, &replacement).unwrap();
     match &result {
-        Term::Lambda { body, .. } => {
-            match body.as_ref() {
-                Term::Var { index, .. } => {
-                    assert_eq!(*index, 1, "VULNERABILITY: capture occurred! Got index {} instead of 1", index);
-                }
-                other => panic!("Expected Var, got {:?}", other),
+        Term::Lambda { body, .. } => match body.as_ref() {
+            Term::Var { index, .. } => {
+                assert_eq!(
+                    *index, 1,
+                    "VULNERABILITY: capture occurred! Got index {} instead of 1",
+                    index
+                );
             }
-        }
+            other => panic!("Expected Var, got {:?}", other),
+        },
         _ => panic!("Expected Lambda"),
     }
 }
@@ -489,7 +560,11 @@ fn attack5_double_binder_capture() {
         Term::Lambda { body: outer, .. } => match outer.as_ref() {
             Term::Lambda { body: inner, .. } => match inner.as_ref() {
                 Term::Var { index, .. } => {
-                    assert_eq!(*index, 2, "VULNERABILITY: double-binder capture! index={}", index);
+                    assert_eq!(
+                        *index, 2,
+                        "VULNERABILITY: double-binder capture! index={}",
+                        index
+                    );
                 }
                 other => panic!("Expected Var, got {:?}", other),
             },
@@ -515,7 +590,11 @@ fn attack5_pi_codomain_capture() {
     match &result {
         Term::Pi { codomain, .. } => match codomain.as_ref() {
             Term::Var { index, .. } => {
-                assert_eq!(*index, 1, "VULNERABILITY: Pi codomain capture! index={}", index);
+                assert_eq!(
+                    *index, 1,
+                    "VULNERABILITY: Pi codomain capture! index={}",
+                    index
+                );
             }
             other => panic!("Expected Var in codomain, got {:?}", other),
         },
@@ -541,7 +620,11 @@ fn attack5_let_body_capture() {
     match &result {
         Term::Let { body, .. } => match body.as_ref() {
             Term::Var { index, .. } => {
-                assert_eq!(*index, 1, "VULNERABILITY: Let body capture! index={}", index);
+                assert_eq!(
+                    *index, 1,
+                    "VULNERABILITY: Let body capture! index={}",
+                    index
+                );
             }
             other => panic!("Expected Var, got {:?}", other),
         },
@@ -578,37 +661,37 @@ fn attack6_pi_different_effect_rows_not_equal() {
     // But PartialEq will say None != Some(Empty)!
     // This means conv_eq will consider them NOT equal.
     // Check: can we have a lambda checked against one but not the other?
-    
+
     let body = lam(type0(), var(0));
 
     // Check against pure pi (None)
     let _result_pure = check(&ctx, &body, &pure_pi);
     // Check against empty-effect pi (Some(Empty))
     let _result_empty = check(&ctx, &body, &empty_effect_pi);
-    
+
     // Both should succeed (both are pure Pi types)
     // But if admissibility rejects Some(Empty), the empty_effect_pi check never runs
     // Let's see...
-    
+
     // Actually, admissibility DOES accept EffectRow::Empty explicitly.
     // So both should pass admissibility. The question is whether
     // ensure_pi works for both.
-    
+
     // Actually, for check mode with Lambda, ensure_pi is called on the EXPECTED type.
     // ensure_pi reduces to WHNF and matches Pi. Both are already Pi.
     // ensure_pi returns (domain, codomain) — it does not check effect_row.
     // So Lambda check doesn't care about effect_row at all!
-    
+
     // The real gap: if we try to use conv_eq between the two Pi types,
     // e.g., by inferring one and checking against the other:
     let annot_pure = annot(body.clone(), pure_pi.clone());
     let result_check = check(&ctx, &annot_pure, &empty_effect_pi);
-    
+
     // infer(annot(body, pure_pi)) => pure_pi
     // then conv_eq(pure_pi, empty_effect_pi)
     // pure_pi has effect_row: None, empty_effect_pi has effect_row: Some(Empty)
     // conv_eq compares e1 == e2 => None != Some(Empty) => MISMATCH!
-    
+
     match result_check {
         Ok(()) => {
             // If this succeeds, the system correctly identifies them as equivalent
@@ -639,7 +722,7 @@ fn attack6_effect_row_join_not_normalized() {
         Box::new(EffectRow::Empty),
         Box::new(EffectRow::Effects(vec![Effect::Read])),
     );
-    
+
     // These should be semantically equivalent but structurally different
     let are_equal = row_simple == row_join;
     if are_equal {
@@ -671,11 +754,18 @@ fn attack7_forged_debruijn_index() {
 
     // Should fail against claimed type
     let result_wrong = check(&ctx, &term, &claimed_type);
-    assert!(result_wrong.is_err(), "VULNERABILITY: forged index accepted with wrong type!");
+    assert!(
+        result_wrong.is_err(),
+        "VULNERABILITY: forged index accepted with wrong type!"
+    );
 
     // Should succeed against real type
     let result_right = check(&ctx, &term, &real_type);
-    assert!(result_right.is_ok(), "Correct type rejected: {:?}", result_right.unwrap_err());
+    assert!(
+        result_right.is_ok(),
+        "Correct type rejected: {:?}",
+        result_right.unwrap_err()
+    );
 }
 
 /// Attack: Construct a term that is checked in an inconsistent context.
@@ -783,7 +873,11 @@ fn attack8_deep_pi_recursion() {
                 shallow = pi(type0(), shallow);
             }
             let result2 = infer(&ctx, &shallow);
-            assert!(result2.is_ok(), "180-deep Pi chain failed: {:?}", result2.unwrap_err());
+            assert!(
+                result2.is_ok(),
+                "180-deep Pi chain failed: {:?}",
+                result2.unwrap_err()
+            );
         })
         .expect("thread spawn")
         .join()
@@ -803,7 +897,7 @@ fn attack8_deep_pi_recursion() {
 fn attack9_omega_combinator_rejected() {
     let ctx = Context::empty();
     // λ(x : ?). x x — we need a type for x such that x : A -> B and A = A -> B
-    // With a forged annotation, try: (λ(x : Type_0). x x : ?) 
+    // With a forged annotation, try: (λ(x : Type_0). x x : ?)
     // But x : Type_0 means x is a type, and applying a type to itself is ill-typed.
     let self_app = app(var(0), var(0)); // x x
     let omega_half = lam(type0(), self_app);
@@ -812,5 +906,8 @@ fn attack9_omega_combinator_rejected() {
     // x : Type_0, so x x means applying Type_0 to Type_0
     // infer(x) => Type_0 (lookup index 0)
     // ensure_pi(Type_0) => fails (Type_0 is not a Pi)
-    assert!(result.is_err(), "VULNERABILITY: omega combinator body accepted!");
+    assert!(
+        result.is_err(),
+        "VULNERABILITY: omega combinator body accepted!"
+    );
 }

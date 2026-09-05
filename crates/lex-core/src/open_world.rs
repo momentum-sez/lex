@@ -346,10 +346,7 @@ pub fn decompose_query(
 /// - Observable universe digest is non-empty
 /// - Oracle version is non-empty
 /// - Exclusion set commitment is non-empty
-pub fn validate_envelope(
-    envelope: &OracleEnvelope,
-    query: &OpenWorldQuery,
-) -> bool {
+pub fn validate_envelope(envelope: &OracleEnvelope, query: &OpenWorldQuery) -> bool {
     envelope.horizon_k == query.oracle.horizon_k
         && envelope.query_predicate_hash == query.predicate_hash
         && !envelope.observable_universe_digest.is_empty()

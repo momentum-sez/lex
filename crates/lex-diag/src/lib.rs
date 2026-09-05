@@ -216,8 +216,7 @@ mod tests {
     fn category_serde_roundtrip() {
         let cat = DiagnosticCategory::TemporalStratificationViolation;
         let json = serde_json::to_string(&cat).expect("serialize category");
-        let back: DiagnosticCategory =
-            serde_json::from_str(&json).expect("deserialize category");
+        let back: DiagnosticCategory = serde_json::from_str(&json).expect("deserialize category");
         assert_eq!(cat, back);
     }
 

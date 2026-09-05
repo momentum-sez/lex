@@ -163,8 +163,7 @@ fn discharge(obligation: &ProofObligation, facts: IncorporationFacts<'_>) -> Dec
         ObligationCategory::ExhaustiveMatch => {
             decide::finite_domain_check("Jurisdiction", &["SC"], facts.jurisdiction)
         }
-        ObligationCategory::DefeasibleResolution
-        | ObligationCategory::ThresholdComparison => {
+        ObligationCategory::DefeasibleResolution | ObligationCategory::ThresholdComparison => {
             decide::threshold_check(facts.director_count, 1, ">=")
         }
         ObligationCategory::DomainMembership => {
@@ -327,9 +326,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     let hole = fit_and_proper_hole();
     let hole_obligations = obligations::extract_obligations(&hole);
-    println!(
-        "      Hole: ? : ComplianceVerdict @ authority.fsa.seychelles (SC, 2026-03)."
-    );
+    println!("      Hole: ? : ComplianceVerdict @ authority.fsa.seychelles (SC, 2026-03).");
     println!(
         "      Extractor produced {} obligation(s) from the hole's scope:",
         hole_obligations.len()

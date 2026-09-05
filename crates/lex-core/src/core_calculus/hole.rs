@@ -202,7 +202,7 @@ impl HmacSha256Verifier {
     /// dependency is required).
     fn hmac_sha256(key: &[u8], message: &[u8]) -> [u8; 32] {
         const BLOCK: usize = 64; // SHA-256 block size in bytes.
-        // Keys longer than the block size are first hashed.
+                                 // Keys longer than the block size are first hashed.
         let mut key_block = [0u8; BLOCK];
         if key.len() > BLOCK {
             let mut h = Sha256::new();
@@ -893,10 +893,7 @@ mod tests {
         let mut w = witness_hmac_valid(&v);
         w.signature[0] ^= 0x01; // Corrupt the tag.
         let r = h.fill_verified(filler, w, &v);
-        assert!(matches!(
-            r,
-            Err(AuthorityError::SignatureInvalid { .. })
-        ));
+        assert!(matches!(r, Err(AuthorityError::SignatureInvalid { .. })));
     }
 
     #[test]

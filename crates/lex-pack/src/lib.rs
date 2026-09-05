@@ -303,10 +303,7 @@ impl Pack {
                 body_digest: self.digest.clone(),
             });
         }
-        let signature = self
-            .signature
-            .as_ref()
-            .ok_or(PackVerifyError::Unsigned)?;
+        let signature = self.signature.as_ref().ok_or(PackVerifyError::Unsigned)?;
         verifier
             .verify(&self.version.curator_did, &self.digest, signature)
             .map_err(PackVerifyError::SignatureRejected)
@@ -371,11 +368,12 @@ pub fn compile(
         }
 
         // Assign de-Bruijn indices for a stable, host-consumable body.
-        let indexed = lex_core::debruijn::assign_indices(&rule.body)
-            .map_err(|e| PackCompileError::IndexAssignment {
+        let indexed = lex_core::debruijn::assign_indices(&rule.body).map_err(|e| {
+            PackCompileError::IndexAssignment {
                 rule: rule.name.clone(),
                 reason: format!("{e:?}"),
-            })?;
+            }
+        })?;
 
         let body = CompiledTerm::from_term(indexed)?;
 
@@ -410,8 +408,8 @@ pub fn compile(
         semver: &semver,
         rules: &compiled,
     };
-    let canonical =
-        CanonicalBytes::new(&body).map_err(|e| PackCompileError::Canonicalization(e.to_string()))?;
+    let canonical = CanonicalBytes::new(&body)
+        .map_err(|e| PackCompileError::Canonicalization(e.to_string()))?;
     let digest = sha256_digest(&canonical).to_hex();
 
     Ok(Pack {
@@ -446,18 +444,14 @@ fn first_unfilled_hole(term: &Term) -> Option<&Hole> {
         // Single-child / paired children.
         Term::Pair { fst, snd } => first_unfilled_hole(fst).or_else(|| first_unfilled_hole(snd)),
         Term::Proj { pair, .. } => first_unfilled_hole(pair),
-        Term::App { func, arg } => {
-            first_unfilled_hole(func).or_else(|| first_unfilled_hole(arg))
-        }
+        Term::App { func, arg } => first_unfilled_hole(func).or_else(|| first_unfilled_hole(arg)),
         Term::SanctionsDominance { proof } => first_unfilled_hole(proof),
         Term::DefeatElim { rule } => first_unfilled_hole(rule),
         Term::Lift0 { time } => first_unfilled_hole(time),
         Term::Derive1 { time, witness } => {
             first_unfilled_hole(time).or_else(|| first_unfilled_hole(witness))
         }
-        Term::Annot { term, ty } => {
-            first_unfilled_hole(term).or_else(|| first_unfilled_hole(ty))
-        }
+        Term::Annot { term, ty } => first_unfilled_hole(term).or_else(|| first_unfilled_hole(ty)),
         Term::Unlock { effect_row, body } => {
             first_unfilled_hole(effect_row).or_else(|| first_unfilled_hole(body))
         }
@@ -469,15 +463,13 @@ fn first_unfilled_hole(term: &Term) -> Option<&Hole> {
         Term::Pi {
             domain, codomain, ..
         } => first_unfilled_hole(domain).or_else(|| first_unfilled_hole(codomain)),
-        Term::Sigma {
-            fst_ty, snd_ty, ..
-        } => first_unfilled_hole(fst_ty).or_else(|| first_unfilled_hole(snd_ty)),
+        Term::Sigma { fst_ty, snd_ty, .. } => {
+            first_unfilled_hole(fst_ty).or_else(|| first_unfilled_hole(snd_ty))
+        }
         Term::Let { ty, val, body, .. } => first_unfilled_hole(ty)
             .or_else(|| first_unfilled_hole(val))
             .or_else(|| first_unfilled_hole(body)),
-        Term::Rec { ty, body, .. } => {
-            first_unfilled_hole(ty).or_else(|| first_unfilled_hole(body))
-        }
+        Term::Rec { ty, body, .. } => first_unfilled_hole(ty).or_else(|| first_unfilled_hole(body)),
 
         // Collections.
         Term::InductiveIntro { args, .. } => args.iter().find_map(first_unfilled_hole),
@@ -643,7 +635,10 @@ mod tests {
 
     #[test]
     fn specific_scope_matches_exact_pair_only() {
-        let s = scope(&["sc"], &[OperationKindScope::Specific(qi("entity.incorporate"))]);
+        let s = scope(
+            &["sc"],
+            &[OperationKindScope::Specific(qi("entity.incorporate"))],
+        );
         assert!(s.matches(&qi("sc"), &qi("entity.incorporate")));
         // Wrong jurisdiction.
         assert!(!s.matches(&qi("de"), &qi("entity.incorporate")));
@@ -791,7 +786,9 @@ mod tests {
         assert_eq!(de[0].name, "de_incorporate");
 
         // Wrong jurisdiction → no rules.
-        assert!(pack.rules_for(&qi("uk"), &qi("entity.incorporate")).is_empty());
+        assert!(pack
+            .rules_for(&qi("uk"), &qi("entity.incorporate"))
+            .is_empty());
     }
 
     #[test]
@@ -878,7 +875,10 @@ mod tests {
             )],
         )
         .unwrap();
-        assert_eq!(pack.verify(&AcceptAll).unwrap_err(), PackVerifyError::Unsigned);
+        assert_eq!(
+            pack.verify(&AcceptAll).unwrap_err(),
+            PackVerifyError::Unsigned
+        );
     }
 
     #[test]
@@ -941,4 +941,3 @@ mod tests {
         );
     }
 }
-

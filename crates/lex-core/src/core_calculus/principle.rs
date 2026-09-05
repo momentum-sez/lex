@@ -184,7 +184,10 @@ impl PriorityGraph {
 /// The cycle is surfaced in diagnostics so the fiber author can locate and
 /// break it.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
-#[error("principle deadlock: cycle detected on the product graph: {}", format_cycle(cycle))]
+#[error(
+    "principle deadlock: cycle detected on the product graph: {}",
+    format_cycle(cycle)
+)]
 pub struct PrincipleDeadlock {
     pub cycle: Vec<ProductNode>,
 }

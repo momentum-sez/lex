@@ -227,11 +227,13 @@ mod tests {
 
     #[test]
     fn small_tree_within_horizon() {
-        let o = UBOOracle::new(
-            "ubo-v1",
-            edges(&[("root", "a"), ("root", "b"), ("a", "c")]),
+        let o = UBOOracle::new("ubo-v1", edges(&[("root", "a"), ("root", "b"), ("a", "c")]));
+        let r = o.supply_bounded_horizon(
+            UBOQuery {
+                root: "root".into(),
+            },
+            Horizon(5),
         );
-        let r = o.supply_bounded_horizon(UBOQuery { root: "root".into() }, Horizon(5));
         assert_eq!(r.witnesses.len(), 3);
         assert!(r.is_complete());
     }

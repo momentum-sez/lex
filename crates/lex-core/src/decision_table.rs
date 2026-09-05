@@ -119,11 +119,17 @@ impl std::fmt::Display for CompileError {
         match self {
             CompileError::EmptyTable => write!(f, "decision table has no rules"),
             CompileError::InvalidVerdict(v) => {
-                write!(f, "invalid verdict '{v}': expected Compliant, NonCompliant, or Pending")
+                write!(
+                    f,
+                    "invalid verdict '{v}': expected Compliant, NonCompliant, or Pending"
+                )
             }
             CompileError::EmptyAccessor => write!(f, "accessor path is empty"),
             CompileError::ThresholdTooLarge(t) => {
-                write!(f, "threshold {t} exceeds maximum allowed value of {MAX_THRESHOLD}")
+                write!(
+                    f,
+                    "threshold {t} exceeds maximum allowed value of {MAX_THRESHOLD}"
+                )
             }
         }
     }
@@ -221,7 +227,10 @@ fn validate_condition(condition: &Condition) -> Result<(), CompileError> {
             }
             Ok(())
         }
-        Condition::GreaterThan { accessor, threshold } => {
+        Condition::GreaterThan {
+            accessor,
+            threshold,
+        } => {
             if accessor.is_empty() {
                 return Err(CompileError::EmptyAccessor);
             }
@@ -230,7 +239,10 @@ fn validate_condition(condition: &Condition) -> Result<(), CompileError> {
             }
             Ok(())
         }
-        Condition::LessThan { accessor, threshold } => {
+        Condition::LessThan {
+            accessor,
+            threshold,
+        } => {
             if accessor.is_empty() {
                 return Err(CompileError::EmptyAccessor);
             }
@@ -623,7 +635,10 @@ fn compile_exceptions(context_type: &str, rules: &[&DecisionRule]) -> Vec<Except
     // Group by priority.
     let mut priority_groups: Vec<(u32, Vec<&DecisionRule>)> = Vec::new();
     for rule in rules {
-        if let Some(group) = priority_groups.iter_mut().find(|(p, _)| *p == rule.priority) {
+        if let Some(group) = priority_groups
+            .iter_mut()
+            .find(|(p, _)| *p == rule.priority)
+        {
             group.1.push(rule);
         } else {
             priority_groups.push((rule.priority, vec![rule]));
@@ -651,7 +666,10 @@ fn compile_exceptions(context_type: &str, rules: &[&DecisionRule]) -> Vec<Except
 
 /// Remove duplicate wildcard branches, keeping only the last.
 fn deduplicate_wildcards(branches: &mut Vec<Branch>) {
-    let wildcard_count = branches.iter().filter(|b| b.pattern == Pattern::Wildcard).count();
+    let wildcard_count = branches
+        .iter()
+        .filter(|b| b.pattern == Pattern::Wildcard)
+        .count();
     if wildcard_count > 1 {
         // Keep the last wildcard, remove earlier ones.
         let mut seen_last = false;
@@ -695,16 +713,14 @@ mod tests {
             jurisdiction: "sc".to_string(),
             legal_basis: "IBC Act 2016 s.130(1)".to_string(),
             context_type: "IncorporationContext".to_string(),
-            rules: vec![
-                DecisionRule {
-                    condition: Condition::Equals {
-                        accessor: "director_count".to_string(),
-                        value: "0".to_string(),
-                    },
-                    verdict: "NonCompliant".to_string(),
-                    priority: 0,
+            rules: vec![DecisionRule {
+                condition: Condition::Equals {
+                    accessor: "director_count".to_string(),
+                    value: "0".to_string(),
                 },
-            ],
+                verdict: "NonCompliant".to_string(),
+                priority: 0,
+            }],
         }
     }
 
@@ -732,7 +748,10 @@ mod tests {
         match &compiled {
             Term::Defeasible(rule) => {
                 assert_eq!(rule.name.name, "minimum_directors");
-                assert!(rule.exceptions.is_empty(), "no exceptions for single-priority");
+                assert!(
+                    rule.exceptions.is_empty(),
+                    "no exceptions for single-priority"
+                );
 
                 // base_ty should be ComplianceVerdict
                 assert_eq!(
@@ -742,7 +761,11 @@ mod tests {
 
                 // base_body should be lambda (ctx : IncorporationContext). match ...
                 match rule.base_body.as_ref() {
-                    Term::Lambda { binder, domain, body } => {
+                    Term::Lambda {
+                        binder,
+                        domain,
+                        body,
+                    } => {
                         assert_eq!(binder.name, "ctx");
                         assert_eq!(
                             **domain,
@@ -751,7 +774,11 @@ mod tests {
 
                         // body should be a Match
                         match body.as_ref() {
-                            Term::Match { scrutinee, return_ty, branches } => {
+                            Term::Match {
+                                scrutinee,
+                                return_ty,
+                                branches,
+                            } => {
                                 // scrutinee = App(Constant("director_count"), Var("ctx"))
                                 assert_eq!(
                                     **scrutinee,
@@ -902,24 +929,20 @@ mod tests {
         };
         let compiled = compile_table(&table).unwrap();
         match &compiled {
-            Term::Defeasible(rule) => {
-                match rule.base_body.as_ref() {
-                    Term::Lambda { body, .. } => {
-                        match body.as_ref() {
-                            Term::Match { branches, .. } => {
-                                assert_eq!(branches.len(), 1);
-                                assert_eq!(branches[0].pattern, Pattern::Wildcard);
-                                assert_eq!(
-                                    branches[0].body,
-                                    Term::Constant(QualIdent::simple("Compliant"))
-                                );
-                            }
-                            other => panic!("expected Match, got {:?}", other),
-                        }
+            Term::Defeasible(rule) => match rule.base_body.as_ref() {
+                Term::Lambda { body, .. } => match body.as_ref() {
+                    Term::Match { branches, .. } => {
+                        assert_eq!(branches.len(), 1);
+                        assert_eq!(branches[0].pattern, Pattern::Wildcard);
+                        assert_eq!(
+                            branches[0].body,
+                            Term::Constant(QualIdent::simple("Compliant"))
+                        );
                     }
-                    other => panic!("expected Lambda, got {:?}", other),
-                }
-            }
+                    other => panic!("expected Match, got {:?}", other),
+                },
+                other => panic!("expected Lambda, got {:?}", other),
+            },
             other => panic!("expected Defeasible, got {:?}", other),
         }
     }
@@ -1155,10 +1178,9 @@ mod tests {
                                             Term::Constant(QualIdent::simple("NonCompliant"))
                                         );
                                     }
-                                    other => panic!(
-                                        "expected nested Match for Equals, got {:?}",
-                                        other
-                                    ),
+                                    other => {
+                                        panic!("expected nested Match for Equals, got {:?}", other)
+                                    }
                                 }
                             }
                             other => panic!("expected Match body, got {:?}", other),

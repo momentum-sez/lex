@@ -264,14 +264,13 @@ fn temporal_window(
     // Assign each conjunct to a bound by its operator, accepting either
     // conjunct order. The `Ge` side is the lower bound, the `Le` side the
     // upper bound.
-    let (lo_attr, not_before, hi_attr, not_after) =
-        match (ge_timestamp(a), le_timestamp(b)) {
-            (Some((la, lt)), Some((ha, ht))) => (la, lt, ha, ht),
-            _ => match (le_timestamp(a), ge_timestamp(b)) {
-                (Some((ha, ht)), Some((la, lt))) => (la, lt, ha, ht),
-                _ => return None,
-            },
-        };
+    let (lo_attr, not_before, hi_attr, not_after) = match (ge_timestamp(a), le_timestamp(b)) {
+        (Some((la, lt)), Some((ha, ht))) => (la, lt, ha, ht),
+        _ => match (le_timestamp(a), ge_timestamp(b)) {
+            (Some((ha, ht)), Some((la, lt))) => (la, lt, ha, ht),
+            _ => return None,
+        },
+    };
     if lo_attr != hi_attr {
         return None;
     }
@@ -665,8 +664,14 @@ mod tests {
         let cav = temporal_swapped("2026-03-01T00:00:00Z", "2026-06-30T00:00:00Z");
         let (attr, nb, na) = temporal_window(&cav.predicate).expect("valid swapped window");
         assert_eq!(attr, "now");
-        assert_eq!(nb, &DateTime::<Utc>::from_str("2026-03-01T00:00:00Z").unwrap());
-        assert_eq!(na, &DateTime::<Utc>::from_str("2026-06-30T00:00:00Z").unwrap());
+        assert_eq!(
+            nb,
+            &DateTime::<Utc>::from_str("2026-03-01T00:00:00Z").unwrap()
+        );
+        assert_eq!(
+            na,
+            &DateTime::<Utc>::from_str("2026-06-30T00:00:00Z").unwrap()
+        );
         // And nb <= na (non-empty interval).
         assert!(nb <= na);
     }

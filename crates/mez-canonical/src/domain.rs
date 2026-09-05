@@ -346,7 +346,10 @@ mod tests {
 
     #[test]
     fn specific_variants_round_trip() {
-        assert_eq!("aml".parse::<ComplianceDomain>().unwrap(), ComplianceDomain::Aml);
+        assert_eq!(
+            "aml".parse::<ComplianceDomain>().unwrap(),
+            ComplianceDomain::Aml
+        );
         assert_eq!(
             "data_privacy".parse::<ComplianceDomain>().unwrap(),
             ComplianceDomain::DataPrivacy

@@ -142,16 +142,10 @@ pub fn check_verdict_preservation(summary: &ProofSummary, cert: &DerivationCerti
 
 /// Verify invariant 3: every unfilled hole in `cert` appears in
 /// `summary.discretion_frontier`.
-pub fn check_discretion_preservation(
-    summary: &ProofSummary,
-    cert: &DerivationCertificate,
-) -> bool {
-    cert.discretion_frontier.iter().all(|h| {
-        summary
-            .discretion_frontier
-            .iter()
-            .any(|e| &e.hole_id == h)
-    })
+pub fn check_discretion_preservation(summary: &ProofSummary, cert: &DerivationCertificate) -> bool {
+    cert.discretion_frontier
+        .iter()
+        .all(|h| summary.discretion_frontier.iter().any(|e| &e.hole_id == h))
 }
 
 #[cfg(test)]

@@ -23,9 +23,7 @@
 //! leave the order non-total regardless of position, and the check
 //! rejects them.
 
-use lex_core::ast::{
-    AuthorityRef, DefeasibleRule, Exception, Ident, QualIdent, Term,
-};
+use lex_core::ast::{AuthorityRef, DefeasibleRule, Exception, Ident, QualIdent, Term};
 use lex_core::typecheck::{check_admissibility, AdmissibilityViolation, TypeError};
 
 fn lam(binder: &str, domain: Term, body: Term) -> Term {
@@ -173,7 +171,10 @@ fn error_display_mentions_non_total_and_priority_value() {
         msg.to_lowercase().contains("not total") || msg.to_lowercase().contains("order"),
         "display message should mention order/total-order violation: {msg}"
     );
-    assert!(msg.contains("10"), "display message should cite the conflicting priority: {msg}");
+    assert!(
+        msg.contains("10"),
+        "display message should cite the conflicting priority: {msg}"
+    );
 }
 
 #[test]

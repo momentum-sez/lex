@@ -10,7 +10,7 @@ use super::hole::{
 };
 use super::monotone::{FourTuple, Proof};
 use super::oracle::{Horizon, OracleResponse, WitnessSupplyOracle};
-use super::principle::{CaseCategory, PriorityGraph, PrincipleId, ProductNode};
+use super::principle::{CaseCategory, PrincipleId, PriorityGraph, ProductNode};
 use super::summary::{
     check_discretion_preservation, check_obligation_preservation, check_verdict_preservation,
     compile_summary,
@@ -150,10 +150,7 @@ fn worked_example_material_adverse_change() {
         Some("mac_event"),
         adjudicator(),
         ScopeConstraint {
-            time_window: Some((
-                "2026-01-15T00:00:00Z".into(),
-                "2026-04-15T00:00:00Z".into(),
-            )),
+            time_window: Some(("2026-01-15T00:00:00Z".into(), "2026-04-15T00:00:00Z".into())),
             entity_class: Some("Borrower".into()),
             ..Default::default()
         },
@@ -208,10 +205,7 @@ fn worked_example_systems_and_controls_awaiting_regulator() {
         Some("sys_controls"),
         national_regulator(),
         ScopeConstraint {
-            time_window: Some((
-                "2025-04-15T00:00:00Z".into(),
-                "2026-04-15T00:00:00Z".into(),
-            )),
+            time_window: Some(("2025-04-15T00:00:00Z".into(), "2026-04-15T00:00:00Z".into())),
             entity_class: Some("DepositoryInstitution".into()),
             ..Default::default()
         },
@@ -354,16 +348,11 @@ fn principle_graph_acyclicity_rejects_cycle() {
 #[test]
 fn oracle_beyond_horizon_emits_hole() {
     use super::oracle::{UBOOracle, UBOQuery};
-    let edges: std::collections::BTreeSet<(String, String)> = [
-        ("a", "b"),
-        ("b", "c"),
-        ("c", "d"),
-        ("d", "e"),
-        ("e", "f"),
-    ]
-    .iter()
-    .map(|(x, y)| (x.to_string(), y.to_string()))
-    .collect();
+    let edges: std::collections::BTreeSet<(String, String)> =
+        [("a", "b"), ("b", "c"), ("c", "d"), ("d", "e"), ("e", "f")]
+            .iter()
+            .map(|(x, y)| (x.to_string(), y.to_string()))
+            .collect();
     let o = UBOOracle::new("ubo-v2", edges);
     let r: OracleResponse<_> = o.supply_bounded_horizon(UBOQuery { root: "a".into() }, Horizon(2));
     assert!(!r.is_complete());
@@ -485,8 +474,7 @@ fn cannot_build_pending_with_empty_frontier() {
 #[test]
 fn mechanical_bit_tracks_frontier_size() {
     for n in 0..5 {
-        let frontier: BTreeSet<HoleId> =
-            (0..n).map(|i| HoleId(format!("h{}", i))).collect();
+        let frontier: BTreeSet<HoleId> = (0..n).map(|i| HoleId(format!("h{}", i))).collect();
         let verdict = if n == 0 {
             Verdict::Compliant
         } else {

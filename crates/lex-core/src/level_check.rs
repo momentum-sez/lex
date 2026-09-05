@@ -149,7 +149,11 @@ impl fmt::Display for LevelCheckError {
                 write!(f, "missing required field: '{}'", field)
             }
             LevelCheckError::InvalidFieldType { field, expected } => {
-                write!(f, "field '{}' has wrong type (expected {})", field, expected)
+                write!(
+                    f,
+                    "field '{}' has wrong type (expected {})",
+                    field, expected
+                )
             }
             LevelCheckError::EmptyRuleName => write!(f, "rule_name must not be empty"),
             LevelCheckError::MalformedQuantifier { reason } => {
@@ -185,12 +189,10 @@ impl std::error::Error for LevelCheckError {}
 pub fn check_level_polymorphism(
     rule: &serde_json::Value,
 ) -> Result<MetaRuleLevel, LevelCheckError> {
-    let obj = rule
-        .as_object()
-        .ok_or(LevelCheckError::InvalidFieldType {
-            field: "(root)".to_string(),
-            expected: "object".to_string(),
-        })?;
+    let obj = rule.as_object().ok_or(LevelCheckError::InvalidFieldType {
+        field: "(root)".to_string(),
+        expected: "object".to_string(),
+    })?;
 
     // Extract rule_name
     let rule_name = obj
@@ -235,9 +237,11 @@ pub fn check_level_polymorphism(
     let mut quantified_levels = Vec::with_capacity(quantifies_over.len());
 
     for (i, entry) in quantifies_over.iter().enumerate() {
-        let entry_obj = entry.as_object().ok_or(LevelCheckError::MalformedQuantifier {
-            reason: format!("entry {} is not an object", i),
-        })?;
+        let entry_obj = entry
+            .as_object()
+            .ok_or(LevelCheckError::MalformedQuantifier {
+                reason: format!("entry {} is not an object", i),
+            })?;
 
         let var = entry_obj
             .get("var")
@@ -542,12 +546,10 @@ mod tests {
         let meta = MetaRuleLevel {
             rule_name: "audit_meta".to_string(),
             level: 4,
-            quantified_levels: vec![
-                QuantifiedVar {
-                    var: "base".to_string(),
-                    level: 2,
-                },
-            ],
+            quantified_levels: vec![QuantifiedVar {
+                var: "base".to_string(),
+                level: 2,
+            }],
         };
 
         let json = serde_json::to_string(&meta).unwrap();

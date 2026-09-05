@@ -148,7 +148,10 @@ const BUNDLE_SCHEME: &str = "hmac-sha256";
 #[derive(Debug)]
 enum CliError {
     /// A file could not be read or written.
-    Io { path: String, source: std::io::Error },
+    Io {
+        path: String,
+        source: std::io::Error,
+    },
     /// Lexing failed.
     Lex(String),
     /// Parsing failed.
@@ -494,8 +497,7 @@ mod tests {
         // nothing?", expected HMAC-SHA256 is a published fixed vector. This
         // pins the hand-rolled HMAC construction to the standard.
         let mac = hmac_sha256(b"Jefe", b"what do ya want for nothing?");
-        let expected =
-            "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843";
+        let expected = "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843";
         assert_eq!(sha256_hex_of_bytes(&mac), expected);
     }
 
@@ -516,7 +518,9 @@ mod tests {
     fn sha256_hex_is_64_lowercase_hex_chars() {
         let hex = sha256_hex(b"hello");
         assert_eq!(hex.len(), 64);
-        assert!(hex.chars().all(|c| c.is_ascii_hexdigit() && !c.is_uppercase()));
+        assert!(hex
+            .chars()
+            .all(|c| c.is_ascii_hexdigit() && !c.is_uppercase()));
         // Known SHA-256("hello").
         assert_eq!(
             hex,

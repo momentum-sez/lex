@@ -528,11 +528,7 @@ fn collect_term(term: &Term, obligations: &mut Vec<ProofObligation>, counter: &m
     }
 }
 
-fn collect_time_term(
-    time: &TimeTerm,
-    obligations: &mut Vec<ProofObligation>,
-    counter: &mut usize,
-) {
+fn collect_time_term(time: &TimeTerm, obligations: &mut Vec<ProofObligation>, counter: &mut usize) {
     match time {
         TimeTerm::Literal(_) | TimeTerm::Var { .. } => {}
         TimeTerm::AsOf0(term) | TimeTerm::AsOf1(term) => collect_term(term, obligations, counter),
@@ -672,7 +668,9 @@ fn summarize_term(term: &Term) -> String {
         Term::Var { name, .. } => name.name.clone(),
         Term::Constant(name) => name_to_string(name),
         Term::AxiomUse { axiom } => name_to_string(axiom),
-        Term::App { .. } => application_head_name(term).unwrap_or_else(|| "application".to_string()),
+        Term::App { .. } => {
+            application_head_name(term).unwrap_or_else(|| "application".to_string())
+        }
         Term::Match { .. } => "match".to_string(),
         Term::Defeasible(rule) => rule.name.name.clone(),
         Term::StringLit(value) => value.clone(),
@@ -893,13 +891,13 @@ mod tests {
     }
 
     fn find_categories(obligations: &[ProofObligation]) -> Vec<ObligationCategory> {
-        obligations.iter().map(|obligation| obligation.category).collect()
+        obligations
+            .iter()
+            .map(|obligation| obligation.category)
+            .collect()
     }
 
-    fn count_category(
-        obligations: &[ProofObligation],
-        category: ObligationCategory,
-    ) -> usize {
+    fn count_category(obligations: &[ProofObligation], category: ObligationCategory) -> usize {
         obligations
             .iter()
             .filter(|obligation| obligation.category == category)
@@ -957,7 +955,10 @@ mod tests {
 
         assert!(categories.contains(&ObligationCategory::ExhaustiveMatch));
         assert!(categories.contains(&ObligationCategory::DomainMembership));
-        assert_eq!(count_category(&obligations, ObligationCategory::ExhaustiveMatch), 1);
+        assert_eq!(
+            count_category(&obligations, ObligationCategory::ExhaustiveMatch),
+            1
+        );
     }
 
     #[test]
@@ -975,7 +976,10 @@ mod tests {
         let exhaustive = first_by_category(&obligations, ObligationCategory::ExhaustiveMatch);
 
         assert!(exhaustive.description.contains("IBC, _"));
-        assert_eq!(count_category(&obligations, ObligationCategory::ExhaustiveMatch), 1);
+        assert_eq!(
+            count_category(&obligations, ObligationCategory::ExhaustiveMatch),
+            1
+        );
     }
 
     #[test]
@@ -983,8 +987,7 @@ mod tests {
         let term = sample_defeasible_rule();
 
         let obligations = extract_obligations(&term);
-        let obligation =
-            first_by_category(&obligations, ObligationCategory::DefeasibleResolution);
+        let obligation = first_by_category(&obligations, ObligationCategory::DefeasibleResolution);
 
         assert!(obligation.description.contains("late_filing_exception"));
         assert_eq!(
@@ -1013,7 +1016,10 @@ mod tests {
 
         let obligations = extract_obligations(&term);
 
-        assert_eq!(count_category(&obligations, ObligationCategory::SanctionsCheck), 1);
+        assert_eq!(
+            count_category(&obligations, ObligationCategory::SanctionsCheck),
+            1
+        );
     }
 
     #[test]
@@ -1026,8 +1032,7 @@ mod tests {
         );
 
         let obligations = extract_obligations(&term);
-        let obligation =
-            first_by_category(&obligations, ObligationCategory::ThresholdComparison);
+        let obligation = first_by_category(&obligations, ObligationCategory::ThresholdComparison);
 
         assert_eq!(obligation.suggested_procedure, "presburger_arithmetic");
         assert_eq!(obligation.term, term);
@@ -1035,7 +1040,11 @@ mod tests {
 
     #[test]
     fn amount_exceeds_application_extracts_threshold_obligation() {
-        let term = app2("amount_exceeds", var("wire_amount"), Term::IntLit(1_000_000));
+        let term = app2(
+            "amount_exceeds",
+            var("wire_amount"),
+            Term::IntLit(1_000_000),
+        );
 
         let obligations = extract_obligations(&term);
 
@@ -1050,11 +1059,13 @@ mod tests {
         let term = Term::app(constant("all_identified"), var("ubo_register"));
 
         let obligations = extract_obligations(&term);
-        let obligation =
-            first_by_category(&obligations, ObligationCategory::IdentityVerification);
+        let obligation = first_by_category(&obligations, ObligationCategory::IdentityVerification);
 
         assert!(obligation.description.contains("all_identified"));
-        assert_eq!(obligation.expected, "the referenced subject is identity-verified");
+        assert_eq!(
+            obligation.expected,
+            "the referenced subject is identity-verified"
+        );
     }
 
     #[test]
@@ -1162,9 +1173,7 @@ mod tests {
 
         let obligations = extract_obligations(&term);
 
-        assert!(
-            count_category(&obligations, ObligationCategory::SanctionsCheck) >= 1
-        );
+        assert!(count_category(&obligations, ObligationCategory::SanctionsCheck) >= 1);
     }
 
     #[test]
@@ -1221,7 +1230,11 @@ mod tests {
     fn verify_certificate_obligations_accepts_matching_coverage() {
         let term = Term::app(constant("sanctions_check"), var("counterparty"));
         let extracted = extract_obligations(&term);
-        assert_eq!(extracted.len(), 1, "fixture must produce exactly one obligation");
+        assert_eq!(
+            extracted.len(),
+            1,
+            "fixture must produce exactly one obligation"
+        );
 
         let cert = build_covered_certificate(&extracted);
         assert!(verify_certificate_obligations(&extracted, &cert).is_ok());
@@ -1244,7 +1257,10 @@ mod tests {
         assert!(extracted_more.len() > cert.obligations.len());
 
         match verify_certificate_obligations(&extracted_more, &cert) {
-            Err(ObligationVerificationError::CountMismatch { extracted, certified }) => {
+            Err(ObligationVerificationError::CountMismatch {
+                extracted,
+                certified,
+            }) => {
                 assert_eq!(extracted, extracted_more.len());
                 assert_eq!(certified, cert.obligations.len());
             }
@@ -1299,9 +1315,7 @@ mod tests {
         let mut renamed = extracted[0].clone();
         renamed.id = "obl-9999".to_string();
         let discharged =
-            vec![
-                DischargedObligation::seal(&renamed, &boolean_check(true)).expect("seals"),
-            ];
+            vec![DischargedObligation::seal(&renamed, &boolean_check(true)).expect("seals")];
         let cert = build_certificate(
             "rd",
             "sc",

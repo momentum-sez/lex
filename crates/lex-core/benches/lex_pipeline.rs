@@ -10,8 +10,7 @@ const IBC_S130_RULE_BODY_SOURCE: &str = r#"lambda(ctx : IncorporationContext).
   | _ => Compliant
 end"#;
 
-const IBC_S130_ACCESSOR_SOURCE: &str =
-    "lambda(ctx : IncorporationContext). director_count ctx";
+const IBC_S130_ACCESSOR_SOURCE: &str = "lambda(ctx : IncorporationContext). director_count ctx";
 
 fn parse_source(source: &str) -> Term {
     let tokens = lexer::lex(source).expect("benchmark source should lex");
@@ -119,9 +118,8 @@ fn lex_pipeline_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let tokens = lexer::lex(black_box(source)).expect("benchmark source should lex");
             let term = parser::parse(black_box(&tokens)).expect("benchmark tokens should parse");
-            let elaborated =
-                elaborate::elaborate(black_box(&term), black_box(&prelude_ctx))
-                    .expect("benchmark term should elaborate");
+            let elaborated = elaborate::elaborate(black_box(&term), black_box(&prelude_ctx))
+                .expect("benchmark term should elaborate");
             obligations::extract_obligations(black_box(&elaborated))
         })
     });

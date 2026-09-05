@@ -201,8 +201,7 @@ pub fn check_acyclicity(
     jurisdiction: &str,
 ) -> Result<(), PrincipleDeadlock> {
     // Group edges by case category.
-    let mut by_category: HashMap<&CaseCategory, Vec<(&PrincipleId, &PrincipleId)>> =
-        HashMap::new();
+    let mut by_category: HashMap<&CaseCategory, Vec<(&PrincipleId, &PrincipleId)>> = HashMap::new();
     for edge in edges {
         by_category
             .entry(&edge.case_category)
@@ -514,10 +513,26 @@ mod tests {
         // A > B, A > C, B > D, C > D - diamond, no cycle.
         let cat = CaseCategory::ComplianceEvaluation;
         let edges = vec![
-            edge(PrincipleId::ProtectLife, cat.clone(), PrincipleId::ProtectProperty),
-            edge(PrincipleId::ProtectLife, cat.clone(), PrincipleId::FulfillContract),
-            edge(PrincipleId::ProtectProperty, cat.clone(), PrincipleId::PreservePublicOrder),
-            edge(PrincipleId::FulfillContract, cat.clone(), PrincipleId::PreservePublicOrder),
+            edge(
+                PrincipleId::ProtectLife,
+                cat.clone(),
+                PrincipleId::ProtectProperty,
+            ),
+            edge(
+                PrincipleId::ProtectLife,
+                cat.clone(),
+                PrincipleId::FulfillContract,
+            ),
+            edge(
+                PrincipleId::ProtectProperty,
+                cat.clone(),
+                PrincipleId::PreservePublicOrder,
+            ),
+            edge(
+                PrincipleId::FulfillContract,
+                cat.clone(),
+                PrincipleId::PreservePublicOrder,
+            ),
         ];
 
         let result = check_acyclicity(&edges, "LU");
@@ -549,7 +564,10 @@ mod tests {
         ];
 
         let result = check_acyclicity(&edges, "KY");
-        assert!(result.is_err(), "cycle in TreasuryAction should be detected");
+        assert!(
+            result.is_err(),
+            "cycle in TreasuryAction should be detected"
+        );
 
         let deadlock = result.unwrap_err();
         assert_eq!(deadlock.case_category, CaseCategory::TreasuryAction);

@@ -15,8 +15,6 @@
 //! This fixture checks only the supplied director count. It does not model
 //! appointment validity or the applicability exceptions in the Coq example.
 
-use mez_canonical::canonical::CanonicalBytes;
-use mez_canonical::digest::sha256_digest;
 use lex_core::ast::{
     Branch, Constructor, DefeasibleRule, Exception, Ident, Level, Pattern, QualIdent, Sort, Term,
 };
@@ -24,13 +22,13 @@ use lex_core::certificate::{
     self, ComplianceVerdict, DischargedObligation as CertDischargedObligation, LexCertificate,
 };
 use lex_core::debruijn;
-use lex_core::decide::{
-    DecisionResult, boolean_check, finite_domain_check, threshold_check,
-};
+use lex_core::decide::{boolean_check, finite_domain_check, threshold_check, DecisionResult};
+use lex_core::obligations;
 use lex_core::prelude;
 use lex_core::temporal;
-use lex_core::obligations;
 use lex_core::typecheck;
+use mez_canonical::canonical::CanonicalBytes;
+use mez_canonical::digest::sha256_digest;
 
 #[derive(Debug, Clone)]
 struct ProofObligation {
@@ -143,7 +141,6 @@ fn ibc_s130_minimum_directors_rule() -> Term {
         vec![],
     )
 }
-
 
 fn rule_content_hash(term: &Term) -> String {
     let canonical = CanonicalBytes::new(term).expect("rule AST should canonicalize");

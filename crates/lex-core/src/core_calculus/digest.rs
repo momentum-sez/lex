@@ -11,8 +11,7 @@ use sha2::{Digest, Sha256};
 
 /// SHA-256 hex digest over the JSON serialization of `value`.
 pub fn sha256_hex<T: Serialize>(value: &T) -> String {
-    let bytes = serde_json::to_vec(value)
-        .expect("core calculus values are always serializable");
+    let bytes = serde_json::to_vec(value).expect("core calculus values are always serializable");
     sha256_hex_bytes(&bytes)
 }
 

@@ -12,7 +12,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum DiagnosticCategory {
     // ── Type system ──────────────────────────────────────────────────
-
     /// Type mismatch: expected one type, found another during bidirectional
     /// type checking. Maps to `TypeError::Mismatch`.
     TypeMismatch,
@@ -42,7 +41,6 @@ pub enum DiagnosticCategory {
     AmbiguousOverload,
 
     // ── Termination and resource limits ──────────────────────────────
-
     /// Evaluation or reduction fuel exhausted — the term requires too many
     /// reduction steps. Maps to `TypeError::ReductionLimitExceeded`,
     /// `EvalError::ReductionLimitExceeded`.
@@ -62,7 +60,6 @@ pub enum DiagnosticCategory {
     LevelOverflow,
 
     // ── Temporal stratification ─────────────────────────────────────
-
     /// Temporal constraint violation: a term references a time stratum it is not
     /// permitted to access (frozen historical time vs. derived legal time).
     /// Maps to Lex temporal sort violations.
@@ -81,7 +78,6 @@ pub enum DiagnosticCategory {
     MetaRuleViolation,
 
     // ── Authority and scope ─────────────────────────────────────────
-
     /// A tribunal or authority scope constraint is violated — the operation
     /// exceeds the authority granted to the current evaluator.
     TribunalScopeViolation,
@@ -94,7 +90,6 @@ pub enum DiagnosticCategory {
     ScopeClosureFailure,
 
     // ── Effects ─────────────────────────────────────────────────────
-
     /// Effect row subsumption failure: the term's effects are not a subset of
     /// the permitted effect row. Maps to `EffectError::SubsumptionFailure`.
     EffectViolation,
@@ -104,7 +99,6 @@ pub enum DiagnosticCategory {
     BranchSensitiveWithoutUnlock,
 
     // ── Defeasibility ───────────────────────────────────────────────
-
     /// Two or more defeasible rules fire simultaneously with conflicting
     /// conclusions and no priority ordering resolves the conflict.
     DefeasibilityConflict,
@@ -114,7 +108,6 @@ pub enum DiagnosticCategory {
     RuleDefeated,
 
     // ── Discretion and principles ───────────────────────────────────
-
     /// A typed discretion hole in the Lex program has not been filled by a
     /// human judgment — the rule cannot evaluate mechanically.
     DiscretionHoleUnfilled,
@@ -124,7 +117,6 @@ pub enum DiagnosticCategory {
     PrincipleConflict,
 
     // ── Fibers and composition ──────────────────────────────────────
-
     /// A fiber activation conflicts with an already-active fiber on the same
     /// entity or corridor — concurrent activation is not permitted.
     FiberCompositionConflict,
@@ -135,7 +127,6 @@ pub enum DiagnosticCategory {
     RefinementPreservationFailure,
 
     // ── Obligations ─────────────────────────────────────────────────
-
     /// A proof obligation emitted by the obligation extractor could not be
     /// discharged by the SMT solver or external verifier.
     ProofObligationFailed,
@@ -144,7 +135,6 @@ pub enum DiagnosticCategory {
     ObligationNotDischarged,
 
     // ── Evaluation ──────────────────────────────────────────────────
-
     /// An accessor referenced by the rule is not present in the runtime context.
     /// Maps to `EvalError::UnknownAccessor`.
     UnknownAccessor,
@@ -162,7 +152,6 @@ pub enum DiagnosticCategory {
     NotALambda,
 
     // ── Decision table compilation ──────────────────────────────────
-
     /// The decision table is empty — no rules were provided.
     /// Maps to `CompileError::EmptyTable`.
     EmptyDecisionTable,
@@ -180,7 +169,6 @@ pub enum DiagnosticCategory {
     ThresholdTooLarge,
 
     // ── Certificate issuance ────────────────────────────────────────
-
     /// The system clock is before the UNIX epoch — cannot issue a timestamp.
     /// Maps to `CertificateError::ClockBeforeEpoch`.
     ClockBeforeEpoch,
@@ -190,7 +178,6 @@ pub enum DiagnosticCategory {
     CanonicalizationFailed,
 
     // ── Jurisdiction ────────────────────────────────────────────────
-
     /// The jurisdiction identifier is not recognized by any loaded zone manifest.
     UnknownJurisdiction,
 
@@ -199,7 +186,6 @@ pub enum DiagnosticCategory {
     SchemaIncompatible,
 
     // ── Catch-all (soundness violation if ever emitted in production) ─
-
     /// An error occurred that does not map to any known category.
     /// Emitting this variant in production is a soundness violation:
     /// it means the diagnostic ontology is incomplete.

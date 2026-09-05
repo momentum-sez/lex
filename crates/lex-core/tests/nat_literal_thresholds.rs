@@ -39,8 +39,8 @@ fn admissible_core(src: &str) -> lex_core::ast::Term {
     // (`director_count`, `shareholder_count`, …) — the same prelude `lex-cli`'s
     // `elaborate`/`check` commands use, so this mirrors the CLI path exactly.
     let ctx = prelude::compliance_prelude();
-    let core = elaborate::elaborate(&surface, &ctx)
-        .unwrap_or_else(|e| panic!("elaboration error: {e}"));
+    let core =
+        elaborate::elaborate(&surface, &ctx).unwrap_or_else(|e| panic!("elaboration error: {e}"));
     check_admissibility(&core).unwrap_or_else(|e| panic!("admissibility error: {e}"));
     core
 }
@@ -361,7 +361,11 @@ fn closed_datatype_missing_constructor_without_wildcard_still_fails() {
         .expect_err("a Bool match missing `False` with no wildcard must be rejected");
     match err {
         TypeError::Admissibility {
-            violation: AdmissibilityViolation::MatchNonExhaustive { ref missing_constructors, .. },
+            violation:
+                AdmissibilityViolation::MatchNonExhaustive {
+                    ref missing_constructors,
+                    ..
+                },
             ..
         } => {
             assert!(

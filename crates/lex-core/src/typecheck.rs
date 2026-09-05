@@ -564,7 +564,12 @@ fn shift(term: &Term, cutoff: u32, amount: i64, depth: usize) -> Result<Term, Bo
 }
 
 /// Substitute `replacement` for De Bruijn index `target` in `term`.
-fn subst(term: &Term, target: u32, replacement: &Term, depth: usize) -> Result<Term, Box<TypeError>> {
+fn subst(
+    term: &Term,
+    target: u32,
+    replacement: &Term,
+    depth: usize,
+) -> Result<Term, Box<TypeError>> {
     if depth > MAX_DEPTH {
         return Err(boxed_error(|| TypeError::RecursionLimitExceeded));
     }
@@ -720,7 +725,9 @@ fn whnf(term: &Term, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeErr
                     // Guard against substitution blowup before continuing.
                     let size = term_size(&result);
                     if size > MAX_SUBST_NODES {
-                        return Err(boxed_error(|| TypeError::SubstitutionBlowup { node_count: size }));
+                        return Err(boxed_error(|| TypeError::SubstitutionBlowup {
+                            node_count: size,
+                        }));
                     }
                     whnf(&result, depth + 1, fuel)
                 }
@@ -739,7 +746,9 @@ fn whnf(term: &Term, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeErr
             // Guard against substitution blowup before continuing.
             let size = term_size(&result);
             if size > MAX_SUBST_NODES {
-                return Err(boxed_error(|| TypeError::SubstitutionBlowup { node_count: size }));
+                return Err(boxed_error(|| TypeError::SubstitutionBlowup {
+                    node_count: size,
+                }));
             }
             whnf(&result, depth + 1, fuel)
         }
@@ -897,15 +906,19 @@ fn level_eq(a: &Level, b: &Level) -> bool {
 fn ensure_sort(ty: &Term, depth: usize, fuel: &mut usize) -> Result<u64, Box<TypeError>> {
     let n = whnf(ty, depth, fuel)?;
     match &n {
-        Term::Sort(Sort::Type(level)) => eval_level(level).ok_or_else(|| TypeError::NotASort {
-            term: ty.clone(),
-            found: n.clone(),
-        }).map_err(Box::new),
+        Term::Sort(Sort::Type(level)) => eval_level(level)
+            .ok_or_else(|| TypeError::NotASort {
+                term: ty.clone(),
+                found: n.clone(),
+            })
+            .map_err(Box::new),
         Term::Sort(Sort::Prop) => Ok(0),
-        Term::Sort(Sort::Rule(level)) => eval_level(level).ok_or_else(|| TypeError::NotASort {
-            term: ty.clone(),
-            found: n.clone(),
-        }).map_err(Box::new),
+        Term::Sort(Sort::Rule(level)) => eval_level(level)
+            .ok_or_else(|| TypeError::NotASort {
+                term: ty.clone(),
+                found: n.clone(),
+            })
+            .map_err(Box::new),
         _ => Err(boxed_error(|| TypeError::NotASort {
             term: ty.clone(),
             found: n,
@@ -1058,7 +1071,8 @@ pub fn check_admissibility_mode(
         }
         AdmissibilityMode::HoleExtension => {
             let mut residuals = Vec::new();
-            check_admissibility_hole_extension_inner(term, &mut residuals, 0).map_err(|error| *error)?;
+            check_admissibility_hole_extension_inner(term, &mut residuals, 0)
+                .map_err(|error| *error)?;
             Ok(residuals)
         }
     }
@@ -1718,10 +1732,12 @@ fn check_admissibility_inner(term: &Term, depth: usize) -> Result<(), Box<TypeEr
             violation: AdmissibilityViolation::UnlockNotSupported,
             term: term.clone(),
         })),
-        Term::Lift0 { .. } | Term::Derive1 { .. } => Err(boxed_error(|| TypeError::Admissibility {
-            violation: AdmissibilityViolation::TemporalCoercionNotSupported,
-            term: term.clone(),
-        })),
+        Term::Lift0 { .. } | Term::Derive1 { .. } => {
+            Err(boxed_error(|| TypeError::Admissibility {
+                violation: AdmissibilityViolation::TemporalCoercionNotSupported,
+                term: term.clone(),
+            }))
+        }
         Term::ContentRefTerm(_) => Err(boxed_error(|| TypeError::Admissibility {
             violation: AdmissibilityViolation::ContentRefNotSupported,
             term: term.clone(),
@@ -1867,25 +1883,25 @@ fn infer_inner(
 
     match term {
         // -- Var --
-        Term::Var { name, index } => {
-            ctx.lookup(*index)
-                .cloned()
-                .ok_or_else(|| TypeError::UnboundVar {
-                    name: name.name.clone(),
-                    index: *index,
-                    ctx_len: ctx.len(),
-                }).map_err(Box::new)
-        }
+        Term::Var { name, index } => ctx
+            .lookup(*index)
+            .cloned()
+            .ok_or_else(|| TypeError::UnboundVar {
+                name: name.name.clone(),
+                index: *index,
+                ctx_len: ctx.len(),
+            })
+            .map_err(Box::new),
 
         // -- Constant --
-        Term::Constant(name) => {
-            ctx.lookup_constant(name)
-                .cloned()
-                .ok_or_else(|| TypeError::Admissibility {
-                    violation: AdmissibilityViolation::ConstantNotSupported,
-                    term: term.clone(),
-                }).map_err(Box::new)
-        }
+        Term::Constant(name) => ctx
+            .lookup_constant(name)
+            .cloned()
+            .ok_or_else(|| TypeError::Admissibility {
+                violation: AdmissibilityViolation::ConstantNotSupported,
+                term: term.clone(),
+            })
+            .map_err(Box::new),
 
         // -- Sort --
         Term::Sort(sort) => match sort {
@@ -1910,7 +1926,9 @@ fn infer_inner(
             }))
         }
 
-        Term::Pi { domain, codomain, .. } => infer_pi(ctx, domain, codomain, depth, fuel),
+        Term::Pi {
+            domain, codomain, ..
+        } => infer_pi(ctx, domain, codomain, depth, fuel),
 
         Term::App { func, arg } => infer_app(ctx, func, arg, depth, fuel),
 
@@ -1920,10 +1938,16 @@ fn infer_inner(
 
         Term::Defeasible(rule) => infer_defeasible(ctx, rule, depth, fuel),
 
-        Term::Match { scrutinee, return_ty, branches } => infer_match(ctx, scrutinee, return_ty, branches, depth, fuel),
+        Term::Match {
+            scrutinee,
+            return_ty,
+            branches,
+        } => infer_match(ctx, scrutinee, return_ty, branches, depth, fuel),
 
         // -- Lambda --
-        Term::Lambda { .. } => Err(boxed_error(|| TypeError::CannotInfer { term: term.clone() })),
+        Term::Lambda { .. } => Err(boxed_error(|| TypeError::CannotInfer {
+            term: term.clone(),
+        })),
 
         // All other forms rejected by admissibility (unreachable after
         // the check_admissibility call at the top of this function).
@@ -1938,7 +1962,13 @@ fn infer_inner(
 // recursive frame, including unoptimized builds on ordinary caller stacks.
 // -- Pi --
 #[inline(never)]
-fn infer_pi(ctx: &Context, domain: &Term, codomain: &Term, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
+fn infer_pi(
+    ctx: &Context,
+    domain: &Term,
+    codomain: &Term,
+    depth: usize,
+    fuel: &mut usize,
+) -> Result<Term, Box<TypeError>> {
     let i = infer_sort(ctx, domain, depth + 1, fuel)?;
     let ext_ctx = ctx.extend(domain.clone());
     let j = infer_sort(&ext_ctx, codomain, depth + 1, fuel)?;
@@ -1947,7 +1977,13 @@ fn infer_pi(ctx: &Context, domain: &Term, codomain: &Term, depth: usize, fuel: &
 
 // -- App --
 #[inline(never)]
-fn infer_app(ctx: &Context, func: &Term, arg: &Term, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
+fn infer_app(
+    ctx: &Context,
+    func: &Term,
+    arg: &Term,
+    depth: usize,
+    fuel: &mut usize,
+) -> Result<Term, Box<TypeError>> {
     let func_ty = infer_inner(ctx, func, depth + 1, fuel)?;
     let (domain, codomain) = ensure_pi(&func_ty, depth + 1, fuel)?;
     check_inner(ctx, arg, &domain, depth + 1, fuel)?;
@@ -1956,7 +1992,13 @@ fn infer_app(ctx: &Context, func: &Term, arg: &Term, depth: usize, fuel: &mut us
 
 // -- Annot --
 #[inline(never)]
-fn infer_annotation(ctx: &Context, inner: &Term, ty: &Term, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
+fn infer_annotation(
+    ctx: &Context,
+    inner: &Term,
+    ty: &Term,
+    depth: usize,
+    fuel: &mut usize,
+) -> Result<Term, Box<TypeError>> {
     let _ = infer_sort(ctx, ty, depth + 1, fuel)?;
     check_inner(ctx, inner, ty, depth + 1, fuel)?;
     Ok(ty.clone())
@@ -1964,7 +2006,14 @@ fn infer_annotation(ctx: &Context, inner: &Term, ty: &Term, depth: usize, fuel: 
 
 // -- Let --
 #[inline(never)]
-fn infer_let(ctx: &Context, ty: &Term, val: &Term, body: &Term, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
+fn infer_let(
+    ctx: &Context,
+    ty: &Term,
+    val: &Term,
+    body: &Term,
+    depth: usize,
+    fuel: &mut usize,
+) -> Result<Term, Box<TypeError>> {
     let _ = infer_sort(ctx, ty, depth + 1, fuel)?;
     check_inner(ctx, val, ty, depth + 1, fuel)?;
     let ext_ctx = ctx.extend(ty.clone());
@@ -1978,7 +2027,12 @@ fn infer_let(ctx: &Context, ty: &Term, val: &Term, body: &Term, depth: usize, fu
 // then check that base_body inhabits base_ty, and that each
 // exception body also inhabits base_ty.
 #[inline(never)]
-fn infer_defeasible(ctx: &Context, rule: &crate::ast::DefeasibleRule, depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
+fn infer_defeasible(
+    ctx: &Context,
+    rule: &crate::ast::DefeasibleRule,
+    depth: usize,
+    fuel: &mut usize,
+) -> Result<Term, Box<TypeError>> {
     let _ = infer_sort(ctx, &rule.base_ty, depth + 1, fuel)?;
     check_inner(ctx, &rule.base_body, &rule.base_ty, depth + 1, fuel)?;
     for exception in &rule.exceptions {
@@ -1996,7 +2050,14 @@ fn infer_defeasible(ctx: &Context, rule: &crate::ast::DefeasibleRule, depth: usi
 // each branch body under the context extended with the pattern's
 // binder types.
 #[inline(never)]
-fn infer_match(ctx: &Context, scrutinee: &Term, return_ty: &Term, branches: &[crate::ast::Branch], depth: usize, fuel: &mut usize) -> Result<Term, Box<TypeError>> {
+fn infer_match(
+    ctx: &Context,
+    scrutinee: &Term,
+    return_ty: &Term,
+    branches: &[crate::ast::Branch],
+    depth: usize,
+    fuel: &mut usize,
+) -> Result<Term, Box<TypeError>> {
     // Scrutinee must be well-typed.
     let _scrutinee_ty = infer_inner(ctx, scrutinee, depth + 1, fuel)?;
     // Return type must inhabit a sort.
@@ -2015,15 +2076,20 @@ fn infer_match(ctx: &Context, scrutinee: &Term, return_ty: &Term, branches: &[cr
                 constructor,
                 binders,
             } if !binders.is_empty() => {
-                let ext =
-                    bind_match_branch_binders(ctx, constructor, binders.len(), depth, fuel)?;
+                let ext = bind_match_branch_binders(ctx, constructor, binders.len(), depth, fuel)?;
                 (ext, binders.len())
             }
             // Nullary constructor or wildcard: no new binders.
             _ => (ctx.clone(), 0),
         };
         let branch_return_ty = weaken_for_branch(return_ty, binder_count, depth)?;
-        check_inner(&branch_ctx, &branch.body, &branch_return_ty, depth + 1, fuel)?;
+        check_inner(
+            &branch_ctx,
+            &branch.body,
+            &branch_return_ty,
+            depth + 1,
+            fuel,
+        )?;
     }
     Ok(return_ty.clone())
 }
@@ -3359,11 +3425,17 @@ mod tests {
         compliance_prelude()
             .with_named_constant(
                 "Zero",
-                pi(Term::constant("IncorporationContext"), Term::constant("Nat")),
+                pi(
+                    Term::constant("IncorporationContext"),
+                    Term::constant("Nat"),
+                ),
             )
             .with_named_constant(
                 "f",
-                pi(Term::constant("IncorporationContext"), Term::constant("Nat")),
+                pi(
+                    Term::constant("IncorporationContext"),
+                    Term::constant("Nat"),
+                ),
             )
             .with_named_constant("g", pi(Term::constant("Bool"), Term::constant("Nat")))
             .with_named_constant("subject", Term::constant("Nat"))

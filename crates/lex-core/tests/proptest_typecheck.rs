@@ -114,12 +114,10 @@ fn arb_effect() -> impl Strategy<Value = Effect> {
 fn arb_effect_row() -> impl Strategy<Value = EffectRow> {
     prop_oneof![
         Just(EffectRow::empty()),
-        prop::collection::vec(arb_effect(), 0..6).prop_map(|effs| {
-            EffectRow::from_effects(effs)
-        }),
-        prop::collection::vec(arb_effect(), 0..6).prop_map(|effs| {
-            EffectRow::branch_sensitive(effs)
-        }),
+        prop::collection::vec(arb_effect(), 0..6)
+            .prop_map(|effs| { EffectRow::from_effects(effs) }),
+        prop::collection::vec(arb_effect(), 0..6)
+            .prop_map(|effs| { EffectRow::branch_sensitive(effs) }),
     ]
 }
 
@@ -275,7 +273,10 @@ fn nested_inference_rules_preserve_bounded_stack() {
             let ctx = Context::empty();
             let mut annotated = type0.clone();
             let mut let_bound = type0.clone();
-            let mut lambda = Term::Var { name: Ident::new("x"), index: 0 };
+            let mut lambda = Term::Var {
+                name: Ident::new("x"),
+                index: 0,
+            };
             let mut lambda_type = type0.clone();
             for _ in 0..48 {
                 annotated = Term::Annot {
@@ -326,9 +327,7 @@ fn immediate_subterms(term: &Term) -> Vec<&Term> {
         } => vec![domain.as_ref(), codomain.as_ref()],
         Term::App { func, arg } => vec![func.as_ref(), arg.as_ref()],
         Term::Annot { term: t, ty } => vec![t.as_ref(), ty.as_ref()],
-        Term::Let {
-            ty, val, body, ..
-        } => vec![ty.as_ref(), val.as_ref(), body.as_ref()],
+        Term::Let { ty, val, body, .. } => vec![ty.as_ref(), val.as_ref(), body.as_ref()],
         _ => vec![],
     }
 }
