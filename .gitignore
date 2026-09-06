@@ -23,3 +23,6 @@ formal/coq/.Makefile.d
 # Editor
 *.swp
 *~
+
+# Nested agent worktrees created inside this tree.
+.worktrees/
