@@ -196,8 +196,7 @@ host) at Op-program compile time.
 ### 3.1 New crate: `lex-pack`
 
 `crates/lex-pack/` lives in this repo, depends on `lex-core` only, and
-has no host or runtime dependencies. The kernel `mez-pack` crate (or any
-other downstream pack format) is free to bundle a `lex-pack::Pack` as a
+has no host or runtime dependencies. A downstream pack format is free to bundle a `lex-pack::Pack` as a
 sub-artifact, but the pack format itself is canonical Lex.
 
 ### 3.2 `Pack` and `CompiledLexPredicate`
@@ -276,8 +275,7 @@ before any rule from the pack can be referenced.
 
 `PackVersion` is `(curator_did, semver, content_digest)`. Two packs
 with different curators are distinct artifacts even if they contain the
-same rules; this is intentional and enforces the I-2 sovereignty-
-structural invariant at the binding layer.
+same rules; this is intentional and keeps curator provenance explicit at the binding layer.
 
 ## 4. Compilation pipeline
 

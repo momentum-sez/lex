@@ -1056,10 +1056,9 @@ pub fn check_admissibility(term: &Term) -> Result<(), TypeError> {
 
 /// Check admissibility under an explicit public mode.
 ///
-/// `Strict` is the executable admissible fragment. `HoleExtension` is the
-/// public form of the Mass/kernel F136 carve-out: it accepts the frontier
-/// judgment forms only with explicit residuals, preserving public Lex as the
-/// semantics owner instead of requiring a private kernel checker fork.
+/// `Strict` is the executable admissible fragment. `HoleExtension` admits
+/// frontier judgment forms only with explicit residuals, preserving Lex as
+/// the semantics owner for the public checker.
 pub fn check_admissibility_mode(
     term: &Term,
     mode: AdmissibilityMode,

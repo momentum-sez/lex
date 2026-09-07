@@ -1018,7 +1018,7 @@ impl<'a> Parser<'a> {
     /// end
     /// ```
     ///
-    /// ## Term form (jurisdictional `.lex` files; SUPREMUM/24 mass-lang
+    /// ## Term form (jurisdictional `.lex` files; the surface term grammar
     /// authoring draft)
     ///
     /// ```text

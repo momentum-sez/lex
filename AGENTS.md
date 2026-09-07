@@ -215,10 +215,31 @@ statements, conjectures, and open obligations. Preserve theorem hypotheses and
 proof rigor. Report the exact remaining obligation when an investigation ends
 without a proof. Never claim a build or scaffold proves the full system.
 
+## Integration branch and worktree discipline
+
+The integration branch is `develop`. Release branches change only by
+maintainer decision. Each write-capable agent works in its own worktree on a
+unique branch cut from the integration head. Subagents stage only. The main
+thread reviews, commits, and pushes. A session can end without warning. Write
+verified state and open obligations into a record in the worktree as work
+proceeds, and resume from that record. Commits carry no model or tool
+attribution.
+
+## System role
+
+Lex supplies jurisdictional rule logic. Op carries compliance obligations in
+executable operations. gstore keeps Merkle-authenticated state. Moxie prices
+and clears claims and their derivatives. Mass operates the legal entity behind
+a claim end to end. Recourse administers cases, authority records, outcomes,
+stays, execution coordination, and recovery. This repository owns the Lex layer only.
+
 ## Purpose and routing
 
-Lex implements typed jurisdictional rules and their executable admissible
-fragment. Public companions are `github.com/momentum-sez/op`,
+Lex is a dependently-typed, effect-typed language for jurisdictional
+compliance rules. This repository implements its typed rules and their
+executable admissible fragment (`README.md`). Op compiles Lex programs and
+references their proof obligations (`README.md`, Relation to Op). Public
+companions are `github.com/momentum-sez/op`,
 `github.com/momentum-sez/gstore`, and `github.com/momentum-sez/stack`.
 
 | Task | Read |
@@ -245,12 +266,19 @@ Run commands from the repository root. Each formal command uses its own shell
 scope, so the second command starts from the same root as the first.
 
 ```bash
-cargo check --workspace
-cargo test --workspace
-cargo clippy --workspace -- -D warnings
+cargo fmt --all -- --check
+cargo check --workspace --all-targets
+cargo test --workspace --all-targets
+cargo clippy --workspace --all-targets -- -D warnings
+cargo run --example hello-lex -p lex-core
 (cd formal/coq && coqc LexCore.v)
 (cd formal/lean && lean LexCore.lean)
 ```
+
+The cargo commands match `.github/workflows/ci.yml`. The `forbidden-strings`
+and `cold-clone` workflows run on pushes to `main`, `master`,
+`frontier/core-calculus`, and `develop`, and on pull requests. The `coq`
+workflow runs on those events when `formal/coq/**` changes.
 
 Start with the affected crate or formal module. Run workspace checks when shared
 behavior changes. For paper-level Coq work, use the project configuration and

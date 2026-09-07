@@ -405,8 +405,8 @@ const TAG_CONSTRUCTORS: &[&str] = &[
     // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
     //
     // Constructors lifted out of `-- MISSING-PRELUDE: <name>` markers in
-    // ~/kernel/modules/lex/{adgm,bermuda,bvi,cayman,de,eu,guernsey,
-    // hong_kong,iom,jersey,luxembourg,prospera,singapore,uae,uk,usa}/*.lex.
+    // the jurisdictional module corpus ({adgm,bermuda,bvi,cayman,de,eu,guernsey,
+    // hong_kong,iom,jersey,luxembourg,prospera,singapore,uae,uk,usa}/*.lex).
     // Per the F51-LEX-COVERAGE convention (`F51-LEX-COVERAGE.md:139`)
     // each marker named a typed accessor or constructor that the kernel-
     // side Lex programs evaluate counsel-attested at runtime. This block
@@ -2207,14 +2207,13 @@ pub fn legacy_fixture_prelude() -> Context {
     // hole markers ──────────────────────────────────────────────────
     //
     // Each MISSING-PRELUDE marker in
-    // ~/kernel/modules/lex/{cayman,prospera,uk,singapore,usa/states/...}/*.lex
+    // the jurisdictional module corpus ({cayman,prospera,uk,singapore,usa/states/...}/*.lex)
     // for an authority-named typed discretion hole resolves through
     // these names. Per the US_SEC_Counsel pattern, each is typed at
     // ComplianceTag for elaboration-time name resolution. A richer
     // AuthorityRef / regulator-graph extension that distinguishes
     // recognition-grade and acceptance semantics is a follow-up
-    // frontier (tracked in the G2 punch list at
-    // ~/kernel/docs/architecture/frontier-work/G2-MISSING-PRELUDE-CLOSURE.md).
+    // frontier (tracked in the G2 MISSING-PRELUDE closure punch list).
     for authority_ref in [
         // Cayman: Department for International Tax Cooperation (DITC).
         "DITC",
@@ -2434,9 +2433,9 @@ mod tests {
         // 2026-05-07 (G2 closure — MISSING-PRELUDE migration): raised
         // from 433 to 601 to admit the cross-jurisdictional rule
         // surface lifted out of `-- MISSING-PRELUDE: <name>` markers
-        // in ~/kernel/modules/lex/{adgm,cayman,prospera,uk,singapore,
+        // in the jurisdictional module corpus ({adgm,cayman,prospera,uk,singapore,
         // hong_kong,uae,eu,de,bermuda,jersey,guernsey,iom,bvi,
-        // luxembourg,usa/states/...}/*.lex. See the size-pin block
+        // luxembourg,usa/states/...}/*.lex). See the size-pin block
         // below in `prelude_context_size_is_stable` for the per-
         // category accounting.
         assert_eq!(legacy.global_len(), 601);
@@ -2597,9 +2596,9 @@ mod tests {
         // 2026-05-07 (G2 closure — MISSING-PRELUDE migration): raised
         // from 433 to 601 (+168) to admit the cross-jurisdictional rule
         // surface lifted out of `-- MISSING-PRELUDE: <name>` markers
-        // in ~/kernel/modules/lex/{adgm,cayman,prospera,uk,singapore,
+        // in the jurisdictional module corpus ({adgm,cayman,prospera,uk,singapore,
         // hong_kong,uae,eu,de,bermuda,jersey,guernsey,iom,bvi,
-        // luxembourg,usa/states/...}/*.lex. Per-category accounting:
+        // luxembourg,usa/states/...}/*.lex). Per-category accounting:
         //   +2  SANCTIONS_CONSTRUCTORS (Match, PotentialMatch — for
         //                               cayman/sanctions_screening_loop.lex)
         //   +9  TAG_CONSTRUCTORS · Jurisdiction (USDE, BM, JE, GG, IM,
@@ -3164,7 +3163,7 @@ mod tests {
     // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration tests ────
 
     /// Every symbol lifted into the prelude for the
-    /// `~/kernel/modules/lex/{adgm,cayman,prospera,uk,singapore,...}/*.lex`
+    /// jurisdictional module corpus (`{adgm,cayman,prospera,uk,singapore,...}/*.lex`)
     /// MISSING-PRELUDE markers resolves via the prelude context lookup.
     /// File-level coverage gate for the G2 closure: if any G2 symbol
     /// regresses out of the prelude, this test fails.
