@@ -1,0 +1,12 @@
+{
+  "compiler_startup_scripts": "Disabled by -q on every proof and assumption-audit compilation.",
+  "preexisting_generated_objects": [],
+  "source_input_manifest_sha256": "1b60b4734c1a30020abea451b372398da076cb3186c4cb63ecce07948d9cc679",
+  "variables": {
+    "LC_ALL": "C",
+    "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Developer/CommandLineTools/usr/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "TZ": "UTC"
+  },
+  "working_directory": "build/sources"
+}

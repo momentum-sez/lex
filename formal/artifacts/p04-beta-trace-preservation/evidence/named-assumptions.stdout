@@ -1,0 +1,63 @@
+BEGIN|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.administrative_step_included
+Closed under the global context
+END|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.administrative_step_included
+BEGIN|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.captured_step
+Closed under the global context
+END|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.captured_step
+BEGIN|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.let_domain_formation
+Closed under the global context
+END|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.let_domain_formation
+BEGIN|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.lambda_body_context
+Closed under the global context
+END|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.lambda_body_context
+BEGIN|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.let_body_context
+Closed under the global context
+END|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.let_body_context
+BEGIN|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.pi_codomain_context
+Closed under the global context
+END|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.pi_codomain_context
+BEGIN|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.preservation
+Closed under the global context
+END|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.preservation
+BEGIN|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.administrative_steps_included
+Closed under the global context
+END|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.administrative_steps_included
+BEGIN|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.captured_steps
+Closed under the global context
+END|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.captured_steps
+BEGIN|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.trace_preservation
+Closed under the global context
+END|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.trace_preservation
+BEGIN|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.typed_captured_trace
+Closed under the global context
+END|P04BetaTrace.BetaTracePreservation.BetaTracePreservation.typed_captured_trace
+BEGIN|P04BetaTrace.Examples.nested_source_typed
+Closed under the global context
+END|P04BetaTrace.Examples.nested_source_typed
+BEGIN|P04BetaTrace.Examples.nested_first_beta
+Closed under the global context
+END|P04BetaTrace.Examples.nested_first_beta
+BEGIN|P04BetaTrace.Examples.nested_second_beta
+Closed under the global context
+END|P04BetaTrace.Examples.nested_second_beta
+BEGIN|P04BetaTrace.Examples.nested_beta_trace
+Closed under the global context
+END|P04BetaTrace.Examples.nested_beta_trace
+BEGIN|P04BetaTrace.Examples.nested_beta_trace_nonempty
+Closed under the global context
+END|P04BetaTrace.Examples.nested_beta_trace_nonempty
+BEGIN|P04BetaTrace.Examples.nested_beta_typed_execution
+Closed under the global context
+END|P04BetaTrace.Examples.nested_beta_typed_execution
+BEGIN|P04BetaTrace.Examples.nested_converted_trace
+Closed under the global context
+END|P04BetaTrace.Examples.nested_converted_trace
+BEGIN|P04BetaTrace.Examples.dependent_nested_typed_execution
+Closed under the global context
+END|P04BetaTrace.Examples.dependent_nested_typed_execution
+BEGIN|P04BetaTrace.Examples.beta_under_let_typed
+Closed under the global context
+END|P04BetaTrace.Examples.beta_under_let_typed
+BEGIN|P04BetaTrace.Examples.beta_under_pi_typed
+Closed under the global context
+END|P04BetaTrace.Examples.beta_under_pi_typed

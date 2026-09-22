@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "/usr/bin/nice",
+    "-n",
+    "10",
+    "/usr/bin/python3",
+    "-I",
+    "reproduce.py"
+  ],
+  "cwd": ".",
+  "elapsed_seconds": 40.439756708,
+  "exit_code": 0,
+  "source_manifest_sha256": "1b60b4734c1a30020abea451b372398da076cb3186c4cb63ecce07948d9cc679",
+  "started_utc": "2026-09-05T22:22:47.870353+00:00",
+  "stderr": "reproduction-command.stderr",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "reproduction-command.stdout",
+  "stdout_sha256": "198a308ce1c965720ae649fb411ff1d916b51e5812c435550d121c43bc208cb4",
+  "working_directory_basis": "The actual command ran at the extracted supplement root. The path is represented relative to that root.",
+  "wrapper_sha256": "485938c85abfee0ecfbd49bc088654fa5dce58067d4d59fe4af461d9793091ad"
+}

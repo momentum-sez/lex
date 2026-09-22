@@ -1,0 +1,168 @@
+{
+  "logical_roots": [
+    {
+      "logical": "Lex",
+      "path": "dependencies/Lex"
+    },
+    {
+      "logical": "P04Substitution",
+      "path": "dependencies/P04Substitution"
+    },
+    {
+      "logical": "P04ArgsSubstitution",
+      "path": "dependencies/P04ArgsSubstitution"
+    },
+    {
+      "logical": "P04Source",
+      "path": "dependencies/P04Source"
+    },
+    {
+      "logical": "P04RegularityDesign",
+      "path": "dependencies/P04RegularityDesign"
+    },
+    {
+      "logical": "P04TypedSubstitution",
+      "path": "dependencies/P04TypedSubstitution"
+    },
+    {
+      "logical": "P04Preservation",
+      "path": "dependencies/P04Preservation"
+    },
+    {
+      "logical": "P04Products",
+      "path": "dependencies/P04Products"
+    },
+    {
+      "logical": "P04BetaTrace",
+      "path": "proof"
+    }
+  ],
+  "modules_in_build_order": [
+    {
+      "module": "Lex.Syntax",
+      "path": "dependencies/Lex/Syntax.v",
+      "sha256": "60f8ee28a4a01efb429481ffe89d89f288dd45eb46a01c517289171064099251"
+    },
+    {
+      "module": "Lex.DeBruijn",
+      "path": "dependencies/Lex/DeBruijn.v",
+      "sha256": "07c5838ffb4554a68b3912938240246d6761bb3b4007d2589bd88ab81a240cf5"
+    },
+    {
+      "module": "Lex.Typing",
+      "path": "dependencies/Lex/Typing.v",
+      "sha256": "2a7d2a4ba7bd14393bbb9b2808deac0e8362cb8eb4d1f8a96858e7750d423232"
+    },
+    {
+      "module": "P04Substitution.SimultaneousArgs",
+      "path": "dependencies/P04Substitution/SimultaneousArgs.v",
+      "sha256": "92a28a6abca316a4649e11250118025c25f79744ac4ff6662af13ac15110887a"
+    },
+    {
+      "module": "P04ArgsSubstitution.ArgsSubstitution",
+      "path": "dependencies/P04ArgsSubstitution/ArgsSubstitution.v",
+      "sha256": "3dc5b30ba5447a96920531202915a68d9302cc87ce42d4f23051cd8176428563"
+    },
+    {
+      "module": "P04Source.TypeReduction",
+      "path": "dependencies/P04Source/TypeReduction.v",
+      "sha256": "3e2aaa09d9adc26acb38604c883e438f83321f15f14b59852f31bd9f4b154f8e"
+    },
+    {
+      "module": "P04Source.FormedTyping",
+      "path": "dependencies/P04Source/FormedTyping.v",
+      "sha256": "d636783d7e72ee812e2f68d4f48621a40e974c363422152019b509591799fef6"
+    },
+    {
+      "module": "P04RegularityDesign.FormedWeakening",
+      "path": "dependencies/P04RegularityDesign/FormedWeakening.v",
+      "sha256": "25ac36a45b2b74eb24af3a8b909e259daf9093dda1e3c8bb611d4a655a0000ad"
+    },
+    {
+      "module": "P04TypedSubstitution.FormedSubstitution",
+      "path": "dependencies/P04TypedSubstitution/FormedSubstitution.v",
+      "sha256": "042ec712bee1ca525f24a1e8198e09e61a629e441cd90d02114b486608326604"
+    },
+    {
+      "module": "P04Source.FormedRegularity",
+      "path": "dependencies/P04Source/FormedRegularity.v",
+      "sha256": "c9f8038765779b4a6ab26f3bbddff7cfb87ab0502c5a2dc60ae738934c471b84"
+    },
+    {
+      "module": "P04Source.RepairedReduction",
+      "path": "dependencies/P04Source/RepairedReduction.v",
+      "sha256": "cc7d817919757975a7063f20f8a653203661ee90a97416547aedf9f784ddaa69"
+    },
+    {
+      "module": "P04Preservation.CorePreservation",
+      "path": "dependencies/P04Preservation/CorePreservation.v",
+      "sha256": "c99017ac536b58e0ee4d81a688c6963004cc722afdd9799c313c3b3d0641a5b1"
+    },
+    {
+      "module": "P04Preservation.ContextTransport",
+      "path": "dependencies/P04Preservation/ContextTransport.v",
+      "sha256": "31024e5d7fc13d18bd8a2365cdc80ae12f469f7565193f1e87d787ea5f2cfcf0"
+    },
+    {
+      "module": "P04Preservation.AdministrativeReduction",
+      "path": "dependencies/P04Preservation/AdministrativeReduction.v",
+      "sha256": "6333db2e2d6ac9a1231cc928ecef46e8f1773f9e5dd4b5dbab696c9724d76737"
+    },
+    {
+      "module": "P04Preservation.ConditionalBeta",
+      "path": "dependencies/P04Preservation/ConditionalBeta.v",
+      "sha256": "28fd1af78e4ddc036820946b060a7239307dcea8fbfed5a0ee159a20061118e3"
+    },
+    {
+      "module": "P04Products.Products",
+      "path": "dependencies/P04Products/Products.v",
+      "sha256": "286d71528b1030c4825f6741ff6a20dc71c74f0be2de8bd320db0bf6dc9d041e"
+    },
+    {
+      "module": "P04Products.Parallel",
+      "path": "dependencies/P04Products/Parallel.v",
+      "sha256": "021a9d13ab437509d001c29d1ee96c9c735272e5e8544204fce557c0c3e0fe42"
+    },
+    {
+      "module": "P04Products.ParallelSubstitution",
+      "path": "dependencies/P04Products/ParallelSubstitution.v",
+      "sha256": "51e34049def8ffe0fe9c77754305713bcf96e79794d4e8628a90aa11e13d1ad9"
+    },
+    {
+      "module": "P04Products.ParallelTriangle",
+      "path": "dependencies/P04Products/ParallelTriangle.v",
+      "sha256": "2a6dd2f41c52315c6d1ace9216e1d4a1a8b0c3302830ca9210f677884e39484d"
+    },
+    {
+      "module": "P04Products.ParallelEmbedding",
+      "path": "dependencies/P04Products/ParallelEmbedding.v",
+      "sha256": "35d6800c033501b7c6e3ff1c4024f16c0fd1c27f272549f98c5c5aecb2166410"
+    },
+    {
+      "module": "P04Products.ParallelClosure",
+      "path": "dependencies/P04Products/ParallelClosure.v",
+      "sha256": "a823e9d061704b0f9a274a38b328f685758c2532c603b1f6d43073bdab5b07af"
+    },
+    {
+      "module": "P04Products.ProductCompatibility",
+      "path": "dependencies/P04Products/ProductCompatibility.v",
+      "sha256": "edccadf4f0883b6e8cd88abcc693ccc4b037f9b3ea463914651e2e0c3503d7f6"
+    },
+    {
+      "module": "P04Preservation.BetaPreservation",
+      "path": "dependencies/P04Preservation/BetaPreservation.v",
+      "sha256": "6472417a9cfb389015bcfb85f1c1ba77fef6b253ffc0aab685607b47550d53de"
+    },
+    {
+      "module": "P04BetaTrace.BetaTracePreservation",
+      "path": "proof/BetaTracePreservation.v",
+      "sha256": "5d22e6ee1e7ebfdcdd4cda2fc719b02a97cf903d6bebf9e82d6eb3f12914c5f9"
+    },
+    {
+      "module": "P04BetaTrace.Examples",
+      "path": "proof/Examples.v",
+      "sha256": "1d6422defbdd21b19ca495ae460eec7ecab7ed6393d093a8e49fd95414ddc363"
+    }
+  ],
+  "schema": "lex-source-trace-dependencies-v1"
+}

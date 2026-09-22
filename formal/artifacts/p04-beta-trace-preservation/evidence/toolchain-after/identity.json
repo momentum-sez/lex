@@ -1,0 +1,55 @@
+{
+  "binaries": {
+    "coqc": {
+      "path": "/opt/homebrew/bin/coqc",
+      "resolved_path": "/opt/homebrew/Cellar/rocq/9.1.1_1/bin/coqc",
+      "sha256": "993dfca8a77f434bf0ebff8da9c5f989cb873f84eaecf1aa8a5f95d2783540c3",
+      "size": 2148080
+    },
+    "coqchk": {
+      "path": "/opt/homebrew/bin/coqchk",
+      "resolved_path": "/opt/homebrew/Cellar/rocq/9.1.1_1/bin/coqchk",
+      "sha256": "0f619d93d0dab72fdc65de6005b0775d9f48beeac7ba4700a0f1447fbea594cf",
+      "size": 6196808
+    },
+    "rocq": {
+      "path": "/opt/homebrew/bin/rocq",
+      "resolved_path": "/opt/homebrew/Cellar/rocq/9.1.1_1/bin/rocq",
+      "sha256": "42b5a882b913ba3a2b93daf11be84371f2defb62d6735025d71ce876bba219d2",
+      "size": 4215672
+    },
+    "rocqchk": {
+      "path": "/opt/homebrew/bin/rocqchk",
+      "resolved_path": "/opt/homebrew/Cellar/rocq/9.1.1_1/bin/rocqchk",
+      "sha256": "39ca87e4596f45358f090b613ddcc1fbd62b55e56c88ddd366786caea5a3b4a6",
+      "size": 6196824
+    }
+  },
+  "checker_version": "The Rocq Proof Checker, version 9.1.1\n",
+  "compiler_version": "The Rocq Prover, version 9.1.1\ncompiled with OCaml 5.4.1\n",
+  "libraries": {
+    "coqlib": {
+      "file_count": 2104,
+      "manifest": "coqlib-files.json",
+      "path": "/opt/homebrew/lib/ocaml/coq",
+      "tree_sha256": "58ba8cb3acd7a0513cd904d154248d85bfb2fbb15293eedae3f75a2cc243135a"
+    },
+    "runtime": {
+      "file_count": 3583,
+      "manifest": "runtime-files.json",
+      "path": "/opt/homebrew/lib/ocaml/coq/../rocq-runtime",
+      "tree_sha256": "901601a01b14c254c3435f75db9131ece11b3b4fbcc3be69fb6167ff17596706"
+    },
+    "stdlib": {
+      "file_count": 1692,
+      "manifest": "stdlib-files.json",
+      "path": "/opt/homebrew/lib/ocaml/coq/user-contrib/Stdlib",
+      "tree_sha256": "29f2ddd6cd9e74b49022a388115ab052f3e34071bc30a7b0dcc68f4e5ed48a06"
+    }
+  },
+  "machine": "arm64",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "python_executable": "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+  "python_sha256": "bdea59019a38eb6600cc9e71e984a97fedadc406448431281e7657030f54987e",
+  "python_version": "3.9.6 (default, May 22 2026, 11:13:45) \n[Clang 21.0.0 (clang-2100.1.1.101)]"
+}

@@ -1,0 +1,32 @@
+Lex source-trace proof supplement
+
+Copyright 2026 Momentum Ltd.
+
+The following three inherited files retain their exact Lex source bytes:
+
+  dependencies/Lex/Syntax.v
+  dependencies/Lex/DeBruijn.v
+  dependencies/Lex/Typing.v
+
+Their original public source locations are formal/coq/Lex/Syntax.v,
+formal/coq/Lex/DeBruijn.v, and formal/coq/Lex/Typing.v in
+https://github.com/momentum-sez/lex.
+
+LICENSE preserves the exact license furnished with those inherited files.
+It carries the title Apache License, Version 2.0, and includes
+project-specific text. It is not represented as a verbatim copy of the
+standard license. This package does not replace those inherited terms.
+
+The other twenty-two proof sources and the reproduction wrapper are
+submitted under Lex's existing Apache-2.0 contribution contract.
+LICENSE-CONTRIBUTIONS.txt supplies that standard license text. The
+contribution statement applies to those new contributions; it does not
+relicense the three inherited files or third-party software.
+
+Every proof-source digest and its license mapping appears in
+SOURCE-MANIFEST.json. No proof-source header or proof body was changed.
+The dependency metadata and reproduction wrapper use portable paths.
+
+The compiler, standard library, and their binaries are not redistributed.
+Their installation requirements and licenses remain with their providers.
+This package records their identities and installed-file manifests.

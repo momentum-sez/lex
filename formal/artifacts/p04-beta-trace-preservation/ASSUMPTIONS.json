@@ -1,0 +1,41 @@
+{
+  "expected_reports": [
+    {
+      "closed_theorems": [
+        "administrative_step_included",
+        "captured_step",
+        "let_domain_formation",
+        "lambda_body_context",
+        "let_body_context",
+        "pi_codomain_context",
+        "preservation",
+        "administrative_steps_included",
+        "captured_steps",
+        "trace_preservation",
+        "typed_captured_trace"
+      ],
+      "module": "P04BetaTrace.BetaTracePreservation",
+      "source": "proof/BetaTracePreservation.v"
+    },
+    {
+      "closed_theorems": [
+        "nested_source_typed",
+        "nested_first_beta",
+        "nested_second_beta",
+        "nested_beta_trace",
+        "nested_beta_trace_nonempty",
+        "nested_beta_typed_execution",
+        "nested_converted_trace",
+        "dependent_nested_typed_execution",
+        "beta_under_let_typed",
+        "beta_under_pi_typed"
+      ],
+      "module": "P04BetaTrace.Examples",
+      "source": "proof/Examples.v"
+    }
+  ],
+  "named_reports_repeat_exported_source_queries": true,
+  "recorded_named_reports": "evidence/named-assumptions.json",
+  "recorded_source_reports": "evidence/assumptions.json",
+  "schema": "lex-exported-assumption-queries-v1"
+}

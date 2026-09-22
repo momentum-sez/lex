@@ -1,0 +1,28 @@
+{
+  "compiled_with": "OCaml 5.4.1",
+  "compiler": "Rocq 9.1.1",
+  "compiler_source_sha256": "35cd03fc4193969b1cce01190340e5c129c1ba8f02242a9e6dff4b83be118759",
+  "compiler_source_url": "https://github.com/rocq-prover/rocq/releases/download/V9.1.1/rocq-9.1.1.tar.gz",
+  "installation_requirements": [
+    "Supply Python 3.9 or later.",
+    "Supply coqc, coqchk, rocq and rocqchk in PATH.",
+    "Install the Rocq core, runtime and Stdlib logical namespace.",
+    "Match every compiler binary and installed-library tree digest in PINNED-TOOLCHAIN.json.",
+    "The wrapper rejects an installation whose bytes differ from the pin."
+  ],
+  "installed_recipe_path": "/opt/homebrew/Cellar/rocq/9.1.1_1/.brew/rocq.rb",
+  "installed_recipe_sha256": "6bd2d44ac10e367f741537fd3144b64a5948f1e9d7c77592c6be1d5f8df4f49e",
+  "limits": [
+    "Version labels alone do not establish the recorded installation identity.",
+    "The source URLs and recipe identity do not establish byte-identical rebuilt compiler binaries.",
+    "The archive does not include a compiler or operating-system installation.",
+    "Cross-platform binary and historical object reproduction remain unestablished."
+  ],
+  "observed_installation": "Homebrew rocq 9.1.1_1 on macOS arm64",
+  "pin": "PINNED-TOOLCHAIN.json",
+  "python_minimum": "3.9",
+  "schema": "lex-proof-toolchain-requirements-v1",
+  "standard_library_recipe_version": "9.0.0",
+  "stdlib_source_sha256": "1ab6adc42dfc651ddc909604bae1a54ff5623cda837f93677a8b12aab9eec711",
+  "stdlib_source_url": "https://github.com/rocq-prover/stdlib/releases/download/V9.0.0/stdlib-9.0.0.tar.gz"
+}

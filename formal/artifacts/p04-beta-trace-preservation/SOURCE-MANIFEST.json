@@ -1,0 +1,439 @@
+{
+  "file_specific_proof_license": [
+    {
+      "basis": "Retained upstream terms for an unchanged inherited Lex source.",
+      "license_file": "LICENSE",
+      "path": "dependencies/Lex/DeBruijn.v"
+    },
+    {
+      "basis": "Retained upstream terms for an unchanged inherited Lex source.",
+      "license_file": "LICENSE",
+      "path": "dependencies/Lex/Syntax.v"
+    },
+    {
+      "basis": "Retained upstream terms for an unchanged inherited Lex source.",
+      "license_file": "LICENSE",
+      "path": "dependencies/Lex/Typing.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04ArgsSubstitution/ArgsSubstitution.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Preservation/AdministrativeReduction.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Preservation/BetaPreservation.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Preservation/ConditionalBeta.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Preservation/ContextTransport.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Preservation/CorePreservation.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Products/Parallel.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Products/ParallelClosure.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Products/ParallelEmbedding.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Products/ParallelSubstitution.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Products/ParallelTriangle.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Products/ProductCompatibility.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Products/Products.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04RegularityDesign/FormedWeakening.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Source/FormedRegularity.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Source/FormedTyping.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Source/RepairedReduction.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Source/TypeReduction.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04Substitution/SimultaneousArgs.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "dependencies/P04TypedSubstitution/FormedSubstitution.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "proof/BetaTracePreservation.v"
+    },
+    {
+      "basis": "Existing Lex contribution contract for this new contribution.",
+      "license_file": "LICENSE-CONTRIBUTIONS.txt",
+      "path": "proof/Examples.v"
+    }
+  ],
+  "input_files": [
+    {
+      "path": "ASSUMPTIONS.json",
+      "sha256": "95e7501cdd3440b764f47c85bf9d3d386605ec22944b6e9a2a477aba5b37e5be",
+      "size": 1209
+    },
+    {
+      "path": "COVERAGE.json",
+      "sha256": "ccb9f3bca211e9a2f4ecb5ad488ccd80b25431ebcf86be40b08f6bd258d1ab66",
+      "size": 1994
+    },
+    {
+      "path": "DEPENDENCIES.json",
+      "sha256": "6f8683439d418b0c73cbf0496f5eec96f753b49e054af86279ed169405eff4af",
+      "size": 5959
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "c525b4844a561919558367e2f823669b99b4ca357002393faa80f75d987e2fbd",
+      "size": 11304
+    },
+    {
+      "path": "LICENSE-CONTRIBUTIONS.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "size": 11358
+    },
+    {
+      "path": "NOTICE.txt",
+      "sha256": "61438e838fea719cc0986153e2b372d1e636ef9462c8c5e7078ff6c1273f24a6",
+      "size": 1422
+    },
+    {
+      "path": "PINNED-TOOLCHAIN.json",
+      "sha256": "a6693803dc71c2a8dab779eb18897cc4e88f13da3d96d31d9b14f206bd5c0628",
+      "size": 765
+    },
+    {
+      "path": "README.md",
+      "sha256": "fa2bb399eee3bb2c48734e7367a9c2bcea3b388ea77ebf36510a6c073a914e78",
+      "size": 5916
+    },
+    {
+      "path": "TOOLCHAIN-REQUIREMENTS.json",
+      "sha256": "d3d6d6f8d9d818fd45f2e74ac18feecc48ba90d17ba58f75b515faf081229a1f",
+      "size": 1805
+    },
+    {
+      "path": "dependencies/Lex/DeBruijn.v",
+      "sha256": "07c5838ffb4554a68b3912938240246d6761bb3b4007d2589bd88ab81a240cf5",
+      "size": 131025
+    },
+    {
+      "path": "dependencies/Lex/Syntax.v",
+      "sha256": "60f8ee28a4a01efb429481ffe89d89f288dd45eb46a01c517289171064099251",
+      "size": 11125
+    },
+    {
+      "path": "dependencies/Lex/Typing.v",
+      "sha256": "2a7d2a4ba7bd14393bbb9b2808deac0e8362cb8eb4d1f8a96858e7750d423232",
+      "size": 180058
+    },
+    {
+      "path": "dependencies/P04ArgsSubstitution/ArgsSubstitution.v",
+      "sha256": "3dc5b30ba5447a96920531202915a68d9302cc87ce42d4f23051cd8176428563",
+      "size": 7940
+    },
+    {
+      "path": "dependencies/P04Preservation/AdministrativeReduction.v",
+      "sha256": "6333db2e2d6ac9a1231cc928ecef46e8f1773f9e5dd4b5dbab696c9724d76737",
+      "size": 3787
+    },
+    {
+      "path": "dependencies/P04Preservation/BetaPreservation.v",
+      "sha256": "6472417a9cfb389015bcfb85f1c1ba77fef6b253ffc0aab685607b47550d53de",
+      "size": 1477
+    },
+    {
+      "path": "dependencies/P04Preservation/ConditionalBeta.v",
+      "sha256": "28fd1af78e4ddc036820946b060a7239307dcea8fbfed5a0ee159a20061118e3",
+      "size": 2996
+    },
+    {
+      "path": "dependencies/P04Preservation/ContextTransport.v",
+      "sha256": "31024e5d7fc13d18bd8a2365cdc80ae12f469f7565193f1e87d787ea5f2cfcf0",
+      "size": 7127
+    },
+    {
+      "path": "dependencies/P04Preservation/CorePreservation.v",
+      "sha256": "c99017ac536b58e0ee4d81a688c6963004cc722afdd9799c313c3b3d0641a5b1",
+      "size": 8436
+    },
+    {
+      "path": "dependencies/P04Products/Parallel.v",
+      "sha256": "021a9d13ab437509d001c29d1ee96c9c735272e5e8544204fce557c0c3e0fe42",
+      "size": 6558
+    },
+    {
+      "path": "dependencies/P04Products/ParallelClosure.v",
+      "sha256": "a823e9d061704b0f9a274a38b328f685758c2532c603b1f6d43073bdab5b07af",
+      "size": 10789
+    },
+    {
+      "path": "dependencies/P04Products/ParallelEmbedding.v",
+      "sha256": "35d6800c033501b7c6e3ff1c4024f16c0fd1c27f272549f98c5c5aecb2166410",
+      "size": 2163
+    },
+    {
+      "path": "dependencies/P04Products/ParallelSubstitution.v",
+      "sha256": "51e34049def8ffe0fe9c77754305713bcf96e79794d4e8628a90aa11e13d1ad9",
+      "size": 4937
+    },
+    {
+      "path": "dependencies/P04Products/ParallelTriangle.v",
+      "sha256": "2a6dd2f41c52315c6d1ace9216e1d4a1a8b0c3302830ca9210f677884e39484d",
+      "size": 6223
+    },
+    {
+      "path": "dependencies/P04Products/ProductCompatibility.v",
+      "sha256": "edccadf4f0883b6e8cd88abcc693ccc4b037f9b3ea463914651e2e0c3503d7f6",
+      "size": 3722
+    },
+    {
+      "path": "dependencies/P04Products/Products.v",
+      "sha256": "286d71528b1030c4825f6741ff6a20dc71c74f0be2de8bd320db0bf6dc9d041e",
+      "size": 2623
+    },
+    {
+      "path": "dependencies/P04RegularityDesign/FormedWeakening.v",
+      "sha256": "25ac36a45b2b74eb24af3a8b909e259daf9093dda1e3c8bb611d4a655a0000ad",
+      "size": 22589
+    },
+    {
+      "path": "dependencies/P04Source/FormedRegularity.v",
+      "sha256": "c9f8038765779b4a6ab26f3bbddff7cfb87ab0502c5a2dc60ae738934c471b84",
+      "size": 1636
+    },
+    {
+      "path": "dependencies/P04Source/FormedTyping.v",
+      "sha256": "d636783d7e72ee812e2f68d4f48621a40e974c363422152019b509591799fef6",
+      "size": 7146
+    },
+    {
+      "path": "dependencies/P04Source/RepairedReduction.v",
+      "sha256": "cc7d817919757975a7063f20f8a653203661ee90a97416547aedf9f784ddaa69",
+      "size": 10689
+    },
+    {
+      "path": "dependencies/P04Source/TypeReduction.v",
+      "sha256": "3e2aaa09d9adc26acb38604c883e438f83321f15f14b59852f31bd9f4b154f8e",
+      "size": 12766
+    },
+    {
+      "path": "dependencies/P04Substitution/SimultaneousArgs.v",
+      "sha256": "92a28a6abca316a4649e11250118025c25f79744ac4ff6662af13ac15110887a",
+      "size": 3559
+    },
+    {
+      "path": "dependencies/P04TypedSubstitution/FormedSubstitution.v",
+      "sha256": "042ec712bee1ca525f24a1e8198e09e61a629e441cd90d02114b486608326604",
+      "size": 13662
+    },
+    {
+      "path": "proof/BetaTracePreservation.v",
+      "sha256": "5d22e6ee1e7ebfdcdd4cda2fc719b02a97cf903d6bebf9e82d6eb3f12914c5f9",
+      "size": 7309
+    },
+    {
+      "path": "proof/Examples.v",
+      "sha256": "1d6422defbdd21b19ca495ae460eec7ecab7ed6393d093a8e49fd95414ddc363",
+      "size": 8350
+    },
+    {
+      "path": "reproduce.py",
+      "sha256": "485938c85abfee0ecfbd49bc088654fa5dce58067d4d59fe4af461d9793091ad",
+      "size": 15294
+    }
+  ],
+  "proof_source_count": 25,
+  "proof_source_preservation": "All 25 proof sources retain their exact input bytes. Only package metadata and the reproduction wrapper change.",
+  "proof_source_set_sha256": "b9bb3bb5dcbc5aab2eb58e730729e1350db6101c6bc2974b930d46079c26a30f",
+  "proof_sources": [
+    {
+      "path": "dependencies/Lex/DeBruijn.v",
+      "sha256": "07c5838ffb4554a68b3912938240246d6761bb3b4007d2589bd88ab81a240cf5",
+      "size": 131025
+    },
+    {
+      "path": "dependencies/Lex/Syntax.v",
+      "sha256": "60f8ee28a4a01efb429481ffe89d89f288dd45eb46a01c517289171064099251",
+      "size": 11125
+    },
+    {
+      "path": "dependencies/Lex/Typing.v",
+      "sha256": "2a7d2a4ba7bd14393bbb9b2808deac0e8362cb8eb4d1f8a96858e7750d423232",
+      "size": 180058
+    },
+    {
+      "path": "dependencies/P04ArgsSubstitution/ArgsSubstitution.v",
+      "sha256": "3dc5b30ba5447a96920531202915a68d9302cc87ce42d4f23051cd8176428563",
+      "size": 7940
+    },
+    {
+      "path": "dependencies/P04Preservation/AdministrativeReduction.v",
+      "sha256": "6333db2e2d6ac9a1231cc928ecef46e8f1773f9e5dd4b5dbab696c9724d76737",
+      "size": 3787
+    },
+    {
+      "path": "dependencies/P04Preservation/BetaPreservation.v",
+      "sha256": "6472417a9cfb389015bcfb85f1c1ba77fef6b253ffc0aab685607b47550d53de",
+      "size": 1477
+    },
+    {
+      "path": "dependencies/P04Preservation/ConditionalBeta.v",
+      "sha256": "28fd1af78e4ddc036820946b060a7239307dcea8fbfed5a0ee159a20061118e3",
+      "size": 2996
+    },
+    {
+      "path": "dependencies/P04Preservation/ContextTransport.v",
+      "sha256": "31024e5d7fc13d18bd8a2365cdc80ae12f469f7565193f1e87d787ea5f2cfcf0",
+      "size": 7127
+    },
+    {
+      "path": "dependencies/P04Preservation/CorePreservation.v",
+      "sha256": "c99017ac536b58e0ee4d81a688c6963004cc722afdd9799c313c3b3d0641a5b1",
+      "size": 8436
+    },
+    {
+      "path": "dependencies/P04Products/Parallel.v",
+      "sha256": "021a9d13ab437509d001c29d1ee96c9c735272e5e8544204fce557c0c3e0fe42",
+      "size": 6558
+    },
+    {
+      "path": "dependencies/P04Products/ParallelClosure.v",
+      "sha256": "a823e9d061704b0f9a274a38b328f685758c2532c603b1f6d43073bdab5b07af",
+      "size": 10789
+    },
+    {
+      "path": "dependencies/P04Products/ParallelEmbedding.v",
+      "sha256": "35d6800c033501b7c6e3ff1c4024f16c0fd1c27f272549f98c5c5aecb2166410",
+      "size": 2163
+    },
+    {
+      "path": "dependencies/P04Products/ParallelSubstitution.v",
+      "sha256": "51e34049def8ffe0fe9c77754305713bcf96e79794d4e8628a90aa11e13d1ad9",
+      "size": 4937
+    },
+    {
+      "path": "dependencies/P04Products/ParallelTriangle.v",
+      "sha256": "2a6dd2f41c52315c6d1ace9216e1d4a1a8b0c3302830ca9210f677884e39484d",
+      "size": 6223
+    },
+    {
+      "path": "dependencies/P04Products/ProductCompatibility.v",
+      "sha256": "edccadf4f0883b6e8cd88abcc693ccc4b037f9b3ea463914651e2e0c3503d7f6",
+      "size": 3722
+    },
+    {
+      "path": "dependencies/P04Products/Products.v",
+      "sha256": "286d71528b1030c4825f6741ff6a20dc71c74f0be2de8bd320db0bf6dc9d041e",
+      "size": 2623
+    },
+    {
+      "path": "dependencies/P04RegularityDesign/FormedWeakening.v",
+      "sha256": "25ac36a45b2b74eb24af3a8b909e259daf9093dda1e3c8bb611d4a655a0000ad",
+      "size": 22589
+    },
+    {
+      "path": "dependencies/P04Source/FormedRegularity.v",
+      "sha256": "c9f8038765779b4a6ab26f3bbddff7cfb87ab0502c5a2dc60ae738934c471b84",
+      "size": 1636
+    },
+    {
+      "path": "dependencies/P04Source/FormedTyping.v",
+      "sha256": "d636783d7e72ee812e2f68d4f48621a40e974c363422152019b509591799fef6",
+      "size": 7146
+    },
+    {
+      "path": "dependencies/P04Source/RepairedReduction.v",
+      "sha256": "cc7d817919757975a7063f20f8a653203661ee90a97416547aedf9f784ddaa69",
+      "size": 10689
+    },
+    {
+      "path": "dependencies/P04Source/TypeReduction.v",
+      "sha256": "3e2aaa09d9adc26acb38604c883e438f83321f15f14b59852f31bd9f4b154f8e",
+      "size": 12766
+    },
+    {
+      "path": "dependencies/P04Substitution/SimultaneousArgs.v",
+      "sha256": "92a28a6abca316a4649e11250118025c25f79744ac4ff6662af13ac15110887a",
+      "size": 3559
+    },
+    {
+      "path": "dependencies/P04TypedSubstitution/FormedSubstitution.v",
+      "sha256": "042ec712bee1ca525f24a1e8198e09e61a629e441cd90d02114b486608326604",
+      "size": 13662
+    },
+    {
+      "path": "proof/BetaTracePreservation.v",
+      "sha256": "5d22e6ee1e7ebfdcdd4cda2fc719b02a97cf903d6bebf9e82d6eb3f12914c5f9",
+      "size": 7309
+    },
+    {
+      "path": "proof/Examples.v",
+      "sha256": "1d6422defbdd21b19ca495ae460eec7ecab7ed6393d093a8e49fd95414ddc363",
+      "size": 8350
+    }
+  ],
+  "reproduction_wrapper_license": "LICENSE-CONTRIBUTIONS.txt",
+  "schema": "lex-public-proof-input-manifest-v1",
+  "snapshot_manifest_excludes_itself": true
+}

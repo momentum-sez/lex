@@ -1,0 +1,10 @@
+Warning: Cannot determine user home directory, using '.' .
+File "./dependencies/Lex/DeBruijn.v", line 19, characters 0-31:
+Warning: "From Coq" has been replaced by "From Stdlib".
+[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]
+File "./dependencies/Lex/DeBruijn.v", line 20, characters 0-30:
+Warning: "From Coq" has been replaced by "From Stdlib".
+[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]
+File "./dependencies/Lex/DeBruijn.v", line 21, characters 0-33:
+Warning: "From Coq" has been replaced by "From Stdlib".
+[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]

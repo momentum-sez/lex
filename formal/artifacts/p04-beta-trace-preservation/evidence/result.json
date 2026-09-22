@@ -1,0 +1,23 @@
+{
+  "compiler_runtime_correspondence_established": false,
+  "cross_platform_binary_reproduction_established": false,
+  "fresh_build_directory": true,
+  "full_language_soundness_established": false,
+  "historical_final_receipt_absent": true,
+  "historical_object_reproduction_established": false,
+  "kernel_checks": 2,
+  "named_exported_closed_assumption_reports": 21,
+  "original_closed_assumption_reports": 119,
+  "proof_module_compilations": 25,
+  "public_immutable_locator": null,
+  "reproduction_wrapper_sha256": "485938c85abfee0ecfbd49bc088654fa5dce58067d4d59fe4af461d9793091ad",
+  "schema": "lex-public-source-validation-v1",
+  "scope": "Fourteen-constructor source subrelation, with 42 excluded operational constructors.",
+  "separate_assumption_audit_compilations": 1,
+  "source_files_unchanged": true,
+  "source_input_manifest_sha256": "1b60b4734c1a30020abea451b372398da076cb3186c4cb63ecce07948d9cc679",
+  "source_modules": 25,
+  "status": "PASS",
+  "toolchain_unchanged": true,
+  "trace_scope": "Arbitrary finite traces under Formed.wf_context and Formed.has_type."
+}

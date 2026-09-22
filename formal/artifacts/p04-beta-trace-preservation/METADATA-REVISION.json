@@ -1,0 +1,27 @@
+{
+  "all_recorded_evidence_bytes_unchanged": true,
+  "current_input_manifest_sha256": "d2f2344f61b296ffd601aacc2af20ac1cf1f389b5adb3a6eb9c8abf87fd4775e",
+  "date_utc": "2026-09-05T22:42:05.872617+00:00",
+  "documentation_changes": [
+    {
+      "current_sha256": "fa2bb399eee3bb2c48734e7367a9c2bcea3b388ea77ebf36510a6c073a914e78",
+      "path": "README.md",
+      "reason": "Describe the existing fixed wrapper search paths, and distinguish the documentation revision from the unchanged recorded execution.",
+      "validated_sha256": "21f52e0421e9ec3de79071071065c75a86898458157a1552410dc4f058e2184c"
+    },
+    {
+      "current_sha256": "d3d6d6f8d9d818fd45f2e74ac18feecc48ba90d17ba58f75b515faf081229a1f",
+      "path": "TOOLCHAIN-REQUIREMENTS.json",
+      "reason": "Describe the existing fixed wrapper search paths, and distinguish the documentation revision from the unchanged recorded execution.",
+      "validated_sha256": "6ea394f03ea59c18c47efad4eee6c6e3e68a1becd101dc5038f4320f055e3196"
+    }
+  ],
+  "executable_and_25_proof_sources_unchanged": true,
+  "predecessor_archive_sha256": "fffcb9626144a85202daa3f8969b367e758ca334d222f033921c8449b52ad9b4",
+  "recorded_validation_path": "evidence/result.json",
+  "recorded_validation_sha256": "f02c3dd453c46275d1917b49cbdfba3cdebe74a8da9a910e4604a8c66fee79fd",
+  "schema": "lex-proof-documentation-revision-v1",
+  "validated_input_manifest_path": "metadata-history/validated-build-inputs/SOURCE-MANIFEST.json",
+  "validated_input_manifest_sha256": "1b60b4734c1a30020abea451b372398da076cb3186c4cb63ecce07948d9cc679",
+  "validation_rerun": false
+}

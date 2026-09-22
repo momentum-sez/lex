@@ -1,0 +1,111 @@
+Warning: Cannot determine user home directory, using '.' .
+File "./dependencies/Lex/Typing.v", line 22, characters 0-31:
+Warning: "From Coq" has been replaced by "From Stdlib".
+[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 23, characters 0-32:
+Warning: "From Coq" has been replaced by "From Stdlib".
+[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 24, characters 0-30:
+Warning: "From Coq" has been replaced by "From Stdlib".
+[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 25, characters 0-34:
+Warning: "From Coq" has been replaced by "From Stdlib".
+[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 26, characters 0-33:
+Warning: "From Coq" has been replaced by "From Stdlib".
+[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 149, characters 10-20:
+Warning: Notation app_length is deprecated since 8.20.
+Use length_app instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 149, characters 10-20:
+Warning: Notation app_length is deprecated since 8.20.
+Use length_app instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 149, characters 10-20:
+Warning: Notation app_length is deprecated since 8.20.
+Use length_app instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 151, characters 10-23:
+Warning: Notation firstn_length is deprecated since 8.20.
+Use length_firstn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 151, characters 25-37:
+Warning: Notation skipn_length is deprecated since 8.20.
+Use length_skipn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 151, characters 10-23:
+Warning: Notation firstn_length is deprecated since 8.20.
+Use length_firstn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 151, characters 10-23:
+Warning: Notation firstn_length is deprecated since 8.20.
+Use length_firstn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 151, characters 25-37:
+Warning: Notation skipn_length is deprecated since 8.20.
+Use length_skipn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 151, characters 25-37:
+Warning: Notation skipn_length is deprecated since 8.20.
+Use length_skipn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 173, characters 30-43:
+Warning: Notation firstn_length is deprecated since 8.20.
+Use length_firstn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 173, characters 30-43:
+Warning: Notation firstn_length is deprecated since 8.20.
+Use length_firstn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 173, characters 30-43:
+Warning: Notation firstn_length is deprecated since 8.20.
+Use length_firstn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 199, characters 30-43:
+Warning: Notation firstn_length is deprecated since 8.20.
+Use length_firstn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 199, characters 30-43:
+Warning: Notation firstn_length is deprecated since 8.20.
+Use length_firstn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 199, characters 30-43:
+Warning: Notation firstn_length is deprecated since 8.20.
+Use length_firstn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 224, characters 30-43:
+Warning: Notation firstn_length is deprecated since 8.20.
+Use length_firstn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 224, characters 30-43:
+Warning: Notation firstn_length is deprecated since 8.20.
+Use length_firstn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 224, characters 30-43:
+Warning: Notation firstn_length is deprecated since 8.20.
+Use length_firstn instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 1349, characters 13-23:
+Warning: Notation map_length is deprecated since 8.20.
+Use length_map instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 1349, characters 13-23:
+Warning: Notation map_length is deprecated since 8.20.
+Use length_map instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 1349, characters 13-23:
+Warning: Notation map_length is deprecated since 8.20.
+Use length_map instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 1349, characters 13-23:
+Warning: Notation map_length is deprecated since 8.20.
+Use length_map instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 1349, characters 13-23:
+Warning: Notation map_length is deprecated since 8.20.
+Use length_map instead.
+[deprecated-syntactic-definition-since-8.20,deprecated-since-8.20,deprecated-syntactic-definition,deprecated,default]
+File "./dependencies/Lex/Typing.v", line 2593, characters 0-33:
+Warning: "From Coq" has been replaced by "From Stdlib".
+[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]

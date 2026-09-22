@@ -26,7 +26,7 @@
 //! 2. Reduce `App(Constant("accessor"), Var(0))` by looking up `accessor` in
 //!    the [`RuntimeContext`] and returning the corresponding constant term.
 //! 3. Reduce `Match` by evaluating the scrutinee, finding the first matching
-//!    branch (constructor or wildcard), and evaluating the branch body.
+//!    branch, substituting its complete constructor payload, and evaluating the body.
 //! 4. Reduce `Defeasible` by evaluating the base body, then each exception
 //!    guard in priority order; the highest-priority satisfied exception wins.
 //! 5. Recognize verdict constants (`Compliant`, `NonCompliant`, `Pending`)
@@ -36,6 +36,7 @@ use std::collections::BTreeMap;
 
 use crate::ast::{Pattern, QualIdent, Term};
 use crate::certificate::ComplianceVerdict;
+use crate::typecheck::{instantiate_constructor_args, validate_evaluation_shape, TypeError};
 
 // ---------------------------------------------------------------------------
 // RuntimeValue — concrete values supplied by the caller
@@ -117,6 +118,9 @@ pub enum EvalError {
     /// The rule is not a lambda abstraction at the top level.
     NotALambda { term: Box<Term> },
 
+    /// Substitution rejected a term outside its checked structural limits.
+    Substitution { error: Box<TypeError> },
+
     /// Evaluation recursion depth exceeded.
     RecursionLimitExceeded,
 
@@ -141,6 +145,7 @@ impl std::fmt::Display for EvalError {
             Self::NotALambda { .. } => {
                 write!(f, "rule is not a lambda abstraction")
             }
+            Self::Substitution { error } => write!(f, "evaluation substitution failed: {error}"),
             Self::RecursionLimitExceeded => {
                 write!(f, "evaluation recursion limit exceeded")
             }
@@ -170,7 +175,11 @@ const MAX_EVAL_FUEL: usize = 4096;
 /// or a `Defeasible` rule wrapping such a lambda. The evaluator substitutes
 /// accessor lookups with values from `ctx` and reduces the term to a
 /// [`ComplianceVerdict`].
+///
+/// Constructor arities come from the fixture prelude. This entrypoint does not
+/// accept custom constructor signatures or establish typing or certificate validity.
 pub fn evaluate(term: &Term, ctx: &RuntimeContext) -> Result<ComplianceVerdict, EvalError> {
+    validate_evaluation_shape(term).map_err(substitution_error)?;
     let mut fuel = MAX_EVAL_FUEL;
     eval_term(term, ctx, 0, &mut fuel)
 }
@@ -182,89 +191,11 @@ fn eval_term(
     depth: usize,
     fuel: &mut usize,
 ) -> Result<ComplianceVerdict, EvalError> {
-    if depth > MAX_EVAL_DEPTH {
-        return Err(EvalError::RecursionLimitExceeded);
-    }
-    *fuel = fuel
-        .checked_sub(1)
-        .ok_or(EvalError::ReductionLimitExceeded)?;
+    consume_step(depth, fuel)?;
 
     match term {
-        // ── Verdict constants ──────────────────────────────────────────
-        Term::Constant(name) => {
-            let n = qual_ident_name(name);
-            match n {
-                "Compliant" => Ok(ComplianceVerdict::Compliant),
-                "NonCompliant" => Ok(ComplianceVerdict::NonCompliant),
-                "Pending" => Ok(ComplianceVerdict::Pending),
-                _ => Err(EvalError::NotAVerdict {
-                    term: Box::new(term.clone()),
-                }),
-            }
-        }
-
-        // ── Lambda: enter the body with runtime context ────────────────
-        // The lambda binds the IncorporationContext. We don't literally
-        // substitute — instead we pass the RuntimeContext through and
-        // resolve accessor applications when we encounter them.
+        // The outer rule lambda supplies the runtime context implicitly.
         Term::Lambda { body, .. } => eval_term(body, ctx, depth + 1, fuel),
-
-        // ── Application: resolve accessor lookups ──────────────────────
-        // App(Constant("accessor_name"), Var(0)) => look up in ctx
-        Term::App { func, arg } => eval_app(func, arg, ctx, depth, fuel),
-
-        // ── Match: evaluate scrutinee, find matching branch ────────────
-        Term::Match {
-            scrutinee,
-            branches,
-            ..
-        } => {
-            let scrutinee_val = eval_to_constant(scrutinee, ctx, depth + 1, fuel)?;
-            // Find matching branch
-            for branch in branches {
-                match &branch.pattern {
-                    Pattern::Constructor {
-                        constructor,
-                        binders: _,
-                    } => {
-                        let ctor_name = qual_ident_name(&constructor.name);
-                        if ctor_name == scrutinee_val {
-                            return eval_term(&branch.body, ctx, depth + 1, fuel);
-                        }
-                    }
-                    Pattern::Wildcard => {
-                        return eval_term(&branch.body, ctx, depth + 1, fuel);
-                    }
-                }
-            }
-            Err(EvalError::NoMatchingBranch {
-                scrutinee: scrutinee.clone(),
-            })
-        }
-
-        // ── Let: evaluate the bound value, then the body ───────────────
-        // Evaluate the bound value to a RuntimeValue and insert it into
-        // the context under the binder name for the body evaluation. If
-        // the value cannot be resolved to a RuntimeValue, fall through to
-        // structural evaluation of the body with the unchanged context.
-        Term::Let {
-            binder, val, body, ..
-        } => {
-            let resolved = eval_to_constant(val, ctx, depth + 1, fuel)
-                .ok()
-                .and_then(|name| constant_name_to_runtime_value(&name));
-            match resolved {
-                Some(rv) => {
-                    let mut extended_ctx = ctx.clone();
-                    extended_ctx.insert(binder.name.as_str(), rv);
-                    eval_term(body, &extended_ctx, depth + 1, fuel)
-                }
-                None => eval_term(body, ctx, depth + 1, fuel),
-            }
-        }
-
-        // ── Annotation: strip and evaluate inner term ──────────────────
-        Term::Annot { term: inner, .. } => eval_term(inner, ctx, depth + 1, fuel),
 
         // ── Defeasible rule: evaluate base, then exceptions ────────────
         Term::Defeasible(rule) => {
@@ -305,116 +236,227 @@ fn eval_term(
             }
         }
 
-        // ── Var(0) at the top level means the context itself ───────────
-        // This shouldn't normally appear as a final result, but if a rule
-        // is just `λctx. ctx` it would reduce here.
-        Term::Var { .. } => Err(EvalError::NotAVerdict {
-            term: Box::new(term.clone()),
-        }),
-
-        // ── Everything else is not evaluable ───────────────────────────
-        _ => Err(EvalError::NotAVerdict {
-            term: Box::new(term.clone()),
-        }),
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Application resolution
-// ---------------------------------------------------------------------------
-
-/// Evaluate a function application. The key case is:
-/// `App(Constant("accessor_name"), _)` — look up accessor in the RuntimeContext
-/// and return the corresponding constant.
-fn eval_app(
-    func: &Term,
-    arg: &Term,
-    ctx: &RuntimeContext,
-    depth: usize,
-    fuel: &mut usize,
-) -> Result<ComplianceVerdict, EvalError> {
-    // Case 1: Direct accessor application — App(Constant("accessor"), _)
-    if let Term::Constant(name) = func {
-        let accessor_name = qual_ident_name(name);
-        if let Some(val) = ctx.get(accessor_name) {
-            let resolved = runtime_value_to_term(val);
-            return eval_term(&resolved, ctx, depth + 1, fuel);
-        }
-        // Not an accessor — might be a constructor application or something else
-        return Err(EvalError::UnknownAccessor {
-            name: accessor_name.to_string(),
-        });
-    }
-
-    // Case 2: Beta-reduction — App(Lambda { binder, body, .. }, arg)
-    // Evaluate the argument to a RuntimeValue, extend the context with the
-    // binder name mapped to that value, and evaluate the body. If the
-    // argument cannot be resolved, fall through to structural evaluation.
-    if let Term::Lambda { binder, body, .. } = func {
-        let resolved = eval_to_constant(arg, ctx, depth + 1, fuel)
-            .ok()
-            .and_then(|name| constant_name_to_runtime_value(&name));
-        match resolved {
-            Some(rv) => {
-                let mut extended_ctx = ctx.clone();
-                extended_ctx.insert(binder.name.as_str(), rv);
-                return eval_term(body, &extended_ctx, depth + 1, fuel);
-            }
-            None => {
+        _ => {
+            let value = reduce_value(term, ctx, depth + 1, fuel)?.term;
+            if let Term::Lambda { body, .. } = &value {
                 return eval_term(body, ctx, depth + 1, fuel);
             }
+            if let Term::Constant(name) = &value {
+                if name.segments.len() == 1 {
+                    match qual_ident_name(name) {
+                        "Compliant" => return Ok(ComplianceVerdict::Compliant),
+                        "NonCompliant" => return Ok(ComplianceVerdict::NonCompliant),
+                        "Pending" => return Ok(ComplianceVerdict::Pending),
+                        _ => {}
+                    }
+                }
+            }
+            Err(EvalError::NotAVerdict {
+                term: Box::new(value),
+            })
         }
     }
-
-    Err(EvalError::NotAVerdict {
-        term: Box::new(Term::App {
-            func: Box::new(func.clone()),
-            arg: Box::new(arg.clone()),
-        }),
-    })
 }
 
-/// Evaluate an accessor application, returning the resolved constant as a Term
-/// rather than a ComplianceVerdict. This is used for Match scrutinee evaluation.
-fn eval_to_constant(
-    term: &Term,
-    ctx: &RuntimeContext,
-    depth: usize,
-    fuel: &mut usize,
-) -> Result<String, EvalError> {
+fn consume_step(depth: usize, fuel: &mut usize) -> Result<(), EvalError> {
     if depth > MAX_EVAL_DEPTH {
         return Err(EvalError::RecursionLimitExceeded);
     }
     *fuel = fuel
         .checked_sub(1)
         .ok_or(EvalError::ReductionLimitExceeded)?;
+    Ok(())
+}
 
+/// Instantiate the complete source-order payload with the checker's bounded substitution.
+fn instantiate(args: &[Term], body: &Term) -> Result<Term, EvalError> {
+    instantiate_constructor_args(args, body).map_err(substitution_error)
+}
+
+fn substitution_error(error: Box<TypeError>) -> EvalError {
+    match *error {
+        TypeError::RecursionLimitExceeded => EvalError::RecursionLimitExceeded,
+        TypeError::ReductionLimitExceeded | TypeError::SubstitutionBlowup { .. } => {
+            EvalError::ReductionLimitExceeded
+        }
+        _ => EvalError::Substitution { error },
+    }
+}
+
+/// Read payload arity from the same declarations used by the fixture checker.
+fn constructor_arity(name: &QualIdent) -> Option<usize> {
+    if !crate::prelude::is_prelude_constructor(&name.to_dotted()) {
+        return None;
+    }
+    if crate::prelude::is_nat_constructor(&name.to_dotted()) {
+        return Some(0);
+    }
+    static SIGNATURE: std::sync::LazyLock<crate::typecheck::Context> =
+        std::sync::LazyLock::new(crate::prelude::legacy_fixture_prelude);
+    let mut ty = SIGNATURE.lookup_constant(name)?;
+    let mut arity = 0;
+    while let Term::Pi { codomain, .. } = ty {
+        arity += 1;
+        ty = codomain;
+    }
+    Some(arity)
+}
+
+/// A runtime accessor supplies a concrete value even for an open tag family.
+struct ReducedValue {
+    term: Term,
+    remaining_arguments: Option<usize>,
+}
+
+/// Reduce to a value without dropping constructor arguments or entering lambdas.
+fn reduce_value(
+    term: &Term,
+    ctx: &RuntimeContext,
+    depth: usize,
+    fuel: &mut usize,
+) -> Result<ReducedValue, EvalError> {
+    consume_step(depth, fuel)?;
     match term {
-        // A constant like "Compliant", "True", "Active", "Zero", etc.
-        Term::Constant(name) => Ok(qual_ident_name(name).to_string()),
-
-        // Application: resolve accessor
-        Term::App { func, .. } => {
-            if let Term::Constant(name) = func.as_ref() {
-                let accessor_name = qual_ident_name(name);
-                if let Some(val) = ctx.get(accessor_name) {
-                    return Ok(runtime_value_to_constant_name(val));
-                }
-                return Err(EvalError::UnknownAccessor {
-                    name: accessor_name.to_string(),
+        Term::App { func, arg } => {
+            let func = reduce_value(func, ctx, depth + 1, fuel)?;
+            if let Term::Lambda { body, .. } = &func.term {
+                let body = instantiate(std::slice::from_ref(arg.as_ref()), body)?;
+                return reduce_value(&body, ctx, depth + 1, fuel);
+            }
+            if func.remaining_arguments == Some(0) {
+                return Err(EvalError::NotAVerdict {
+                    term: Box::new(Term::app(func.term, arg.as_ref().clone())),
                 });
             }
-            Err(EvalError::NotAVerdict {
-                term: Box::new(term.clone()),
+            if let Term::Constant(name) = &func.term {
+                // Constructor syntax has priority over a colliding accessor name.
+                if !crate::prelude::is_prelude_constructor(&name.to_dotted()) {
+                    let value =
+                        ctx.get(&name.to_dotted())
+                            .ok_or_else(|| EvalError::UnknownAccessor {
+                                name: name.to_dotted(),
+                            })?;
+                    let term = runtime_value_to_term(value);
+                    if matches!(&term, Term::Constant(name) if matches!(constructor_arity(name), Some(1..)))
+                    {
+                        return Err(EvalError::NotAVerdict {
+                            term: Box::new(term),
+                        });
+                    }
+                    return Ok(ReducedValue {
+                        term,
+                        remaining_arguments: Some(0),
+                    });
+                }
+            }
+            let remaining_arguments = func.remaining_arguments.map(|arity| arity - 1);
+            Ok(ReducedValue {
+                term: Term::app(func.term, arg.as_ref().clone()),
+                remaining_arguments,
             })
         }
-
-        // Annotation: strip
-        Term::Annot { term: inner, .. } => eval_to_constant(inner, ctx, depth + 1, fuel),
-
-        // Var(0) in a lambda body — this IS the context, can't resolve to a constant
+        Term::Let { val, body, .. } => {
+            let body = instantiate(std::slice::from_ref(val.as_ref()), body)?;
+            reduce_value(&body, ctx, depth + 1, fuel)
+        }
+        Term::Annot { term, .. } => reduce_value(term, ctx, depth + 1, fuel),
+        Term::Match {
+            scrutinee,
+            branches,
+            ..
+        } => {
+            // Resolve accessor errors before selecting even a wildcard branch.
+            let value = reduce_value(scrutinee, ctx, depth + 1, fuel)?;
+            if matches!(value.remaining_arguments, Some(1..)) {
+                return Err(EvalError::NotAVerdict {
+                    term: Box::new(value.term),
+                });
+            }
+            let mut head = &value.term;
+            let mut args = Vec::new();
+            while let Term::App { func, arg } = head {
+                consume_step(depth, fuel)?;
+                args.push(arg.as_ref().clone());
+                head = func;
+            }
+            args.reverse();
+            for branch in branches {
+                match &branch.pattern {
+                    Pattern::Wildcard => return reduce_value(&branch.body, ctx, depth + 1, fuel),
+                    Pattern::Constructor {
+                        constructor,
+                        binders,
+                    } => {
+                        if value.remaining_arguments != Some(0) {
+                            return Err(EvalError::NotAVerdict {
+                                term: Box::new(value.term),
+                            });
+                        }
+                        let Term::Constant(name) = head else {
+                            // An unresolved earlier arm prevents a later wildcard decision.
+                            return Err(EvalError::NotAVerdict {
+                                term: Box::new(value.term),
+                            });
+                        };
+                        if constructor.name == *name {
+                            if binders.len() != args.len() {
+                                return Err(EvalError::NoMatchingBranch {
+                                    scrutinee: scrutinee.clone(),
+                                });
+                            }
+                            let body = instantiate(&args, &branch.body)?;
+                            return reduce_value(&body, ctx, depth + 1, fuel);
+                        }
+                    }
+                }
+            }
+            Err(EvalError::NoMatchingBranch {
+                scrutinee: scrutinee.clone(),
+            })
+        }
+        Term::Defeasible(_) => {
+            let name = match eval_term(term, ctx, depth + 1, fuel)? {
+                ComplianceVerdict::Compliant => "Compliant",
+                ComplianceVerdict::NonCompliant => "NonCompliant",
+                ComplianceVerdict::Pending => "Pending",
+            };
+            Ok(ReducedValue {
+                term: Term::Constant(QualIdent::simple(name)),
+                remaining_arguments: Some(0),
+            })
+        }
+        Term::Constant(_)
+        | Term::Var { .. }
+        | Term::Sort(_)
+        | Term::Lambda { .. }
+        | Term::Pi { .. } => Ok(ReducedValue {
+            remaining_arguments: match term {
+                Term::Constant(name) => constructor_arity(name),
+                _ => None,
+            },
+            term: term.clone(),
+        }),
         _ => Err(EvalError::NotAVerdict {
             term: Box::new(term.clone()),
+        }),
+    }
+}
+
+fn eval_to_constant(
+    term: &Term,
+    ctx: &RuntimeContext,
+    depth: usize,
+    fuel: &mut usize,
+) -> Result<String, EvalError> {
+    let value = reduce_value(term, ctx, depth, fuel)?;
+    match value.term {
+        Term::Constant(name)
+            if value.remaining_arguments == Some(0) && name.segments.len() == 1 =>
+        {
+            Ok(qual_ident_name(&name).to_string())
+        }
+        term => Err(EvalError::NotAVerdict {
+            term: Box::new(term),
         }),
     }
 }
@@ -497,6 +539,7 @@ fn encode_non_zero_nat(n: u64) -> String {
 
 /// Decode a value-preserving non-zero-natural marker name back to its value.
 /// Returns `None` if `name` is not a non-zero-natural marker.
+#[cfg(test)]
 fn decode_non_zero_nat(name: &str) -> Option<u64> {
     name.strip_prefix(NON_ZERO_NAT_PREFIX)
         .and_then(|rest| rest.parse::<u64>().ok())
@@ -518,6 +561,7 @@ fn runtime_value_to_term(val: &RuntimeValue) -> Term {
 }
 
 /// Convert a RuntimeValue to a constructor name string for pattern matching.
+#[cfg(test)]
 fn runtime_value_to_constant_name(val: &RuntimeValue) -> String {
     match val {
         RuntimeValue::Nat(0) => "Zero".to_string(),
@@ -536,6 +580,7 @@ fn runtime_value_to_constant_name(val: &RuntimeValue) -> String {
 /// its concrete value. Returns `None` for any other name; the caller treats a
 /// `None` as "not a recognized runtime value" and does NOT mint a `Tag` from
 /// it (an unknown token is not silently coerced into a valid value).
+#[cfg(test)]
 fn constant_name_to_runtime_value(name: &str) -> Option<RuntimeValue> {
     match name {
         "Zero" => Some(RuntimeValue::Nat(0)),

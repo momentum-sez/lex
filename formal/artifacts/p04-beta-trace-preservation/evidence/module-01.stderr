@@ -1,0 +1,10 @@
+Warning: Cannot determine user home directory, using '.' .
+File "./dependencies/Lex/Syntax.v", line 14, characters 0-34:
+Warning: "From Coq" has been replaced by "From Stdlib".
+[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]
+File "./dependencies/Lex/Syntax.v", line 15, characters 0-30:
+Warning: "From Coq" has been replaced by "From Stdlib".
+[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]
+File "./dependencies/Lex/Syntax.v", line 16, characters 0-34:
+Warning: "From Coq" has been replaced by "From Stdlib".
+[deprecated-from-Coq,deprecated-since-9.0,deprecated,default]

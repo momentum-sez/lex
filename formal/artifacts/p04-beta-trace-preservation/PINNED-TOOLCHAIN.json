@@ -1,0 +1,15 @@
+{
+  "binaries": {
+    "coqc": "993dfca8a77f434bf0ebff8da9c5f989cb873f84eaecf1aa8a5f95d2783540c3",
+    "coqchk": "0f619d93d0dab72fdc65de6005b0775d9f48beeac7ba4700a0f1447fbea594cf",
+    "rocq": "42b5a882b913ba3a2b93daf11be84371f2defb62d6735025d71ce876bba219d2",
+    "rocqchk": "39ca87e4596f45358f090b613ddcc1fbd62b55e56c88ddd366786caea5a3b4a6"
+  },
+  "checker_version": "The Rocq Proof Checker, version 9.1.1\n",
+  "compiler_version": "The Rocq Prover, version 9.1.1\ncompiled with OCaml 5.4.1\n",
+  "libraries": {
+    "coqlib": "58ba8cb3acd7a0513cd904d154248d85bfb2fbb15293eedae3f75a2cc243135a",
+    "runtime": "901601a01b14c254c3435f75db9131ece11b3b4fbcc3be69fb6167ff17596706",
+    "stdlib": "29f2ddd6cd9e74b49022a388115ab052f3e34071bc30a7b0dcc68f4e5ed48a06"
+  }
+}

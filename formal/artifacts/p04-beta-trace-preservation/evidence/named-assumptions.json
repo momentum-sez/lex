@@ -1,0 +1,131 @@
+{
+  "audit_source_sha256": "a2fc2fe55f7b0c4642690f04cc7e12baea06025fbaa3126adc73cec36bc75da1",
+  "command": {
+    "argv": [
+      "/opt/homebrew/bin/coqc",
+      "-q",
+      "-Q",
+      "dependencies/Lex",
+      "Lex",
+      "-Q",
+      "dependencies/P04Substitution",
+      "P04Substitution",
+      "-Q",
+      "dependencies/P04ArgsSubstitution",
+      "P04ArgsSubstitution",
+      "-Q",
+      "dependencies/P04Source",
+      "P04Source",
+      "-Q",
+      "dependencies/P04RegularityDesign",
+      "P04RegularityDesign",
+      "-Q",
+      "dependencies/P04TypedSubstitution",
+      "P04TypedSubstitution",
+      "-Q",
+      "dependencies/P04Preservation",
+      "P04Preservation",
+      "-Q",
+      "dependencies/P04Products",
+      "P04Products",
+      "-Q",
+      "proof",
+      "P04BetaTrace",
+      "../evidence/AssumptionAudit.v"
+    ],
+    "cwd": "build/sources",
+    "elapsed_seconds": 1.2519543749999968,
+    "exit_code": 0,
+    "started_utc": "2026-09-05T22:23:26.349265+00:00",
+    "stderr": "named-assumptions.stderr",
+    "stderr_sha256": "273617ddc9994b9282d80f664d0757d621342875555fdb53177d7c2da4100700",
+    "stdout": "named-assumptions.stdout",
+    "stdout_sha256": "9e4aab7667a7f700cbc0e9a7b7c4354740fc0f187d5218db9a398545c6758700"
+  },
+  "queries": [
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.BetaTracePreservation.BetaTracePreservation.administrative_step_included"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.BetaTracePreservation.BetaTracePreservation.captured_step"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.BetaTracePreservation.BetaTracePreservation.let_domain_formation"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.BetaTracePreservation.BetaTracePreservation.lambda_body_context"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.BetaTracePreservation.BetaTracePreservation.let_body_context"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.BetaTracePreservation.BetaTracePreservation.pi_codomain_context"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.BetaTracePreservation.BetaTracePreservation.preservation"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.BetaTracePreservation.BetaTracePreservation.administrative_steps_included"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.BetaTracePreservation.BetaTracePreservation.captured_steps"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.BetaTracePreservation.BetaTracePreservation.trace_preservation"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.BetaTracePreservation.BetaTracePreservation.typed_captured_trace"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.Examples.nested_source_typed"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.Examples.nested_first_beta"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.Examples.nested_second_beta"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.Examples.nested_beta_trace"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.Examples.nested_beta_trace_nonempty"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.Examples.nested_beta_typed_execution"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.Examples.nested_converted_trace"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.Examples.dependent_nested_typed_execution"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.Examples.beta_under_let_typed"
+    },
+    {
+      "output": "Closed under the global context",
+      "theorem": "P04BetaTrace.Examples.beta_under_pi_typed"
+    }
+  ]
+}

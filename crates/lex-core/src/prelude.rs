@@ -31,6 +31,7 @@ const CORE_TYPES: &[&str] = &[
 const VERDICT_CONSTRUCTORS: &[&str] = &["Compliant", "NonCompliant", "Pending"];
 const BOOL_CONSTRUCTORS: &[&str] = &["True", "False"];
 const NAT_CONSTRUCTORS: &[&str] = &["Zero"];
+const STRUCTURAL_TAG_CONSTRUCTORS: &[&str] = &["Some", "None", "Cons", "Nil"];
 
 /// Prefix for the value-carrying non-zero-natural marker constructor name.
 ///
@@ -53,12 +54,13 @@ const NAT_CONSTRUCTORS: &[&str] = &["Zero"];
 pub(crate) const NON_ZERO_NAT_PREFIX: &str = "__NonZeroNat:";
 
 /// Returns `true` if `name` is a value-carrying non-zero-natural marker
-/// constructor (`__NonZeroNat:<n>` for some natural `n`). Such a name is an
+/// constructor (`__NonZeroNat:<n>` for canonical positive `u64` value `n`). Such a name is an
 /// admissible *value pattern* of the `Nat` datatype — the positive-count
 /// counterpart of the named `Zero` constructor.
 pub(crate) fn is_non_zero_nat_marker(name: &str) -> bool {
     name.strip_prefix(NON_ZERO_NAT_PREFIX)
-        .is_some_and(|rest| !rest.is_empty() && rest.bytes().all(|b| b.is_ascii_digit()))
+        .and_then(|rest| rest.parse::<u64>().ok())
+        .is_some_and(|n| n > 0 && encode_non_zero_nat_marker(n) == name)
 }
 
 /// Returns `true` if `name` is an admissible constructor of the `Nat` datatype:
@@ -2051,6 +2053,7 @@ pub fn is_prelude_constructor(name: &str) -> bool {
         || is_nat_constructor(name)
         || SANCTIONS_CONSTRUCTORS.contains(&name)
         || TAG_CONSTRUCTORS.contains(&name)
+        || STRUCTURAL_TAG_CONSTRUCTORS.contains(&name)
 }
 
 /// Returns `true` if `name` is one of the core prelude types
@@ -2065,6 +2068,11 @@ pub fn is_prelude_type(name: &str) -> bool {
 pub struct PreludeRegistry;
 
 impl PreludeRegistry {
+    /// These families have a complete finite constructor enumeration.
+    pub fn is_closed_datatype(name: &str) -> bool {
+        matches!(name, "ComplianceVerdict" | "Bool" | "SanctionsResult")
+    }
+
     /// Return the full constructor list for a named prelude datatype, or
     /// `None` if `datatype_name` is not a known prelude type.
     ///
@@ -2086,6 +2094,7 @@ impl PreludeRegistry {
                     .iter()
                     .copied()
                     .chain(TAG_OVERLOADED_CONSTRUCTORS.iter().copied())
+                    .chain(STRUCTURAL_TAG_CONSTRUCTORS.iter().copied())
                     .collect(),
             ),
             _ => None,
@@ -2112,7 +2121,9 @@ impl PreludeRegistry {
             Some("Nat")
         } else if SANCTIONS_CONSTRUCTORS.contains(&ctor_name) {
             Some("SanctionsResult")
-        } else if TAG_CONSTRUCTORS.contains(&ctor_name) {
+        } else if TAG_CONSTRUCTORS.contains(&ctor_name)
+            || STRUCTURAL_TAG_CONSTRUCTORS.contains(&ctor_name)
+        {
             Some("ComplianceTag")
         } else {
             None
@@ -2143,7 +2154,9 @@ impl PreludeRegistry {
         if SANCTIONS_CONSTRUCTORS.contains(&ctor_name) {
             dts.push("SanctionsResult");
         }
-        if TAG_CONSTRUCTORS.contains(&ctor_name) || TAG_OVERLOADED_CONSTRUCTORS.contains(&ctor_name)
+        if TAG_CONSTRUCTORS.contains(&ctor_name)
+            || TAG_OVERLOADED_CONSTRUCTORS.contains(&ctor_name)
+            || STRUCTURAL_TAG_CONSTRUCTORS.contains(&ctor_name)
         {
             dts.push("ComplianceTag");
         }

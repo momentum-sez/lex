@@ -1,0 +1,52 @@
+administrative_step_included
+     : forall t u : Term, AdministrativeReduction.step t u -> step t u
+Closed under the global context
+captured_step
+     : forall t u : Term, step t u -> Repaired.step t u
+Closed under the global context
+let_domain_formation
+     : forall (ctx : Context) (t T : Term),
+       has_type ctx t T ->
+       forall A v body : Term,
+       t = Let A v body -> exists i : nat, has_type ctx A (type_level i)
+Closed under the global context
+lambda_body_context
+     : forall (ctx : Context) (A body T : Term),
+       wf_context ctx ->
+       has_type ctx (Lambda A body) T -> wf_context (ctx_extend ctx A)
+Closed under the global context
+let_body_context
+     : forall (ctx : Context) (A v body T : Term),
+       wf_context ctx ->
+       has_type ctx (Let A v body) T -> wf_context (ctx_extend ctx A)
+Closed under the global context
+pi_codomain_context
+     : forall (ctx : Context) (A : Term) (eff : option EffectRow)
+         (B T : Term),
+       wf_context ctx ->
+       has_type ctx (Pi A eff B) T -> wf_context (ctx_extend ctx A)
+Closed under the global context
+preservation
+     : forall t u : Term,
+       step t u ->
+       forall (ctx : Context) (T : Term),
+       wf_context ctx -> has_type ctx t T -> has_type ctx u T
+Closed under the global context
+administrative_steps_included
+     : forall t u : Term, AdministrativeReduction.steps t u -> steps t u
+Closed under the global context
+captured_steps
+     : forall t u : Term, steps t u -> Repaired.steps t u
+Closed under the global context
+trace_preservation
+     : forall t u : Term,
+       steps t u ->
+       forall (ctx : Context) (T : Term),
+       wf_context ctx -> has_type ctx t T -> has_type ctx u T
+Closed under the global context
+typed_captured_trace
+     : forall (ctx : Context) (t u T : Term),
+       wf_context ctx ->
+       has_type ctx t T ->
+       steps t u -> Repaired.steps t u /\ has_type ctx u T
+Closed under the global context
