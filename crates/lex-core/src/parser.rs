@@ -2515,6 +2515,24 @@ pub fn parse(tokens: &[Spanned<Token>]) -> Result<Term, ParseError> {
     Ok(first)
 }
 
+/// Parse exactly one top-level term and reject all remaining forms.
+///
+/// This entry point preserves the term grammar used by [`parse`]
+/// without discarding additional top-level terms.
+pub fn parse_single_term(tokens: &[Spanned<Token>]) -> Result<Term, ParseError> {
+    let filtered: Vec<Spanned<Token>> = tokens
+        .iter()
+        .filter(|(token, _)| !matches!(token, Token::Comment(_)))
+        .cloned()
+        .collect();
+    let mut parser = Parser::new(&filtered);
+    let term = parse_one_top_level(&mut parser)?;
+    if !matches!(&filtered[parser.pos..], [] | [(Token::Eof, _)]) {
+        return Err(parser.error("end of source after one top-level term"));
+    }
+    Ok(term)
+}
+
 /// Parse one top-level term, then absorb the optional
 /// `priority <n> [unless|except …]* [end]` trailing decoration that
 /// authored `.lex` files place on a term-form defeasible rule.

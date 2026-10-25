@@ -26,6 +26,8 @@
 //!   compiler everywhere the enum appears.
 //! - [`error::CanonicalizationError`] - the error type returned from MCF
 //!   canonicalization.
+//! - [`program_purpose::ProgramPurposeTag`] - a validated, case-sensitive
+//!   program purpose identifier.
 //!
 //! ## Design Principles
 //!
@@ -40,6 +42,7 @@ pub mod canonical;
 pub mod digest;
 pub mod domain;
 pub mod error;
+pub mod program_purpose;
 
 pub use canonical::CanonicalBytes;
 pub use digest::{
@@ -48,3 +51,4 @@ pub use digest::{
 };
 pub use domain::ComplianceDomain;
 pub use error::CanonicalizationError;
+pub use program_purpose::{ProgramPurposeTag, ProgramPurposeTagError};

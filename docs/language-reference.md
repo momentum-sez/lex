@@ -304,6 +304,81 @@ source
   -> certificate / compose
 ```
 
+### Versioned authored programs and purpose classifications
+
+`lex_core::AuthoredLexProgramV1` carries an explicit purpose beside authored source:
+
+```json
+{
+  "version": 1,
+  "purpose": "Entity.Incorporate",
+  "source": "lambda (ctx : IncorporationContext). Pending"
+}
+```
+
+All three fields are required. Human-readable input must be a map, such as a JSON
+object. Positional JSON arrays and duplicate fields are rejected. Unknown fields,
+unsupported versions, and malformed
+purpose tags are rejected. Purpose tags contain dot-separated ASCII identifiers
+and at most 255 bytes. Each segment matches `[A-Za-z_][A-Za-z0-9_]*`. Case,
+source whitespace, and source comments remain unchanged. No purpose is inferred
+from source, operation names, or jurisdiction.
+
+`parse()` calls the existing lexer and `parser::parse_single_term`. Its
+`ParsedLexProgramV1` result retains the authored envelope and the single parsed
+term. Additional top-level forms are rejected. The legacy `parser::parse`
+entry point remains unchanged. Parsing does not establish elaboration, type
+checking, admission, or proof discharge. Existing `Term`
+encodings and checker contracts remain unchanged.
+
+`lex_pack::ClassifiedPackV2` adds a separate classification envelope around an
+existing `Pack`. Its wire fields are `version: 2`, `pack`, `classifications`,
+`digest`, and `signature`. Each `PurposeClassificationV1` requires `version: 1`,
+`purpose`, `executable_digest`, and `rule_hashes`. The executable digest uses the
+canonical `ContentDigest` representation, including its algorithm. Rule references
+also use `ContentDigest`. Existing pack hash strings are validated at this boundary.
+Rule references must be nonempty, unique, and present in the base pack. Duplicate
+`(purpose, executable_digest)` keys are rejected, including conflicting rule lists.
+Unknown wrapper fields and unsupported versions are rejected. There is no
+fallback from a classified envelope to an old pack.
+
+Human-readable classification envelopes and their entries require maps. Positional
+JSON arrays and duplicate fields are rejected, including nested classification
+entries. Schema-directed binary decoding retains its existing struct field order.
+
+The outer digest is SHA-256 over the canonical object with these fields:
+
+| Field | Content |
+| --- | --- |
+| `domain` | `lex.classified_pack.v2` |
+| `version` | `2` |
+| `pack` | The complete unchanged base pack, including its signature |
+| `classifications` | Every classification entry, in its signed order |
+
+The outer signature is excluded from that preimage. Both signatures use the base
+pack's curator through the caller-supplied `CuratorVerifier`. Verification requires
+the existing base-pack verification and the separate classification verification.
+An outer signature cannot replace a missing or invalid base signature. Existing
+pack serialization and digest preimages remain unchanged.
+
+`resolve()` verifies both layers before selecting the exact purpose and executable
+digest. References must cover every base-pack rule whose `AppliesTo` scope matches
+the query. Missing coverage returns `IncompleteCoverage` with the missing rule
+digests. Success returns all applicable rules in base-pack order. Classification
+metadata cannot remove an applicable obligation. Rules in other scopes need not
+be referenced for this query.
+The caller supplies the actual executable digest, jurisdiction, and operation kind.
+Unknown purposes, wrong artifacts, and scopes without applicable rules return
+errors. Success always contains at least one applicable rule. Classification does
+not establish rule admission, discharge obligations, or provide a cryptographic
+signature implementation.
+
+Concrete scope identifiers require separate, nonempty segments without embedded
+dots, wildcards, whitespace, or control characters. Base rule scopes require
+nonempty jurisdiction and operation lists. Family prefixes contain exactly one
+segment, matching the existing family selector. Malformed scopes are rejected
+before classification can omit their rules. Historical pack bytes remain unchanged.
+
 ### `elaborate`
 
 `elaborate::elaborate` resolves names against the compliance prelude and assigns

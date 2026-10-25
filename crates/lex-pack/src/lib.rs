@@ -36,6 +36,10 @@
 //! The crate depends on `lex-core` (AST, certificate types) and `mez-canonical`
 //! (content digest) only — no host or runtime dependencies (Frontier-09 §3.1).
 
+pub mod classification;
+
+pub use classification::{ClassificationError, ClassifiedPackV2, PurposeClassificationV1};
+
 use lex_core::ast::{AppliesTo, Hole, QualIdent, Term};
 use lex_core::obligations::ProofObligation;
 use mez_canonical::canonical::CanonicalBytes;

@@ -29,6 +29,7 @@ pub mod predicate_runtime;
 pub mod prelude;
 pub mod pretty;
 pub mod principles;
+pub mod program;
 pub mod smt;
 pub mod temporal;
 pub mod token;
@@ -39,3 +40,4 @@ pub use predicate_runtime::{
     evaluate as evaluate_predicate, CaveatKind, EvalContext, EvalError, LexCaveat, LexProposition,
     LexValue,
 };
+pub use program::{AuthoredLexProgramError, AuthoredLexProgramV1, ParsedLexProgramV1};
