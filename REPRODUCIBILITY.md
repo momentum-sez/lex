@@ -1,183 +1,121 @@
 # Reproducibility
 
-This document specifies the exact procedure for reproducing every executable
-claim in this repository. A reviewer with the listed hardware and toolchain
-should obtain bit-identical or functionally-identical results.
+Verify the source revision under review. Record its commit, tool versions,
+commands, exit status, failures, and skipped checks with the result.
+A historical test count does not define acceptance for a later revision.
 
-## Repository
+## Source and toolchain
 
-- URL: <https://github.com/momentum-sez/lex>
-- Branch: `frontier/core-calculus`
-- License: Apache-2.0 (`LICENSE`)
+The public repository is <https://github.com/momentum-sez/lex> and uses Apache-2.0.
+A normal clone is self-contained:
 
-## Clone
-
-```
+```bash
 git clone https://github.com/momentum-sez/lex.git
 cd lex
-git checkout frontier/core-calculus
+git rev-parse HEAD
+rustc --version
+cargo --version
 ```
 
-The workspace is self-contained. `crates/mass-canonical` provides the
-foundational types (`CanonicalBytes`, `sha256_digest`, `ComplianceDomain`),
-so a cold clone compiles without any sibling checkouts.
+For an existing checkout, follow the isolated-worktree contract in `AGENTS.md`
+and `CLAUDE.md`. Use the selected source commit and a unique branch and path.
+Do not replace that commit with a branch name from an old verification record.
 
-## Toolchain
+`rust-toolchain.toml` pins Rust `1.93.0` with `rustfmt` and `clippy`.
+`Cargo.toml` declares the minimum Rust version and workspace members:
+`lex-core`, `lex-diag`, `lex-cli`, `lex-pack`, and `mez-canonical`.
+The in-tree `crates/mez-canonical/` supplies the shared canonical wire types.
+No sibling checkout is required.
 
-Rust toolchain is pinned by `rust-toolchain.toml` at the repository root:
+Inspect the selected revision's workflow files when reproducing CI.
+Record the effective toolchain instead of assuming the workflow matches a local
+installation. The Rocq workflow uses the `rocq/rocq:9.1` container.
+The Lean scaffold has no CI job.
 
-- Channel: `1.93.0` (stable)
-- Components: `rustfmt`, `clippy`
-- Profile: `minimal`
+## Rust checks
 
-`rustup` honors this file automatically. The workspace MSRV declared in
-`Cargo.toml` is `1.93`, matching the pin.
+Run these commands from the repository root:
 
-Coq mechanization is checked against:
-
-- Rocq Prover `9.0+` (the container image `rocq/rocq:9.1` is used by CI).
-
-## Expected results
-
-### Rust workspace
-
-```
-cargo test --workspace
-```
-
-Expected: `742` tests pass across the four crates `lex-core`, `lex-diag`,
-`lex-cli`, `mass-canonical`. Zero failures.
-
-Breakdown by binary at the time this document was written:
-
-| Binary | Passed | Notes |
-|---|---|---|
-| `lex-core` unit tests | 590 | |
-| `lex-core` integration: `adgm_rules` | 12 | ADGM jurisdictional fiber |
-| `lex-core` integration: `adversarial_attacks` | 31 | level self-application, cyclic priorities, unauthorised fills |
-| `lex-core` integration: `cycle3_admissibility_properties` | 3 | |
-| `lex-core` integration: `discretion_hole_contract` | 2 | frontier-boundary contract tests |
-| `lex-core` integration: `proof_pipeline_e2e` | 1 | parse → elaborate → typecheck → obligations → certificate |
-| `lex-core` integration: `proptest_typecheck` | 10 + 1 ignored | soundness proptests |
-| `lex-core` integration: `seychelles_ibc_rules` | 22 | Seychelles IBC fiber |
-| `lex-diag` unit tests | 20 | |
-| `mass-canonical` unit tests | 44 | |
-| `lex-core` doc-tests | 6 | |
-| `mass-canonical` doc-tests | 1 | |
-
-### Clippy and rustfmt
-
-```
+```bash
+cargo check --workspace --all-targets
+cargo test --workspace --all-targets
+cargo test --workspace --doc
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all -- --check
 ```
 
-Expected: both exit `0` with no output.
+Each required command must exit successfully. Report ignored tests and checks
+that could not run. A different test count alone is not a regression.
+Use Cargo's current output to identify the tests, rather than a copied census:
 
-### Hello-lex example
-
+```bash
+cargo test --workspace -- --list
 ```
+
+Start with the affected crate when investigating a failure. Changes to shared
+syntax, types, or certificates require the affected workspace checks.
+
+## Examples and executable boundaries
+
+```bash
 cargo run --example hello-lex -p lex-core
-```
-
-Expected: the example walks the Seychelles International Business Companies
-Act 2016 s.66 — first-shareholder-meeting requirement — through the full Lex
-pipeline, emits a certificate with a content-addressed digest, then
-constructs a typed discretion hole for `fit_and_proper : Prop @ regulator`
-and extracts two scope obligations (`DomainMembership`, `TemporalOrdering`).
-
-The rule digest and certificate digest are content-addressed over canonical
-serialization and are stable across runs on a fixed toolchain. The `issued
-at` timestamp is clock-stamped and will vary per run.
-
-### Discretion-hole contract tests
-
-```
 cargo test -p lex-core --test discretion_hole_contract
 ```
 
-Expected:
+`crates/lex-core/examples/hello-lex.rs` implements a director-count example.
+It constructs an AST, checks types, extracts obligations, and assembles a
+certificate. It does not verify appointments or statutory applicability.
+The separate `formal/coq/Lex/Examples/SeychellesS130.v` example models different
+inputs. Its result is not interchangeable with the Rust example's result.
 
-```
-running 2 tests
-test surface_fill_example_is_preserved_then_rejected_by_main_checker ... ok
-test surface_hole_example_is_preserved_then_rejected_by_main_checker ... ok
+The discretion-hole tests preserve the surface examples and verify rejection
+by the ordinary admissible checker. They do not prove full-calculus safety.
+Use `docs/language-reference.md` and current source for executable boundaries.
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured
-```
+For determinism checks, inspect `crates/mez-canonical/src/canonical.rs` and
+`crates/mez-canonical/src/digest.rs` with their tests.
+Fix the input fields when comparing certificate digests. A changed timestamp
+changes the serialized input.
 
-### Coq mechanization
+## Formal checks
 
-```
-cd formal/coq
-coqc LexCore.v
-```
+Record `coqc --version` and `lean --version` when using the respective tools.
+Run each command below from the repository root:
 
-Exits `0` with one deprecation warning on Rocq `9.1.1`
-(`From Coq` → `From Stdlib`). The file admits the oracle-totality and
-principle-termination obligations; proof strategies for each are declared in
-`formal/README.md`.
-
-A CI job runs the `coqc` command in the `rocq/rocq:9.1` container on every
-push that touches `formal/coq/**`.
-
-### Formal artifacts (Lean)
-
-```
-formal/lean/LexCore.lean
+```bash
+(cd formal/coq && coqc LexCore.v)
+(cd formal/lean && lean LexCore.lean)
 ```
 
-The Lean mirror is provided as a scaffold. A Lean toolchain is not wired into
-CI.
+These commands check the narrow scaffolds. They do not build or prove the
+paper-level development. `formal/README.md` records proof scope and remaining
+obligations. Check the named declarations before propagating a proof claim.
+
+The paper-level source list is `formal/coq/_CoqProject`.
+Generate its makefile and build in an isolated worktree:
+
+```bash
+(cd formal/coq && coq_makefile -f _CoqProject -o Makefile && make -B)
+```
+
+A forced build checks source instead of accepting pre-existing compiled files.
+A successful build verifies the supplied statements under their assumptions.
+It does not discharge named premises or prove the Rust implementation correct.
 
 ## Benchmarks
 
-```
+```bash
 cargo bench -p lex-core --bench lex_pipeline
 ```
 
-The Criterion harness at `crates/lex-core/benches/lex_pipeline.rs` measures
-parse, elaborate, typecheck, and obligation-extraction throughput on the
-Seychelles IBC Act and ADGM fixtures. Absolute timings are hardware-dependent
-and no committed baseline is enforced by CI.
+The harness is `crates/lex-core/benches/lex_pipeline.rs`.
+Record hardware, toolchain, source revision, inputs, and warm or cold build state.
+CI does not enforce a committed timing baseline.
 
-## Hardware and timing
+## Historical results
 
-The numbers below are indicative. CI runs on `ubuntu-latest` GitHub-hosted
-runners.
-
-| Step | Cold (macOS M-series, 10-core) | Warm (macOS M-series, 10-core) |
-|---|---|---|
-| `cargo check --workspace` | ~40 s | ~3 s |
-| `cargo test --workspace` (build + run) | ~90 s | ~6 s |
-| `coqc LexCore.v` | ~4 s | ~4 s |
-| `cargo run --example hello-lex -p lex-core` (first run) | ~10 s | <1 s |
-
-Disk footprint for the compiled `target/` directory is ~1.2 GB.
-
-## Determinism
-
-- Canonical serialization (`CanonicalBytes`) and `sha256_digest` are exercised
-  against golden vectors at `crates/mass-canonical/src/{canonical,digest}.rs`,
-  including stable byte-equality vectors over the canonical wire format.
-- `ComplianceDomain` wire-format round-trips through 44 unit tests; the 23
-  domains are an invariant checked by `all_returns_23_domains` and
-  `domain_count_invariant`.
-- Certificate digests are reproducible across runs on a fixed toolchain for a
-  fixed source (timestamps excluded).
-
-## Environment
-
-The workspace compiles and tests cleanly on:
-
-- Ubuntu 22.04 / 24.04 (x86_64)
-- macOS 13+ (Apple Silicon)
-
-No network access is required after the initial `cargo fetch`. The workspace
-has no network-dependent tests.
-
-## Issues
-
-If `cargo test --workspace` reports a count other than `742` passed, or if any
-example deviates from the output above, please open an issue at the repository
-with the full `rustc --version`, `cargo --version`, and platform information.
+The [retired April 2026 guide](docs/archive/reproducibility-2026-04-23.md)
+preserves the earlier test census and machine timings.
+Its old branch, crate names, example description, and proof-status claims were
+superseded by the current manifest, example source, and formal source.
+Report failures against the selected revision with reproducible commands.

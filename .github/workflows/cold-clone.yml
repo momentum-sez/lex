@@ -22,21 +22,20 @@ jobs:
         run: |
           set -euo pipefail
           scratch=$(mktemp -d)
-          cd "$scratch"
-          git clone "https://github.com/${{ github.repository }}.git" repo
-          cd repo
-          git checkout "${{ github.sha }}"
-          # Confirm no sibling repos exist; the workspace must build
-          # without anything outside this repo.
-          ls -la ..
+          git clone --no-checkout "https://github.com/${{ github.repository }}.git" "$scratch/repository"
+          git -C "$scratch/repository" fetch origin "$GITHUB_SHA"
+          git -C "$scratch/repository" worktree add "$scratch/source" \
+            -b "verification/$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" "$GITHUB_SHA"
+          printf 'LEX_COLD_CLONE=%s\n' "$scratch/source" >> "$GITHUB_ENV"
+          test "$(git -C "$scratch/source" rev-parse HEAD)" = "$GITHUB_SHA"
       - uses: dtolnay/rust-toolchain@stable
       - name: cargo check from scratch clone
         run: |
-          scratch=$(ls -d /tmp/tmp.*/repo 2>/dev/null | head -1)
-          cd "$scratch"
+          set -euo pipefail
+          cd "$LEX_COLD_CLONE"
           cargo check --workspace --all-targets
       - name: cargo test from scratch clone
         run: |
-          scratch=$(ls -d /tmp/tmp.*/repo 2>/dev/null | head -1)
-          cd "$scratch"
+          set -euo pipefail
+          cd "$LEX_COLD_CLONE"
           cargo test --workspace --all-targets

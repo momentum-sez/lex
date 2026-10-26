@@ -1,6 +1,8 @@
 # CLAUDE.md — lex
 
 > **This public repository carries its agent rules inline.** The block below is a public-safe export of the project-wide operating discipline, so external clones are self-contained and do not depend on private paths or internal repositories.
+>
+> Read `AGENTS.md` for the shared execution contract and local requirements. Skip unchanged invariant text already read. Keep both roots substantively aligned.
 
 ---
 
@@ -27,11 +29,11 @@ Do not discard, rewrite, or hide work. The following commands are forbidden:
 - `rm -rf` on anything git-tracked
 - `--no-verify`, `--no-gpg-sign` on commits unless the principal explicitly requests
 
-Main-thread commits and publication require user authorization. If a forbidden operation appears necessary, stop and report the blocker.
+Main-thread commits and publication require user authorization. Existing authorization persists within its stated scope. If a forbidden operation appears necessary, stop and report the blocker.
 
 ## II. Multi-Agent Concurrency
 
-Read-only agents may inspect a shared checkout. Write-capable parallel agents must use isolated worktrees with explicit ownership, unique branch names, and clear verification commands. Agents do not commit, push, clean up worktrees, or mutate another agent's files.
+Read-only agents may inspect a shared checkout. Write-capable parallel agents must use isolated worktrees with explicit ownership, unique branch names, and clear verification commands. Record the principal checkout's branch and HEAD before creating the worktree from that HEAD. Preserve relevant uncommitted source bytes without importing unrelated work. Subagents do not commit, push, clean up worktrees, or mutate another worker's files.
 
 ## III. Public Documents Stand Alone
 
@@ -58,7 +60,7 @@ Material that informs the repository should live in the repository or in a refer
 
 ## VI. No Tool Attribution In Persistent Artifacts
 
-Commits, changelogs, generated headers, PR descriptions, and published documents must not attribute authorship to an AI model, assistant, or automation harness. The human maintainer is the project author of record.
+Never include `Co-Authored-By` lines referencing any LLM (Claude, GPT, Gemini, any model). Never include `Generated with` footers. Never record an LLM, model, AI assistant, or automation harness as author, co-author, generator, reviewer, or provenance in commit messages, PR descriptions, issue comments, release notes, changelogs, generated-file headers, document metadata, hidden comments, or any other persistent artifact. Technical governance documents may name models and harnesses only to impose operational constraints, not to attribute the work. The principal's authorship is the canonical record.
 
 ## VII. Deep Semantic Merges
 
@@ -124,9 +126,9 @@ Nineteen rules govern code-writing work. Apply judgment in proportion to risk.
 
 ## Repository contract
 
-Keep `AGENTS.md` and `CLAUDE.md` consistent on repository facts. Before code edits,
-read `CLAUDE.md` and any closer instruction file for the affected directory.
-Use the local source and tests to resolve factual drift. Read
+Keep `AGENTS.md` and `CLAUDE.md` consistent on repository facts. Read their shared
+contract once, then any unique host requirements and closer instruction files.
+Use local source and tests to resolve factual drift. Read
 `SUPREMUM-DISCIPLINE.md` for architectural or research choices when present.
 
 Keep changes within assigned files and repositories. Update affected references
@@ -160,6 +162,7 @@ fragment. Public companions are `github.com/momentum-sez/op`,
 | Frontier calculus | `docs/frontier-work/08-lex-core-calculus.md`, `crates/lex-core/src/core_calculus/` |
 | Formalization and proof scope | `formal/README.md`, `formal/coq/Lex/` |
 | Narrow scaffold | `formal/coq/LexCore.v`, `formal/lean/LexCore.lean` |
+| Verification procedure and historical results | `REPRODUCIBILITY.md` |
 
 The language reference governs documented executable boundaries. Inspect code
 and tests when checking conformance. The explanatory `docs/language-spec.md`
@@ -168,6 +171,10 @@ does not expand the executable fragment. Check current source handling of
 surface syntax, elaboration, frontier semantics, and executable admission.
 
 ## Verification
+
+For instruction edits, inspect the diff and affected paths. Run the public
+scan in `.github/workflows/forbidden-strings.yml` with Python 3.11 or newer.
+Its Cargo path check permits relative dependencies that resolve inside this repository.
 
 Run commands from the repository root. Each formal command uses its own shell
 scope, so the second command starts from the same root as the first.

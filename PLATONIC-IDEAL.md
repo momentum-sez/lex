@@ -246,6 +246,6 @@ Review the plan against exact theorem statements, counterexamples, executable bo
 - **`SUPREMUM.md`** — architecture and evidence boundaries; executable claims defer to the language reference and named sources.
 - **`ROADMAP.md`** — the game plan: the phases, dependencies, and per-phase deliverables that take Lex from current state to the platonic-ideal.
 - **`SUBSTRATE-INTERFACE.md`** — the proposed v1.0 interface contract for Op and downstream consumers.
-- **`SUPREMUM-DISCIPLINE.md`** — the meta-principle (always pick the supremum option) under which all of the above operate.
+- **`SUPREMUM-DISCIPLINE.md`** — the comparison rule for defensible targets, evidence, and unresolved design choices.
 - **`formal/README.md`** — current public proof status and local mechanization routes. The research programme retains the full paper-level objectives described here.
 - **`formal/coq/Lex/`** — the Rocq mechanization. Each Section of this document cross-references its Rocq target file where applicable.

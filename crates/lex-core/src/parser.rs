@@ -1032,11 +1032,8 @@ impl<'a> Parser<'a> {
     /// ```
     ///
     /// The term form is anonymous (no name between `defeasible` and the
-    /// body) and encodes the rule body inline as a lambda. It is the
-    /// shape produced by the `modules/lex/**/*.lex` rule files across
-    /// every mature jurisdiction (Prospera, Seychelles, ADGM, Cayman,
-    /// UK, Singapore, Hong Kong, Luxembourg, Pakistan, BVI, and the 2026
-    /// USA-federal extension).
+    /// body) and encodes the rule body inline as a lambda. The
+    /// `defeasible_term_form_body_parses` regression checks this form.
     ///
     /// Disambiguation is by look-ahead: the declarative form begins with
     /// `Ident` followed by `Colon`; everything else routes to the term
@@ -2189,7 +2186,7 @@ impl<'a> Parser<'a> {
                         Ok(Effect::Fuel(Level::Nat(level_num), n))
                     }
                     "sanctions_query" | "statutory_sanctions_query" => {
-                        // Both markers share the same kernel-side effect
+                        // Both markers share the same effect
                         // signature: sanctions lookup bound to the terminal
                         // sanctions tier. Any jurisdiction-specific meaning
                         // of "statutory" belongs in the pack-local rule text.
@@ -2821,9 +2818,7 @@ mod tests {
     //
     // The parser accepts a jurisdictional surface syntax in addition
     // to the Core Lex formal grammar. The tests below pin the
-    // surface-form entry points exercised by `modules/lex/**/*.lex`
-    // — any regression here will be caught by the unit suite before
-    // the `lex_file_coverage` harness runs.
+    // surface-form entry points directly with local rule fixtures.
 
     #[test]
     fn defeasible_term_form_body_parses() {

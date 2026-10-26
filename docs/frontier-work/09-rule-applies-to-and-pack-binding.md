@@ -195,10 +195,10 @@ host) at Op-program compile time.
 
 ### 3.1 New crate: `lex-pack`
 
-`crates/lex-pack/` lives in this repo, depends on `lex-core` only, and
-has no host or runtime dependencies. The kernel `mez-pack` crate (or any
-other downstream pack format) is free to bundle a `lex-pack::Pack` as a
-sub-artifact, but the pack format itself is canonical Lex.
+`crates/lex-pack/` lives in this repository. Its local crate dependencies are
+`lex-core` and `mez-canonical`, as declared in `crates/lex-pack/Cargo.toml`.
+A downstream pack format can bundle a `lex-pack::Pack` as a sub-artifact,
+but the pack format itself is canonical Lex.
 
 ### 3.2 `Pack` and `CompiledLexPredicate`
 

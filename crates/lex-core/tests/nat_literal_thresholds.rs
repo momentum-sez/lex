@@ -205,7 +205,7 @@ fn exact_count_two_matches_only_two() {
 }
 
 // ===========================================================================
-// Nested-match arm delimitation (regression for the kernel-observed
+// Nested-match arm delimitation (regression for the
 // "match on 'ComplianceTag' is not exhaustive" rejection of the Seychelles
 // Companies Act 2003 public-company `>= N` rules).
 //
@@ -216,26 +216,23 @@ fn exact_count_two_matches_only_two() {
 // open `ComplianceTag`-typed `company_class`) with no wildcard, which then
 // failed admissibility as non-exhaustive over the entire ComplianceTag enum.
 //
-// The kernel admits deployed rule bodies via
-// `check_admissibility_mode(parsed_term, HoleExtension)` on the *parsed*
-// (un-elaborated) term, so these fixtures assert that exact path in addition
-// to the strict elaborate-then-check path.
+// These fixtures check `check_admissibility_mode(parsed_term, HoleExtension)`
+// on the parsed term, in addition to the strict elaborate-then-check path.
 // ===========================================================================
 
-/// Parse only (no elaboration) — the shape the kernel's
-/// `lex_admission_residuals_for` feeds to `check_admissibility_mode`.
+/// Parse without elaboration for `check_admissibility_mode`.
 fn parse_only(src: &str) -> lex_core::ast::Term {
     let tokens = lexer::lex(src).unwrap_or_else(|e| panic!("lex error: {e:?}"));
     parser::parse(&tokens).unwrap_or_else(|e| panic!("parse error: {e:?}"))
 }
 
 /// Assert a source admits on BOTH the strict (elaborated) gate and the
-/// `HoleExtension` gate on the parsed term (the kernel's actual admission
-/// path). Returns the elaborated core for evaluation.
+/// `HoleExtension` gate on the parsed term. Returns the elaborated core
+/// for evaluation.
 fn admissible_core_both_modes(src: &str) -> lex_core::ast::Term {
     let parsed = parse_only(src);
     check_admissibility_mode(&parsed, AdmissibilityMode::HoleExtension).unwrap_or_else(|e| {
-        panic!("HoleExtension admissibility (kernel path, parsed term) failed: {e}")
+        panic!("HoleExtension admissibility (public mode, parsed term) failed: {e}")
     });
     admissible_core(src)
 }
@@ -280,11 +277,10 @@ fn value_member_pattern_with_wildcard_admits_on_both_gates() {
     );
 }
 
-// (b) The exact nested kernel shape: outer matches `company_class`
+// (b) The nested fixture: outer matches `company_class`
 //     (ComplianceTag) on `PublicCompany`, inner matches `shareholder_count`
 //     (Nat) with `| 0 | 1 | _` (public ≥ 2); the outer `| _ =>` arm holds a
-//     second inner match `| 0 | _` (private ≥ 1). This is
-//     `modules/lex/seychelles/companies_act_2003.lex` Rule 1, verbatim shape.
+//     second inner match `| 0 | _` (private ≥ 1).
 //     It MUST admit and evaluate correctly: the parser must not let the inner
 //     `PublicCompany`-branch match swallow the outer `| _ =>` arm.
 const SC_COMPANIES_ACT_MIN_SHAREHOLDERS: &str = "\

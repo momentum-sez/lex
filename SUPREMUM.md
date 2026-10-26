@@ -5,7 +5,7 @@
 > - **`PLATONIC-IDEAL.md`** — the converged conception: substrate principle, Feature Integration Theorem, Lex Expressiveness Boundary Theorem, Curry-Howard for typed discretion holes, position theorems framework, tribunal-modal logic class, categorical/denotational completion, mechanization 100% commitment, falsifiers, convergence criterion.
 > - **`ROADMAP.md`** — the game plan: Phases A–H with logical dependencies, per-phase deliverables, convergence criterion.
 > - **`SUBSTRATE-INTERFACE.md`** — the proposed v1.0 interface contract for Op and downstream consumers (currently draft v0.1, proposed for freeze at `ROADMAP.md` Phase E after its prerequisite proofs and consumer review).
-> - **`SUPREMUM-DISCIPLINE.md`** — the meta-principle (always pick the supremum option) under which all of the above operate.
+> - **`SUPREMUM-DISCIPLINE.md`** — the comparison rule for defensible targets, evidence, and unresolved design choices.
 
 ## 1. What Lex is
 

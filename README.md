@@ -266,11 +266,11 @@ child caveat set implies its parent.
 
 ## Reproducibility
 
-See [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) for the exact toolchain pin,
-expected test counts, example outputs, and hardware budgets. The repository
-ships with a pinned Rust toolchain (`rust-toolchain.toml`), GitHub Actions
-CI for Rust and Rocq, and a self-contained workspace that compiles from a
-cold clone without sibling checkouts.
+See [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) for toolchain requirements,
+verification commands, example scope, and historical results. The repository
+ships with a pinned Rust toolchain (`rust-toolchain.toml`) and GitHub Actions
+workflows for Rust and Rocq. The cold-clone workflow builds and tests an
+isolated copy of the selected revision without sibling checkouts.
 
 ## Contributing
 

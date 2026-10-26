@@ -21,9 +21,8 @@ const CORE_TYPES: &[&str] = &[
     "Nat",
     "ComplianceTag",
     // 17 C.F.R. §230.503(a)(1) — Reg D Form D filing deadline arithmetic on
-    // calendar-day Gregorian dates. Added for the usa/regulation_d_503.lex
-    // rule corpus (typed discretion hole for first-sale-date attestation,
-    // Rule 9 / §230.503(a)(1)). At universe level 0 like the other core
+    // calendar-day Gregorian dates and a typed discretion hole for
+    // first-sale-date attestation. At universe level 0 like the other core
     // types; day arithmetic is left to the obligation daemon for now.
     "Date",
 ];
@@ -78,10 +77,9 @@ pub(crate) fn encode_non_zero_nat_marker(n: u64) -> String {
 const SANCTIONS_CONSTRUCTORS: &[&str] = &[
     "Clear",
     // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
-    // SanctionsResult discriminator extensions surfaced by
-    // modules/lex/cayman/sanctions_screening_loop.lex (rule body
+    // SanctionsResult discriminator extensions for a screening rule:
     // `match ctx.sanctions_check return ComplianceVerdict with
-    // | Clear => Compliant | Match => NonCompliant | PotentialMatch => Pending`).
+    // | Clear => Compliant | Match => NonCompliant | PotentialMatch => Pending`.
     "Match",
     "PotentialMatch",
 ];
@@ -347,7 +345,7 @@ const TAG_CONSTRUCTORS: &[&str] = &[
     "WithinOneMonthOfAnniversary",
     // ── USA Reg D §230.503 constructor families (Phase 5.2 extension) ──
     //
-    // These 28 constructors land the usa/regulation_d_503.lex rule surface.
+    // These 28 constructors supply the Reg D filing fixture surface.
     // They are grouped by family below rather than interleaved alphabetically
     // so the Reg D semantic bundle stays visible as one unit (per the
     // "Group new symbols by family" directive). Existing prelude entries
@@ -404,24 +402,19 @@ const TAG_CONSTRUCTORS: &[&str] = &[
     "CredentialsProvisioned",
     // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
     //
-    // Constructors lifted out of `-- MISSING-PRELUDE: <name>` markers in
-    // ~/kernel/modules/lex/{adgm,bermuda,bvi,cayman,de,eu,guernsey,
-    // hong_kong,iom,jersey,luxembourg,prospera,singapore,uae,uk,usa}/*.lex.
-    // Per the F51-LEX-COVERAGE convention (`F51-LEX-COVERAGE.md:139`)
-    // each marker named a typed accessor or constructor that the kernel-
-    // side Lex programs evaluate counsel-attested at runtime. This block
-    // closes the typed seam so those programs can typecheck through the
-    // prelude rather than relying on out-of-band counsel attestation.
+    // Constructors for the cross-jurisdictional fixture surface.
+    // `legacy_fixture_prelude` registers these names for elaboration.
+    // `g2_prelude_extensions_are_resolvable` checks their availability.
+    // Registration supplies types, not evidence of legal applicability.
     //
     // ── Family: Jurisdiction extensions ─────────────────────────────
-    // Delaware (USA-state-level — DGCL §132 registered-office gate from
-    // modules/lex/usa/states/us-de/dgcl_corporate_governance.lex Rule 12;
+    // Delaware (USA-state-level — DGCL §132 registered-office fixture;
     // shipped as `USDE` to disambiguate from country-level codes; joins
     // the existing 10-jurisdiction set: ADGM/GB/HK/HN/KY/LU/PK/SC/SG/VG).
     "USDE",
     // Bermuda (BM), Jersey (JE), Guernsey (GG), Isle of Man (IM),
     // Germany (DE), European Union (EU). Used as harbor markers in
-    // composed AML-CDD bundles (`modules/lex/aml_cdd_composition.lex`)
+    // composed AML-CDD fixtures
     // and per-jurisdiction PoA programs.
     "BM",
     "JE",
@@ -433,8 +426,7 @@ const TAG_CONSTRUCTORS: &[&str] = &[
     "BV",
     // ── Family: AmlCddRegime ─────────────────────────────────────────
     // Per-jurisdiction AML-CDD regulation tags scrutinised by
-    // `aml_cdd_jurisdiction` accessor matches in the Step-4 PoA
-    // programs (`modules/lex/{cayman,uk,usa,...}/aml_cdd_*.lex`). Each
+    // `aml_cdd_jurisdiction` accessor matches in PoA fixtures. Each
     // names the binding rule-set (statute / regulation / regulator
     // notice / handbook).
     "KyCimaAmlr",       // Cayman AML Regulations 2020 + CIMA Guidance Notes
@@ -460,8 +452,8 @@ const TAG_CONSTRUCTORS: &[&str] = &[
     "AeDifcDfsa",       // DIFC DFSA AML Module
     "AeAdgmFsra",       // ADGM FSRA AML Rulebook
     // ── Family: Status extensions (G2 wave) ──────────────────────────
-    // Bare-status constructors used by the kernel-side Step-4 / Step-9
-    // programs that don't fit Reg D / existing families. Most are
+    // Bare-status constructors used by jurisdictional fixtures
+    // that do not fit Reg D / existing families. Most are
     // pass-through ladder rungs (Compliant / NonCompliant / Pending
     // bucket-shaping) on bespoke accessors.
     "Appointed",    // mlro_appointment_status — MLRO designated under reg.5
@@ -520,15 +512,14 @@ const TAG_CONSTRUCTORS: &[&str] = &[
     "KycFailed",               // kyc_status — investor KYC failed
     // ── Family: VaspLicenseCategory ─────────────────────────────────
     // Cayman VASP Act 2020 license-category classifier scrutinised by
-    // `vasp_license_category` accessor matches in
-    // `modules/lex/cayman/vasp_act.lex`.
+    // `vasp_license_category` accessor matches.
     "VaspLicenseCustodian",       // Custodian-only VASP license
     "VaspLicenseTradingPlatform", // Trading-platform VASP license
     "VaspRegistrationOnly",       // Registration without full license (transitional)
                                   // (Note: `Match` / `PotentialMatch` are SanctionsResult constructors,
                                   // registered above in SANCTIONS_CONSTRUCTORS, not TAG_CONSTRUCTORS —
                                   // they are scrutinised against SanctionsResult-typed accessors like
-                                  // `ctx.sanctions_check` per modules/lex/cayman/sanctions_screening_loop.lex.)
+                                  // `ctx.sanctions_check`.)
 ];
 
 const NAT_ACCESSORS: &[&str] = &[
@@ -536,19 +527,17 @@ const NAT_ACCESSORS: &[&str] = &[
     "natural_person_director_count",
     "shareholder_count",
     // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
-    // AIFMD Article 18 substance counts (Luxembourg AIFM CSSF
-    // supervision; modules/lex/luxembourg/aifmd_aif_substance.lex).
+    // AIFMD Article 18 substance counts (Luxembourg AIFM CSSF supervision).
     "aifm_local_staff_count",
     "aifm_conducting_officer_count",
     // VARA Rulebook (Dubai); count of VAS activity classes the licensee
     // is authorised to conduct under the VA Capital Markets Module.
     "vas_activity_classes",
     // FATF Recommendation 16 (Travel Rule) — per-transfer USD-equivalent
-    // amount used for the USD-1000 threshold gate
-    // (modules/lex/adgm/fatf_travel_rule.lex).
+    // amount used for the USD-1000 threshold fixture.
     "transfer_amount_usd",
     // Cayman ES Act 2024 — count of relevant-activity classes the
-    // entity is in scope for (modules/lex/cayman/economic_substance_test.lex).
+    // entity is in scope for.
     "es_activity_class_count",
 ];
 
@@ -600,9 +589,8 @@ const BOOL_ACCESSORS: &[&str] = &[
     "sifc_facilitated_investment",
     "transfers_data_cross_border",
     // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
-    // PoA evidentiary surface — composed across harbors per
-    // modules/lex/aml_cdd_composition.lex and the sixteen per-jurisdiction
-    // PoA programs. True iff a `ProfileDocument` of type ProofOfAddress
+    // PoA evidentiary surface for cross-jurisdictional fixtures.
+    // True iff a `ProfileDocument` of type ProofOfAddress
     // is on file, current under the per-jurisdiction freshness window,
     // and signature/verification chain is valid.
     "proof_of_address_on_file",
@@ -680,7 +668,7 @@ const TAG_ACCESSORS: &[&str] = &[
     "edd_status",
     // 17 C.F.R. §230.503 — EDGAR CIK/access-code provisioning status for
     // Form D filing; CounselFilingPath covers the manual-receipt capture
-    // flow when the issuer's kernel deployment has not been credentialed.
+    // flow when the issuer's deployment has not been credentialed.
     "edgar_credential_status",
     "employment_agreement_status",
     "employment_standards_status",
@@ -761,9 +749,8 @@ const TAG_ACCESSORS: &[&str] = &[
     "wire_transfer_compliance_status",
     // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
     //
-    // Per-jurisdiction AML-CDD regime tag (`AmlCddRegime` family;
-    // scrutinised in modules/lex/{cayman,uk,usa,...}/aml_cdd_*.lex
-    // PoA programs to identify the binding rule-set).
+    // Per-jurisdiction AML-CDD regime tag (`AmlCddRegime` family)
+    // used by PoA fixtures to identify the binding rule-set.
     "aml_cdd_jurisdiction",
     // Cayman AML 2020 Recordkeeping (reg.25 + PoCA s.136B) — five-year
     // retention compliance ladder.
@@ -780,7 +767,7 @@ const TAG_ACCESSORS: &[&str] = &[
     "vasp_license_category",
     // VASP segregation of client/firm assets (VASP Act + custody rules).
     "segregation_status",
-    // VARA prudential VA module status (modules/lex/adgm/vara_digital_assets.lex).
+    // VARA prudential VA module status.
     "prudential_va_module_status",
     // Cayman ES Act — annual ES return filing status accessor.
     "es_filing_status",
@@ -792,19 +779,16 @@ const TAG_ACCESSORS: &[&str] = &[
     "adequate_opex_status",
     // Cayman ES Act — pure-equity holding-company reduced-substance test status.
     "holding_company_reduced_substance_status",
-    // Cayman DITC — CRS / FATCA / CbCR enrolment + filing statuses
-    // (modules/lex/cayman/tax_neutrality.lex).
+    // Cayman DITC — CRS / FATCA / CbCR enrolment + filing statuses.
     "ditc_enrolment_status",
     "crs_filing_status",
     "cbcr_filing_status",
     "self_certification_status",
     "tax_exemption_undertaking_status",
-    // UK HMRC — corporation-tax / VAT filing statuses
-    // (modules/lex/uk/tax_corporation_tax.lex).
+    // UK HMRC — corporation-tax / VAT filing statuses.
     "ct_filing_status",
     "vat_registration_status",
-    // Singapore IRAS — corporate-income-tax / GST filing statuses
-    // (modules/lex/singapore/tax_treaties.lex).
+    // Singapore IRAS — corporate-income-tax / GST filing statuses.
     "cit_filing_status",
     "gst_registration_status",
     // Cayman/Cayman-VASP — STR/FIU report status accessor.
@@ -818,13 +802,11 @@ const TAG_ACCESSORS: &[&str] = &[
     "token_classification_status",
     // Cayman AML 2020 — AML programme review status.
     "aml_program_status",
-    // Prospera regime selector — selected ZEDE regime status accessor
-    // (modules/lex/prospera/regime_selector.lex).
+    // Prospera regime selector — selected ZEDE regime status accessor.
     "selected_regime_status",
     // Prospera reciprocity attestation (corridor-recognition surface).
     "reciprocity_attestation_status",
-    // Prospera — ZEDE Council resolution receipt status
-    // (modules/lex/prospera/authority_council_approval.lex).
+    // Prospera — ZEDE Council resolution receipt status.
     "council_approval_receipt_status",
     // Prospera — investor classification status (kyc_status accessor
     // separate from cross-jurisdictional kyc_aml_status).
@@ -910,7 +892,7 @@ pub enum ConstructorFamily {
     BadActorStatus,
     /// 17 C.F.R. §230.503 — SEC EDGAR CIK/access-code provisioning status
     /// for Form D filing; CounselFilingPath is the manual-receipt capture
-    /// flow when the issuer's kernel deployment has not been credentialed:
+    /// flow when the issuer's deployment has not been credentialed:
     /// CredentialsProvisioned / CredentialsAbsent / CounselFilingPath.
     EdgarCredentialStatus,
     // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration ──────────
@@ -942,8 +924,7 @@ pub fn constructor_family(name: &str) -> Option<ConstructorFamily> {
     match name {
         // ── Jurisdiction ────────────────────────────────────────────
         // Original 10-jurisdiction set + G2 additions: USDE (Delaware
-        // state-level — the dgcl_corporate_governance.lex registered-
-        // office gate), BM/JE/GG/IM/DE/EU/AE/BV (per-jurisdiction
+        // state-level registered-office fixture), BM/JE/GG/IM/DE/EU/AE/BV (per-jurisdiction
         // harbor-marker codes used by the composed AML-CDD bundle).
         "ADGM" | "GB" | "HK" | "HN" | "KY" | "LU" | "PK" | "SC" | "SG" | "VG"
         | "USDE" | "BM" | "JE" | "GG" | "IM" | "DE" | "EU" | "AE" | "BV" => Some(Jurisdiction),
@@ -971,9 +952,8 @@ pub fn constructor_family(name: &str) -> Option<ConstructorFamily> {
         | "CmsCustodialServices"
         | "CmsDealingCapitalMarkets"
         | "CmsFundManagement"
-        // G2 — Cayman VASP Act 2020 license-category constructors used
-        // in modules/lex/cayman/vasp_act.lex Rule 5 (vasp_license_category
-        // accessor).
+        // G2 — Cayman VASP Act 2020 license-category constructors for
+        // the vasp_license_category accessor.
         | "VaspLicenseCustodian"
         | "VaspLicenseTradingPlatform"
         | "VaspRegistrationOnly" => Some(LicenseType),
@@ -1505,7 +1485,7 @@ pub fn accessor_families(accessor: &str) -> Option<&'static [ConstructorFamily]>
         | "gst_registration_status"
         // Cayman holding-company reduced-substance test (Status only).
         | "holding_company_reduced_substance_status"
-        // VARA prudential VA module (modules/lex/adgm/vara_digital_assets.lex).
+        // VARA prudential VA module.
         | "prudential_va_module_status"
         // Cayman VASP supervision / capital / tech-audit / travel-rule /
         // token-classification / AML-program ladders.
@@ -2193,7 +2173,7 @@ pub fn legacy_fixture_prelude() -> Context {
     ctx = register_unary_accessors(ctx, TAG_ACCESSORS, "ComplianceTag");
 
     // 17 C.F.R. §230.503(a)(1) + practitioner consensus on SAFE first-sale
-    // date (Rule 9 of usa/regulation_d_503.lex). US_SEC_Counsel is
+    // date. US_SEC_Counsel is
     // registered as a resolvable name so the typed discretion hole
     //   ? first_sale_date_for_safe : Date @ US_SEC_Counsel
     // can look it up during elaboration. A richer federal regulator
@@ -2206,15 +2186,12 @@ pub fn legacy_fixture_prelude() -> Context {
     // ── G2 closure (2026-05-07) — authority refs and typed-discretion
     // hole markers ──────────────────────────────────────────────────
     //
-    // Each MISSING-PRELUDE marker in
-    // ~/kernel/modules/lex/{cayman,prospera,uk,singapore,usa/states/...}/*.lex
-    // for an authority-named typed discretion hole resolves through
-    // these names. Per the US_SEC_Counsel pattern, each is typed at
+    // Authority-named typed discretion holes resolve through these names.
+    // Per the US_SEC_Counsel pattern, each is typed at
     // ComplianceTag for elaboration-time name resolution. A richer
     // AuthorityRef / regulator-graph extension that distinguishes
-    // recognition-grade and acceptance semantics is a follow-up
-    // frontier (tracked in the G2 punch list at
-    // ~/kernel/docs/architecture/frontier-work/G2-MISSING-PRELUDE-CLOSURE.md).
+    // recognition-grade and acceptance semantics remains a separate
+    // requirement. This registration does not provide those semantics.
     for authority_ref in [
         // Cayman: Department for International Tax Cooperation (DITC).
         "DITC",
@@ -2248,30 +2225,28 @@ pub fn legacy_fixture_prelude() -> Context {
         "AE_DFSA",
         "AE_FSRA",
         // Delaware Court of Chancery — DGCL §141(a) fit-and-proper
-        // determinations (modules/lex/usa/states/us-de/dgcl_corporate_governance.lex
-        // Rule 9). Underscored form for the Lex name; the kernel
-        // authority-graph slug remains us-de-court-of-chancery.
+        // determinations. The Lex name uses underscores for elaboration.
         "US_DE_Court_Of_Chancery",
         // Prospera ZEDE Council — authority for council-resolution
-        // discretion holes (modules/lex/prospera/authority_council_approval.lex).
+        // discretion holes.
         "Prospera_Council",
         // ── Typed-discretion-hole markers ────────────────────────────
         // Each names a discretion hole that is presently counsel-attested
         // at runtime; the prelude resolves the name so elaboration
-        // succeeds. Closure to first-class typed-discretion-hole terms
-        // is tracked in the F51-LEX-COVERAGE follow-up frontier.
-        "DitcPenaltyAssessment",                 // cayman/tax_neutrality.lex
-        "HmrcEnquiryDiscretion",                 // uk/tax_corporation_tax.lex
-        "DiscoveryAssessment",                   // uk/tax_corporation_tax.lex
-        "ComptrollerDiscretion",                 // singapore/tax_treaties.lex
-        "GeneralAntiAvoidanceRule",              // singapore/tax_treaties.lex
-        "ArbitralMeritDetermination",            // prospera/arbitration.lex
-        "CouncilResolutionIssuance",             // prospera/authority_council_approval.lex
-        "USPersonDetermination",                 // prospera/investor_classification.lex
-        "AccreditedInvestorVerification",        // prospera/investor_classification.lex
-        "RegimeAvailabilityDetermination",       // prospera/regime_selector.lex
-        "HondurasLMVDigitalAssetClassification", // prospera/fundraising_regime_classifier.lex
-        "AdequateProceduresDetermination",       // uk/bribery_act_2010.lex
+        // succeeds. First-class typed-discretion-hole terms remain a
+        // separate requirement beyond name registration.
+        "DitcPenaltyAssessment",                 // Cayman tax penalties
+        "HmrcEnquiryDiscretion",                 // UK corporation tax
+        "DiscoveryAssessment",                   // UK corporation tax
+        "ComptrollerDiscretion",                 // Singapore tax treaties
+        "GeneralAntiAvoidanceRule",              // Singapore tax treaties
+        "ArbitralMeritDetermination",            // Prospera arbitration
+        "CouncilResolutionIssuance",             // Prospera council approval
+        "USPersonDetermination",                 // Prospera investor classification
+        "AccreditedInvestorVerification",        // Prospera investor classification
+        "RegimeAvailabilityDetermination",       // Prospera regime selection
+        "HondurasLMVDigitalAssetClassification", // Prospera fundraising classification
+        "AdequateProceduresDetermination",       // UK Bribery Act 2010
     ] {
         ctx = ctx.with_named_constant(authority_ref, constant("ComplianceTag"));
     }
@@ -2360,8 +2335,7 @@ mod tests {
 
         // 2026-05-07 (G2 closure — MISSING-PRELUDE migration): raised
         // from 18 to 20 to admit the SanctionsResult constructor
-        // extensions `Match` and `PotentialMatch` lifted out of
-        // modules/lex/cayman/sanctions_screening_loop.lex.
+        // extensions `Match` and `PotentialMatch` for screening fixtures.
         assert_eq!(ctx.global_len(), 20);
 
         for name in CORE_TYPES {
@@ -2433,10 +2407,8 @@ mod tests {
 
         // 2026-05-07 (G2 closure — MISSING-PRELUDE migration): raised
         // from 433 to 601 to admit the cross-jurisdictional rule
-        // surface lifted out of `-- MISSING-PRELUDE: <name>` markers
-        // in ~/kernel/modules/lex/{adgm,cayman,prospera,uk,singapore,
-        // hong_kong,uae,eu,de,bermuda,jersey,guernsey,iom,bvi,
-        // luxembourg,usa/states/...}/*.lex. See the size-pin block
+        // surface previously marked MISSING-PRELUDE in jurisdictional
+        // rule fixtures. See the size-pin block
         // below in `prelude_context_size_is_stable` for the per-
         // category accounting.
         assert_eq!(legacy.global_len(), 601);
@@ -2570,8 +2542,7 @@ mod tests {
         let ctx = legacy_fixture_prelude();
 
         // 2026-04-24 (Phase 5.2 — USA Reg D §230.503): raised from 393
-        // to 433 to admit 40 new symbols lifted for
-        // modules/lex/usa/regulation_d_503.lex:
+        // to 433 to admit 40 new symbols for Reg D filing fixtures:
         //   +1  CORE_TYPES       (Date)
         //   +28 TAG_CONSTRUCTORS (7 ExemptionCode + 5 FormDFilingStatus +
         //                         3 FormDDeadlineStatus + 4
@@ -2596,12 +2567,9 @@ mod tests {
         //
         // 2026-05-07 (G2 closure — MISSING-PRELUDE migration): raised
         // from 433 to 601 (+168) to admit the cross-jurisdictional rule
-        // surface lifted out of `-- MISSING-PRELUDE: <name>` markers
-        // in ~/kernel/modules/lex/{adgm,cayman,prospera,uk,singapore,
-        // hong_kong,uae,eu,de,bermuda,jersey,guernsey,iom,bvi,
-        // luxembourg,usa/states/...}/*.lex. Per-category accounting:
-        //   +2  SANCTIONS_CONSTRUCTORS (Match, PotentialMatch — for
-        //                               cayman/sanctions_screening_loop.lex)
+        // surface previously marked MISSING-PRELUDE in jurisdictional
+        // rule fixtures. Per-category accounting:
+        //   +2  SANCTIONS_CONSTRUCTORS (Match, PotentialMatch — screening)
         //   +9  TAG_CONSTRUCTORS · Jurisdiction (USDE, BM, JE, GG, IM,
         //                                       DE, EU, AE, BV)
         //  +22  TAG_CONSTRUCTORS · AmlCddRegime (KyCimaAmlr,
@@ -2893,11 +2861,9 @@ mod tests {
 
     // ── USA Reg D §230.503 extension tests (Phase 5.2) ──────────────
 
-    /// Every symbol lifted into the prelude for
-    /// `modules/lex/usa/regulation_d_503.lex` resolves via the prelude
-    /// context lookup. This is the file-level coverage gate for the Reg D
-    /// wave: if a symbol is enumerated in regulation_d_503's PENDING-PRELUDE
-    /// block but missing from prelude.rs, this test fails.
+    /// Every Reg D symbol listed by this regression fixture resolves
+    /// through the legacy prelude context lookup. If a listed symbol
+    /// disappears, this test fails.
     #[test]
     fn reg_d_prelude_extensions_are_resolvable() {
         let ctx = legacy_fixture_prelude();
@@ -3163,9 +3129,8 @@ mod tests {
 
     // ── G2 closure (2026-05-07) — MISSING-PRELUDE migration tests ────
 
-    /// Every symbol lifted into the prelude for the
-    /// `~/kernel/modules/lex/{adgm,cayman,prospera,uk,singapore,...}/*.lex`
-    /// MISSING-PRELUDE markers resolves via the prelude context lookup.
+    /// Every symbol listed by this regression fixture resolves through
+    /// the legacy prelude context lookup.
     /// File-level coverage gate for the G2 closure: if any G2 symbol
     /// regresses out of the prelude, this test fails.
     #[test]
@@ -3259,8 +3224,7 @@ mod tests {
             "VaspRegistrationOnly",
         ];
 
-        // 2 SanctionsResult extensions lifted from
-        // cayman/sanctions_screening_loop.lex.
+        // 2 SanctionsResult extensions for screening fixtures.
         let g2_sanctions_extensions: &[&str] = &["Match", "PotentialMatch"];
 
         // 5 NAT_ACCESSORS.
@@ -3391,9 +3355,8 @@ mod tests {
     }
 
     /// G2 jurisdiction additions resolve through `office_country` /
-    /// `registered_office_country` accessors. Pins the policy so the
-    /// Step-3 us-de DGCL Rule 12 (`registered_office_country` against
-    /// `USDE`) typechecks once the kernel side migrates.
+    /// `registered_office_country` accessors. This includes matching
+    /// `registered_office_country` against `USDE`.
     #[test]
     fn g2_office_country_admits_new_jurisdictions() {
         for j in &["USDE", "BM", "JE", "GG", "IM", "DE", "EU", "AE", "BV"] {
@@ -3452,9 +3415,7 @@ mod tests {
     }
 
     /// Cayman ES adequacy accessors admit both JurisdictionAdequacy
-    /// (`Adequate` / `Inadequate`) and Status families. Pins the
-    /// policy so modules/lex/cayman/economic_substance.lex Rule 4 + 5
-    /// typecheck without re-authoring.
+    /// (`Adequate` / `Inadequate`) and Status families.
     #[test]
     fn g2_es_adequacy_admits_jurisdictionadequacy_and_status() {
         for accessor in &[
@@ -3472,8 +3433,7 @@ mod tests {
 
     /// VASP license-category accessor admits both LicenseType (the new
     /// VaspLicense* constructors) and Status families (the existing
-    /// licensing-status ladder rungs Active / Suspended / Revoked). Pins
-    /// the policy so cayman/vasp_act.lex Rule 5 typechecks.
+    /// licensing-status ladder rungs Active / Suspended / Revoked).
     #[test]
     fn g2_vasp_license_category_admits_licensetype_and_status() {
         for ctor in &[
@@ -3495,8 +3455,7 @@ mod tests {
     }
 
     /// AIFMD Article 18 manager-location accessors admit Jurisdiction
-    /// only — the modules/lex/luxembourg/aifmd_aif_substance.lex
-    /// rules scrutinise them as `Jurisdiction` returning Bool.
+    /// only. The regression checks reject Status constructors.
     #[test]
     fn g2_aifm_location_admits_jurisdiction_only() {
         for accessor in &[
@@ -3549,11 +3508,10 @@ mod tests {
     }
 
     /// Sanctions-result extensions resolve as SanctionsResult-typed
-    /// (not ComplianceTag). Pins the policy so
-    /// modules/lex/cayman/sanctions_screening_loop.lex Rule 1
-    /// (`match ctx.sanctions_check return ComplianceVerdict with
+    /// (not ComplianceTag). The screening fixture
+    /// `match ctx.sanctions_check return ComplianceVerdict with
     /// | Clear => Compliant | Match => NonCompliant
-    /// | PotentialMatch => Pending`) typechecks against the existing
+    /// | PotentialMatch => Pending` uses the existing
     /// `sanctions_check` accessor of type
     /// `IncorporationContext → SanctionsResult`.
     #[test]

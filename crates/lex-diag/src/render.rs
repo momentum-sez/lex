@@ -121,16 +121,16 @@ mod tests {
 
     #[test]
     fn render_basic_diagnostic() {
-        let ctx = DiagContext::new("modules/lex/prospera/aml.lex", 42, 10);
+        let ctx = DiagContext::new("input.lex", 42, 10);
         let msg = render_diagnostic(&DiagnosticCategory::TypeMismatch, &ctx);
         assert!(msg.contains("[Type Mismatch]"));
-        assert!(msg.contains("modules/lex/prospera/aml.lex:42:10"));
+        assert!(msg.contains("input.lex:42:10"));
         assert!(msg.contains("expected a value of one kind"));
     }
 
     #[test]
     fn render_with_jurisdiction_and_snippet() {
-        let ctx = DiagContext::new("modules/lex/luxembourg/corporate.lex", 15, 3)
+        let ctx = DiagContext::new("input.lex", 15, 3)
             .with_jurisdiction("lu")
             .with_snippet("let x = sanctions_check(entity)");
         let msg = render_diagnostic(&DiagnosticCategory::EffectViolation, &ctx);

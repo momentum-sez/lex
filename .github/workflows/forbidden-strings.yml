@@ -1,8 +1,8 @@
 name: forbidden-strings
 
-# Hygiene check: no closed-repository path references in public artifacts.
-# Fails the build on any match. This workflow file itself is excluded from
-# the scan since it necessarily names the forbidden substrings as patterns.
+# Check public artifacts for local paths and unapproved repository URLs.
+# Check Cargo paths without rejecting dependencies inside this repository.
+# Exclude this file from text scans because it contains the search patterns.
 
 on:
   push:
@@ -19,45 +19,87 @@ jobs:
         run: |
           set -euo pipefail
           patterns=(
-            '\.\./kernel/'
-            '\.\./\.\./kernel/'
-            '\.\./\.\./\.\./kernel/'
-            '\.\./moxie/'
-            '\.\./centcom/'
-            '\.\./momentum/'
-            '\.\./momentum-research/'
-            '\.\./momentum-dev/'
-            '\.\./momentum-docs/'
-            '~/kernel/'
-            '~/moxie/'
-            '~/centcom/'
-            '~/momentum/'
-            '~/momentum-research/'
-            '~/momentum-dev/'
-            '~/momentum-docs/'
-            '/Users/[^/]*/kernel/'
-            '/home/[^/]*/kernel/'
-            'path = "\.\./.*kernel'
-            'kernel-integration'
-            'the kernel repo'
-            'in the kernel repo'
-            'kernel tree'
+            '/Users/[^/]+/'
+            '/home/[^/]+/'
+            '/private/tmp/'
+            '~/[^[:space:]]+'
+            'file://'
+            'git[+]ssh://'
+            'modules/'
           )
           fail=0
           for p in "${patterns[@]}"; do
-            matches=$(git grep -nE "$p" -- \
+            if matches=$(git grep -nE "$p" -- \
               ':(exclude).github/workflows/forbidden-strings.yml' \
-              ':(exclude)Cargo.lock' \
-              || true)
-            if [ -n "$matches" ]; then
+              ':(exclude)Cargo.lock'); then
               echo "::error::forbidden-strings matched pattern: $p"
               echo "$matches"
               fail=1
+            else
+              scan_status=$?
+              if [ "$scan_status" -ne 1 ]; then
+                echo "::error::forbidden-strings scan failed with status $scan_status"
+                exit "$scan_status"
+              fi
             fi
           done
+          if urls=$(git grep -nEo \
+            '(https?://github\.com/|git@github\.com:)[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+' -- \
+            ':(exclude).github/workflows/forbidden-strings.yml' \
+            ':(exclude)Cargo.lock'); then
+            if unexpected=$(printf '%s\n' "$urls" | grep -vE \
+              ':[0-9]+:(https?://github\.com/|git@github\.com:)momentum-sez/(lex|op|gstore|stack)(\.git)?$'); then
+              echo "::error::unapproved GitHub repository references"
+              echo "$unexpected"
+              fail=1
+            else
+              scan_status=$?
+              if [ "$scan_status" -ne 1 ]; then
+                echo "::error::GitHub repository filter failed with status $scan_status"
+                exit "$scan_status"
+              fi
+            fi
+          else
+            scan_status=$?
+            if [ "$scan_status" -ne 1 ]; then
+              echo "::error::GitHub repository scan failed with status $scan_status"
+              exit "$scan_status"
+            fi
+          fi
           if [ "$fail" -ne 0 ]; then
             echo ""
             echo "Closed-repository references detected in public files."
             exit 1
           fi
+          # Python 3.11+ provides the TOML parser in the standard library.
+          python3 - <<'PY'
+          from pathlib import Path, PureWindowsPath
+          import subprocess
+          import tomllib
+
+          root = Path.cwd().resolve()
+          tracked = subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0")
+
+          def check_paths(value, manifest):
+              if isinstance(value, dict):
+                  for key, child in value.items():
+                      if key == "path" and isinstance(child, str):
+                          path = Path(child)
+                          resolved = (manifest.parent / path).resolve()
+                          if path.is_absolute() or PureWindowsPath(child).is_absolute():
+                              raise SystemExit(f"{manifest.relative_to(root)}: Cargo path must be relative: {child}")
+                          if not resolved.is_relative_to(root) or not resolved.exists():
+                              raise SystemExit(f"{manifest.relative_to(root)}: Cargo path must resolve inside the repository: {child}")
+                      else:
+                          check_paths(child, manifest)
+              elif isinstance(value, list):
+                  for child in value:
+                      check_paths(child, manifest)
+
+          for entry in tracked:
+              if entry and Path(entry.decode()).name == "Cargo.toml":
+                  manifest = root / entry.decode()
+                  with manifest.open("rb") as source:
+                      check_paths(tomllib.load(source), manifest)
+          PY
           echo "No forbidden strings detected."
