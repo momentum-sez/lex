@@ -412,6 +412,41 @@ rate, operation, domain, resource, counterparty, subject, MCP, jurisdiction,
 and discretion caveats; custom caveats fall back to finite-context
 propositional enumeration.
 
+### Checked Boolean rule execution
+
+`boolean_rule::CompiledBooleanRule::compile(source, signature)` lowers a bounded
+source fragment to the production `LexProposition` evaluator.
+The caller supplies a trusted signature containing the production prelude and
+explicit local accessor declarations. Runtime facts cannot declare new accessors.
+The caller owns declaration provenance and must reject duplicate or forbidden
+replacement declarations before constructing that signature.
+The compiler checks six required Boolean and verdict declarations and each
+referenced accessor. It does not reconstruct overwritten declaration history.
+Referenced qualified names require separate identifier segments. A dot inside
+one segment is rejected, so distinct names cannot share one runtime key.
+
+An iterative source check enforces the fragment before the general parser runs.
+This check rejects effect annotations before the parser can discard them.
+It also bounds structure before recursive parsing, elaboration, checking, or destruction.
+The compiler then parses exactly one term and checks its complete type.
+The fragment accepts one lambda over a named context type.
+Its body contains exhaustive `True` and `False` matches and `Compliant` or
+`NonCompliant` leaves. Each test applies a pure Boolean accessor directly to
+the bound context. Wildcards, holes, effects, other leaves, and other expression
+forms are rejected.
+
+Compilation produces a sealed value with the checked term and its lowered
+proposition. Source input is limited to 65,536 bytes. The compiler limits the
+source tree to 64 nested tree or parenthesis levels and 1,024 nodes.
+
+`evaluate(context)` checks every referenced attribute before evaluating the
+proposition. Missing and non-Boolean attributes remain errors, including
+attributes on branches that the supplied facts would not select.
+The result is `true` for `Compliant` and `false` for `NonCompliant`.
+The caller remains responsible for fact provenance, authority, freshness, and
+the rule's applicable scope. This API does not issue a certificate or establish
+those host obligations.
+
 ### Lex-to-Op boundary
 
 Lex authorization of an Op payload requires an admission envelope, not merely a

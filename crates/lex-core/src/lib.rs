@@ -6,6 +6,7 @@
 //! repository compiles from a cold clone with no external checkouts.
 
 pub mod ast;
+pub mod boolean_rule;
 pub mod certificate;
 pub mod compose;
 pub mod core_calculus;
